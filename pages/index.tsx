@@ -14,7 +14,7 @@ const Home: NextPage = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <header className="">header</header>
+      <header className="text-3xl font-bold">header</header>
       <main className="">main</main>
       <footer className="">footer</footer>
     </div>
