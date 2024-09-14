@@ -105,7 +105,7 @@ function LayoutContent({
   toggleMenu: () => void;
   children: React.ReactNode;
 }): JSX.Element {
-  const { isAdmin, loading } = useAuth(); // Access authentication context to determine if the user is an admin and if the status is still loading.
+  const { loading } = useAuth(); // Access authentication context to determine if the user is an admin and if the status is still loading.
 
   if (loading) {
     return <div>Loading...</div>; // Render a loading state while determining admin status.

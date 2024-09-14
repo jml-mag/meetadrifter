@@ -33,6 +33,11 @@ interface AccordionProps {
   handleDeletePoll: (pollId: string) => Promise<void>; // Function to handle poll deletion.
 }
 
+interface Subscription {
+  unsubscribe: () => void;
+}
+
+
 /**
  * Accordion Component
  * -------------------
@@ -85,7 +90,7 @@ const Accordion: React.FC<AccordionProps> = ({
     }
 
     // Subscribe to real-time vote updates
-    let subscription: any;
+    let subscription: Subscription;
     if (isOpen || isActive) {
       subscription = client.models.Vote.onCreate({
         filter: { pollId: { eq: poll.id } },
@@ -287,7 +292,7 @@ export default function ListPolls(): JSX.Element {
       const subscription = client.models.Vote.onCreate({
         filter: { pollId: { eq: activePoll.id } },
       }).subscribe({
-        next: (newVote) => {
+        next: () => {
           setPolls((prevPolls) =>
             prevPolls.map((poll) => {
               if (poll.id === activePoll.id) {
