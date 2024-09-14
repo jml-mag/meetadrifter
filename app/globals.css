@@ -1,27 +1,28 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* globals.css
+   Purpose: This file sets up global styles that are applied across the entire application.
+   It leverages Tailwind CSS to manage base, component, and utility styles, ensuring a consistent and modern design language.
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+   The `@tailwind` directives import various layers of Tailwind's utility classes,
+   while custom styles within the `@layer base` are defined to tailor the foundational appearance of HTML elements. */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+   @tailwind base;     /* Imports the base styles from Tailwind, which reset and normalize default browser styles. */
+   @tailwind components; /* Imports component styles, allowing the definition of CSS classes that are reusable across components. */
+   @tailwind utilities; /* Imports utility classes from Tailwind, providing a wide range of quick-to-apply styles for spacing, sizing, typography, and more. */
+   
+   /* Define base layer modifications:
+      This section customizes the default styling of HTML elements, particularly the <body> tag,
+      to ensure that the application has a unified look and feel from the start. */
+   @layer base {
+       body {
+           @apply bg-black text-white; /* Sets the background color to black and the text color to white for all text within the <body>. */
+       }
+   }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
+   @layer components {
+    .memberBtn {
+        @apply w-24 mx-2 mt-4 text-xs text-white py-2 px-3 rounded-md shadow-md;
+    }
+   }
+   
+   /* Additional styles can be added here as needed to further customize the application's global aesthetics. */
+   
