@@ -152,7 +152,7 @@ export default function Poll(): JSX.Element {
   if (error || !poll) return <div>{error || "There is no active poll currently"}</div>;
 
   return (
-    <div className="w-full md:w-2/3 lg:w-1/2 mx-auto p-6 rounded-lg shadow shadow-teal-700 bg-blue-950 bg-opacity-95">
+    <div className="w-full shadow-black shadow-lg border-l border-r border-white md:w-2/3 lg:w-1/2 mx-auto p-6 md:rounded-lg bg-gradient-to-b from-blue-900 to-sky-950 via-blue-950">
       <div className="text-lg mb-2">Current Poll Question</div>
       <div className="text-2xl font-bold mb-4">{poll.title}</div>
       {hasVoted ? (

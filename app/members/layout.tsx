@@ -20,6 +20,7 @@ import "@aws-amplify/ui-react/styles.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import MembersMenu from "@/components/MembersMenu";
 import { Bars3Icon, XCircleIcon } from "@heroicons/react/24/solid";
+import { climate_crisis } from "@/app/fonts";
 
 // Configure AWS Amplify
 Amplify.configure(outputs);
@@ -125,6 +126,12 @@ function LayoutContent({
           priority
         />
       </div>
+      <div
+            className={`${climate_crisis.className} fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
+     
+          >
+            Meet A Drifter
+          </div>
       <div className="fixed top-0 w-full h-12 z-50 backdrop:blur-3xl">
         {/* Menu Button */}
         <button

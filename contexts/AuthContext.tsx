@@ -84,10 +84,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, sign
           const session = await fetchAuthSession();
           const groups = session.tokens?.idToken?.payload["cognito:groups"];
           if (Array.isArray(groups) && groups.includes("admin")) {
-            console.log("User is an admin");
+            
             setIsAdmin(true);
           } else {
-            console.log("User is not an admin");
+            
             setIsAdmin(false);
           }
         } catch (error) {
