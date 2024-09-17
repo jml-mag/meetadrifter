@@ -10,16 +10,20 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, useAnimation, AnimationControls } from "framer-motion"; // Import Framer Motion for animations.
-import { climate_crisis } from "@/app/fonts"; // Import custom font for styling.
-import Link from "next/link"; // Import Link component for client-side navigation.
-import { Background } from "@/components/Background"; // Import the Background component.
+import { motion, useAnimation, AnimationControls } from "framer-motion";
+import { climate_crisis } from "@/app/fonts";
+import Link from "next/link";
+import { Background } from "@/components/Background";
 
 export default function Home(): JSX.Element {
-  // Animation controls for the center div, top div, and button.
+  // Animation controls for the center div, top div, button, lines, and footer.
   const centerControls: AnimationControls = useAnimation();
   const topControls: AnimationControls = useAnimation();
   const buttonControls: AnimationControls = useAnimation();
+  const line1Controls: AnimationControls = useAnimation();
+  const line2Controls: AnimationControls = useAnimation();
+  const line3Controls: AnimationControls = useAnimation();
+  const footerControls: AnimationControls = useAnimation();
 
   // useEffect to sequence the animations.
   useEffect(() => {
@@ -43,10 +47,28 @@ export default function Home(): JSX.Element {
         // After the top div has fully appeared, start fading in the button.
         await buttonControls.start("visible");
       }, 500);
+
+      // Animate the lines with delays
+      await line1Controls.start("visible");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await line2Controls.start("visible");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await line3Controls.start("visible");
+
+      // Fade in the footer after the lines
+      await footerControls.start("visible");
     }
 
     sequenceAnimations();
-  }, [centerControls, topControls, buttonControls]);
+  }, [
+    centerControls,
+    topControls,
+    buttonControls,
+    line1Controls,
+    line2Controls,
+    line3Controls,
+    footerControls,
+  ]);
 
   // Variants for the center div animations.
   const centerVariants = {
@@ -60,7 +82,7 @@ export default function Home(): JSX.Element {
       transition: {
         type: "spring",
         stiffness: 300, // Reduced stiffness to lessen the bounce.
-        damping: 25,    // Increased damping to reduce oscillations.
+        damping: 25, // Increased damping to reduce oscillations.
       },
     },
     slideOut: {
@@ -101,6 +123,34 @@ export default function Home(): JSX.Element {
     },
   };
 
+  // Variants for the lines animations.
+  const lineVariants = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5, // Fade in over 0.5s.
+        ease: "easeIn",
+      },
+    },
+  };
+
+  // Variants for the footer animation.
+  const footerVariants = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5, // Fade in over 0.5s.
+        ease: "easeIn",
+      },
+    },
+  };
+
   // Render the main structure of the home page.
   return (
     <>
@@ -121,12 +171,12 @@ export default function Home(): JSX.Element {
               </motion.div>
               {/* Button with fade-in animation. */}
               <motion.div
-                className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 font-bold p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
+                className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700 "
                 variants={buttonVariants}
                 initial="hidden"
                 animate={buttonControls}
               >
-                <Link href="/members">Join / Login</Link>
+                <Link href="/members">Login</Link>
               </motion.div>
             </div>
           </div>
@@ -140,6 +190,40 @@ export default function Home(): JSX.Element {
             Meet A Drifter
           </motion.div>
         </div>
+        <div>
+          {/* Animate each line with fade-in and delay */}
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line1Controls}
+          >
+            The website you join
+          </motion.div>
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line2Controls}
+          >
+            so that you can build for yourself
+          </motion.div>
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line3Controls}
+          >
+            the website you just joined.
+          </motion.div>
+        </div>
+        {/* Footer with fade-in animation */}
+        <motion.a
+          href="https://www.matterandgas.com"
+          className="text-white p-2 fixed bottom-2 right-3 text-xs"
+          variants={footerVariants}
+          initial="hidden"
+          animate={footerControls}
+        >
+          © {new Date().getFullYear()} matterandgas
+        </motion.a>
       </main>
     </>
   );

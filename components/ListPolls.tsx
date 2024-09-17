@@ -112,7 +112,7 @@ const Accordion: React.FC<AccordionProps> = ({
   }, [isOpen, isActive, poll.id, poll.options]);
 
   return (
-    <div className="text-xs mb-2 bg-black bg-opacity-70 border-b pb-2 border-blue-800 shadow-lg rounded-lg overflow-hidden">
+    <div className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
       <motion.header
         className="cursor-pointer p-4 flex items-center justify-between"
         initial={false}
