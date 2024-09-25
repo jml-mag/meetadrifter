@@ -8,6 +8,7 @@
  */
 
 import { defineAuth } from '@aws-amplify/backend'; // Import the defineAuth function from AWS Amplify.
+import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function
 
 /**
  * Auth Configuration
@@ -27,4 +28,25 @@ export const auth = defineAuth({
         `Use this code to confirm your Meet A Drifter account: ${createCode()}`, // Custom body of the verification email.
     },
   },
+
+  /**
+   * User Groups Configuration
+   * -------------------------
+   * Defines user groups for authorization purposes.
+   */
+  groups: ['admin'], // Create new group
+
+  /**
+   * Access Permissions
+   * ------------------
+   * Grants the `manage-users` function the necessary permissions to interact with Cognito.
+   */
+  access: (allow) => [
+    allow.resource(manageUsers).to([
+      "listUsers",
+      "listGroupsForUser",
+      "addUserToGroup",          // Corrected action name
+      "removeUserFromGroup",     // Corrected action name
+    ]),
+  ],
 });

@@ -1,3 +1,5 @@
+// amplify/backend.ts
+
 /**
  * File Path: amplify/backend.ts
  * 
@@ -10,15 +12,15 @@
 import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
 import { auth } from './auth/resource'; // Import the authentication resource configuration.
 import { data } from './data/resource'; // Import the data resource configuration.
+import { manageUsers } from './functions/manage-users/resource'; // Import the manageUsers function
 
 /**
- * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
- * 
  * Backend Configuration
  * ---------------------
- * This function call sets up the backend by integrating the auth and data configurations.
+ * This function call sets up the backend by integrating the auth, data, and manageUsers configurations.
  */
 defineBackend({
   auth,
   data,
+  manageUsers,
 });

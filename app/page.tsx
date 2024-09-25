@@ -1,32 +1,32 @@
-/**
- * File Path: app/page.tsx
- *
- * Home Component
- * --------------
- * This file defines the Home component, which serves as the main landing page of the application.
- * It includes interactive elements such as login links and implements animations using Framer Motion.
- */
-
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, useAnimation, AnimationControls } from "framer-motion";
-import { climate_crisis } from "@/app/fonts";
+import { climate_crisis, tiltWarp } from "@/app/fonts";
 import Link from "next/link";
 import { Background } from "@/components/Background";
 
 export default function Home(): JSX.Element {
-  // Animation controls for the center div, top div, button, lines, and footer.
+  // Animation controls for the center div, top div, button+footer, lines.
   const centerControls: AnimationControls = useAnimation();
   const topControls: AnimationControls = useAnimation();
-  const buttonControls: AnimationControls = useAnimation();
   const line1Controls: AnimationControls = useAnimation();
   const line2Controls: AnimationControls = useAnimation();
   const line3Controls: AnimationControls = useAnimation();
-  const footerControls: AnimationControls = useAnimation();
+  const footerControls: AnimationControls = useAnimation(); // Button and footer now use the same controls
 
-  // useEffect to sequence the animations.
+  // State to track if the component has mounted and if animations are in progress.
+  const [mounted, setMounted] = useState(false);
+  const [animationsComplete, setAnimationsComplete] = useState(false); // Track if animations are complete
+
+  // Ensure component is mounted before triggering animations
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return; // Prevent animations from starting before component is mounted
+
     async function sequenceAnimations() {
       // Wait 500ms after page load.
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -43,32 +43,43 @@ export default function Home(): JSX.Element {
       // Start fading in the top div 500ms after slide-out begins.
       setTimeout(async () => {
         await topControls.start("visible");
-
-        // After the top div has fully appeared, start fading in the button.
-        await buttonControls.start("visible");
       }, 500);
 
-      // Animate the lines with delays
+      // Delay before starting the animation for line 1
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Animate the lines with existing delays
       await line1Controls.start("visible");
       await new Promise((resolve) => setTimeout(resolve, 500));
       await line2Controls.start("visible");
       await new Promise((resolve) => setTimeout(resolve, 500));
       await line3Controls.start("visible");
 
-      // Fade in the footer after the lines
+      // Fade in the footer and button at the same time after the lines
       await footerControls.start("visible");
+
+      // Mark animations as complete after everything is done
+      setAnimationsComplete(true);
     }
 
     sequenceAnimations();
   }, [
+    mounted,
     centerControls,
     topControls,
-    buttonControls,
+    footerControls,
     line1Controls,
     line2Controls,
     line3Controls,
-    footerControls,
   ]);
+
+  // Handle button clicks only when animations are complete
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!animationsComplete) {
+      e.preventDefault();
+      return;
+    }
+  };
 
   // Variants for the center div animations.
   const centerVariants = {
@@ -109,16 +120,16 @@ export default function Home(): JSX.Element {
     },
   };
 
-  // Variants for the button animations.
-  const buttonVariants = {
+  // Variants for the footer+button animations (now they animate together).
+  const footerVariants = {
     hidden: {
       opacity: 0,
     },
     visible: {
       opacity: 1,
       transition: {
-        duration: 0.3, // Fade in quickly over 0.3s.
-        ease: "easeOut",
+        duration: 0.5, // Fade in over 0.5s.
+        ease: "easeIn",
       },
     },
   };
@@ -137,28 +148,13 @@ export default function Home(): JSX.Element {
     },
   };
 
-  // Variants for the footer animation.
-  const footerVariants = {
-    hidden: {
-      opacity: 0,
-    },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.5, // Fade in over 0.5s.
-        ease: "easeIn",
-      },
-    },
-  };
-
   // Render the main structure of the home page.
   return (
     <>
       <Background />
       <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden">
         <div>
-          {/* Navigation link for joining or logging in. */}
-          <div className="fixed top-2">
+          <div>
             <div>
               {/* Top div with fade-in animation. */}
               <motion.div
@@ -168,15 +164,6 @@ export default function Home(): JSX.Element {
                 animate={topControls}
               >
                 Meet A Drifter
-              </motion.div>
-              {/* Button with fade-in animation. */}
-              <motion.div
-                className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700 "
-                variants={buttonVariants}
-                initial="hidden"
-                animate={buttonControls}
-              >
-                <Link href="/members">Login</Link>
               </motion.div>
             </div>
           </div>
@@ -190,7 +177,7 @@ export default function Home(): JSX.Element {
             Meet A Drifter
           </motion.div>
         </div>
-        <div>
+        <div className={`${tiltWarp.className} leading-relaxed text-xl sm:text-3xl md:text-4xl md:leading-loose`}>
           {/* Animate each line with fade-in and delay */}
           <motion.div
             variants={lineVariants}
@@ -214,7 +201,17 @@ export default function Home(): JSX.Element {
             the website you just joined.
           </motion.div>
         </div>
-        {/* Footer with fade-in animation */}
+        {/* Footer and button with fade-in animation */}
+        <motion.div
+          className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
+          variants={footerVariants}
+          initial="hidden"
+          animate={footerControls}
+        >
+          <Link href="/members" onClick={handleClick}>
+            Join/Login
+          </Link>
+        </motion.div>
         <motion.a
           href="https://www.matterandgas.com"
           className="text-white p-2 fixed bottom-2 right-3 text-xs"

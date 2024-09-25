@@ -51,7 +51,7 @@ export default function RootLayout({
         {/* Apply the 'inter' font class to the body for consistent typography across the application. */}
         <ToastProvider>
           {/* Include the ToastProvider to manage toast notifications across the app. */}
-          <Toast />{" "}
+          <Toast />
           {/* Render the Toast component to display notifications at the top level. */}
           {children}
           {/* Render child components passed to the RootLayout. */}

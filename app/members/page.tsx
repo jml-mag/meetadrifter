@@ -12,6 +12,7 @@
 
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
 import Poll from "@/components/Poll"; // Import Poll component for rendering active polls.
+import Profile from "@/components/Profile"; // Import Profile component to display user information.
 
 /**
  * Home Component
@@ -25,15 +26,28 @@ import Poll from "@/components/Poll"; // Import Poll component for rendering act
 export default function Home(): JSX.Element {
   const { user } = useAuth(); // Access user details and signOut function from authentication context.
 
-  // Render the component with user-specific content and actions.
   return (
-    <main className="flex min-h-screen flex-col text-center items-center justify-between py-12">
-      <div>
-        {/* Display the welcoming message with user-specific details. */}
-        <div className="mt-12 text-lg">User ID: {user?.username}</div>
+    <main className="flex min-h-screen flex-col items-center py-8">
+      <div className="w-full mt-12 pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+        {/* Flex adjustments for md screen size */}
+        <div className="flex flex-col items-center justify-center mt-12 text-lg bg-amber-400">
+            <div>User ID: {user?.username}</div>
+          </div>
+        <div className="flex flex-col sm:flex-row justify-between md:space-x-8">
+          {/* Display user-specific details */}
+          
+
+          {/* Render the Profile component */}
+          <div className="flex flex-col items-center justify-center bg-teal-300">
+            <Profile />
+          </div>
+
+          {/* Render the Poll component */}
+          <div className="flex flex-col items-center justify-center bg-purple-300">
+            <Poll />
+          </div>
+        </div>
       </div>
-      {/* Render the Poll component */}
-      <Poll />
     </main>
   );
 }

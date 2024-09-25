@@ -1,6 +1,6 @@
 /**
  * File Path: components/MembersMenu.tsx
- * 
+ *
  * Members Menu Component
  * ----------------------
  * This file defines the MembersMenu component, which is responsible for rendering the navigation
@@ -14,12 +14,13 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
 import { useRouter } from "next/navigation"; // Import useRouter for programmatic navigation.
 import { useEffect, useRef } from "react";
+import { XCircleIcon } from "@heroicons/react/24/outline";
 
 /**
  * MembersMenuProps Interface
  * --------------------------
  * Defines the structure of the props passed to the MembersMenu component.
- * 
+ *
  * @interface MembersMenuProps
  * @property {number} bgOpacity - The current opacity level of the background image.
  * @property {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
@@ -39,7 +40,7 @@ interface MembersMenuProps {
  * This component renders the navigation menu for member areas, including links, background opacity control,
  * and account management options like sign-out. The menu can be toggled open and closed, and it closes automatically
  * when clicking outside of it.
- * 
+ *
  * @component
  * @param {MembersMenuProps} props - The component props.
  * @returns {JSX.Element} The rendered MembersMenu component.
@@ -77,7 +78,7 @@ export default function MembersMenu({
      * handleClickOutside Function
      * ---------------------------
      * Closes the menu if the user clicks outside of it and the menu is open.
-     * 
+     *
      * @param {MouseEvent} event - The mouse event triggered by the user's click.
      */
     const handleClickOutside = (event: MouseEvent): void => {
@@ -98,8 +99,17 @@ export default function MembersMenu({
   }, [isMenuOpen, toggleMenu]);
 
   return (
-    <div ref={menuRef} className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 shadow-md">
+    <div
+      ref={menuRef}
+      className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 shadow-md"
+    >
       {/* Links Section */}
+      <button
+        className="fixed top-4 right-4 text-white px-4 rounded-lg"
+        onClick={toggleMenu}
+      >
+        <XCircleIcon className="size-6 text-white" />
+      </button>
       <div className="mb-6">
         <nav className="mt-2">
           {Links.map((link) => (

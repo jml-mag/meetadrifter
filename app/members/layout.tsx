@@ -1,6 +1,6 @@
 /**
  * File Path: app/members/layout.tsx
- * 
+ *
  * Member Layout Component
  * -----------------------
  * This file defines the Layout component specifically for member areas. It incorporates authentication,
@@ -19,7 +19,7 @@ import bg from "@/public/nacho-champion.png";
 import "@aws-amplify/ui-react/styles.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import MembersMenu from "@/components/MembersMenu";
-import { Bars3Icon, XCircleIcon } from "@heroicons/react/24/solid";
+import { Bars3Icon } from "@heroicons/react/24/solid";
 import { climate_crisis } from "@/app/fonts";
 
 // Configure AWS Amplify
@@ -30,7 +30,7 @@ Amplify.configure(outputs);
  * ----------------
  * This component serves as the layout wrapper for member-specific areas of the application.
  * It handles authentication, manages background opacity, and controls the visibility of the navigation menu.
- * 
+ *
  * @component
  * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
  * @returns {JSX.Element} The rendered Layout component.
@@ -45,7 +45,7 @@ export default function Layout({
    * handleOpacityChange Function
    * ----------------------------
    * Updates the background opacity state based on user input.
-   * 
+   *
    * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event.
    */
   const handleOpacityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +84,7 @@ export default function Layout({
  * -----------------------
  * This component handles the rendering of the main layout content, including background image,
  * menu control, and member-specific child components.
- * 
+ *
  * @component
  * @param {number} bgOpacity - The current opacity level of the background image.
  * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
@@ -113,7 +113,7 @@ function LayoutContent({
   }
 
   return (
-    <div>
+    <div className="w-full">
       <div
         className="w-full h-screen fixed top-0 left-0 -z-50"
         style={{ opacity: bgOpacity }}
@@ -127,23 +127,20 @@ function LayoutContent({
         />
       </div>
       <div
-            className={`${climate_crisis.className} fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
-     
-          >
-            Meet A Drifter
-          </div>
-      <div className="fixed top-0 w-full h-12 z-50 backdrop:blur-3xl">
+        className={`${climate_crisis.className} fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
+      >
+        Meet A Drifter
+      </div>
+      <div className="fixed top-0 w-full h-12 z-40 backdrop:blur-3xl">
         {/* Menu Button */}
-        <button
-          className="fixed top-4 right-4 text-white px-4 rounded-lg"
-          onClick={toggleMenu}
-        >
-          {menuOpen ? (
-            <XCircleIcon className="size-6 text-white" />
-          ) : (
+        {!menuOpen && (
+          <button
+            className="fixed top-4 right-4 text-white px-4 rounded-lg"
+            onClick={toggleMenu}
+          >
             <Bars3Icon className="size-6 text-white" />
-          )}
-        </button>
+          </button>
+        )}
       </div>
       {/* Members Menu */}
       <motion.div

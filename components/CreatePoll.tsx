@@ -128,7 +128,7 @@ export default function CreatePoll(): JSX.Element {
   };
 
   return (
-    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+    <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
       <h1 className="p-3 font-extralight text-2xl text-left">Create a New Poll</h1>
       <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
         <div className="mb-4 w-full">

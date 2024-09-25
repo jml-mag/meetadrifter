@@ -20,7 +20,7 @@ export function AnimatedBackground() {
   const colorMap: { [key in ColorState]: string } = {
     0: "#000000", // black
     1: "#1e3a8a", // bg-blue-800
-    2: "#F97316", // orange-500
+    2: "#F97316", // bg-orange-500
   };
 
   // Function to update dimensions based on window size

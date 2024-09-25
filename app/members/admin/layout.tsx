@@ -56,18 +56,21 @@ export default function AdminLayout({
   // Define the navigation links for the admin area.
   const navLinks = [
     { href: "/members/admin", label: "Admin Home" },
-    { href: "/members/admin/polls", label: "Manage Polls" }
+    { href: "/members/admin/users", label: "Manage Users" },
+    { href: "/members/admin/polls", label: "Manage Polls" },
+    { href: "/members/admin/messaging", label: "Messaging" },
   ];
 
   // Render the component with user-specific content and actions.
   return (
-    <main className="flex min-h-screen flex-col text-center items-center justify-between py-12">
-      <div className=" fixed top-16 flex space-x-6">
+    <main className="flex flex-col w-full min-h-screen py-12 items-center">
+      {/* Navigation links */}
+      <div className="fixed text-xs w-auto mx-auto p-3 sm:p-5 sm:px-6 top-16 m-1 bg-blue-950 bg-opacity-50 rounded-lg shadow flex justify-center space-x-2 sm:space-x-8 md:space-x-16">
         {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`${
+            className={`p-1 text-xs sm:text-sm ${
               pathname === link.href
                 ? "underline decoration-solid decoration-2 underline-offset-4"
                 : ""
@@ -77,7 +80,11 @@ export default function AdminLayout({
           </Link>
         ))}
       </div>
-      {children}
+
+      {/* Content */}
+      <div className="flex-grow w-full mt-20 px-4">
+        {children}
+      </div>
     </main>
   );
 }

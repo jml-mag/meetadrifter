@@ -1,14 +1,32 @@
-/**
- * File Path: contexts/AuthContext.tsx
- * 
- * Authentication Context
- * ----------------------
- * This file provides a React context for managing authentication throughout the application.
- * It handles user state, provides functions for signing out, and checks if the current user has admin status.
- */
-
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types and functions for authentication from AWS Amplify.
+import { generateClient } from "aws-amplify/data"; // Import Amplify Data Client.
+import type { Schema } from "@/amplify/data/resource"; // Import the data schema type.
+
+// Generate a client instance for interacting with the User model.
+const client = generateClient<Schema>();
+
+/**
+ * UserProfile Interface
+ * ---------------------
+ * Defines the structure of the user's profile data.
+ * 
+ * @interface UserProfile
+ * @property {string} username - The unique username of the user.
+ * @property {string} screenName - The user's chosen screen name.
+ * @property {string} firstName - The user's first name.
+ * @property {string} lastName - The user's last name.
+ * @property {string} location - The user's location.
+ * @property {string} joinedDate - The date the user joined.
+ */
+export interface UserProfile {
+  id: string;
+  screenName: string;
+  firstName: string;
+  lastName: string;
+  location: string;
+  memberSince: string;
+}
 
 /**
  * AuthContextProps Interface
@@ -17,12 +35,16 @@ import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types 
  * 
  * @interface AuthContextProps
  * @property {AuthUser | null | undefined} user - The authenticated user.
+ * @property {UserProfile | null} profile - The user's profile information.
+ * @property {React.Dispatch<React.SetStateAction<UserProfile | null>>} setProfile - Function to update the user profile.
  * @property {() => void} signOut - Function to handle user sign-out.
  * @property {boolean} isAdmin - Indicates if the current user belongs to the admin group.
- * @property {boolean} loading - Indicates if the admin status is still being determined.
+ * @property {boolean} loading - Indicates if the profile and admin status are still being determined.
  */
 export interface AuthContextProps {
   user: AuthUser | null | undefined;
+  profile: UserProfile | null;
+  setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
   signOut: () => void;
   isAdmin: boolean;
   loading: boolean;
@@ -75,36 +97,44 @@ interface AuthProviderProps {
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, signOut }) => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // State to track admin status.
+  const [profile, setProfile] = useState<UserProfile | null>(null); // State to track user profile.
   const [loading, setLoading] = useState<boolean>(true); // State to track the loading status.
 
   useEffect(() => {
-    async function checkAdminStatus() {
+    async function checkAdminStatusAndFetchProfile() {
       if (user) {
         try {
           const session = await fetchAuthSession();
           const groups = session.tokens?.idToken?.payload["cognito:groups"];
-          if (Array.isArray(groups) && groups.includes("admin")) {
-            
-            setIsAdmin(true);
-          } else {
-            
-            setIsAdmin(false);
+          setIsAdmin(Array.isArray(groups) && groups.includes("admin"));
+
+          // Fetch user profile
+          const { data } = await client.models.User.get({ id: user.username });
+          if (data) {
+            setProfile({
+              id: data.id,
+              screenName: data.screenName,
+              firstName: data.firstName,
+              lastName: data.lastName || "",
+              location: data.location || "",
+              memberSince: data.createdAt || "",
+            });
           }
         } catch (error) {
-          console.error("Failed to fetch user session:", error);
+          console.error("Failed to fetch user session or profile:", error);
         } finally {
-          setLoading(false); // Admin status check is complete.
+          setLoading(false); // Admin status and profile check are complete.
         }
       } else {
-        setLoading(false); // No user, so no admin check needed.
+        setLoading(false); // No user, so no profile or admin check needed.
       }
     }
 
-    checkAdminStatus();
+    checkAdminStatusAndFetchProfile();
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, signOut, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, profile, setProfile, signOut, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );

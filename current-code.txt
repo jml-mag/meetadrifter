@@ -1,0 +1,2508 @@
+File Path: app/fonts.ts
+// fonts.ts
+// Purpose: This module configures the Google fonts used throughout the application.
+// It sets up 'Inter' and 'Josefin Slab' fonts with specific subsets and display settings.
+// These fonts are imported and configured using the new font API from Next.js.
+
+import { Inter, Josefin_Slab, Climate_Crisis, Tilt_Warp } from 'next/font/google';  // Import specific fonts from the Google fonts library provided by Next.js.
+
+// Configure the 'Inter' font.
+// 'subsets' specifies which subsets of the font to include, focusing here on 'latin'.
+// 'display' is set to 'swap' to ensure text remains visible during font loading, enhancing the perceived performance.
+export const inter = Inter({
+  subsets: ['latin'],  // Targets the Latin character set for broad compatibility.
+  display: 'swap',      // Uses font-display: swap to provide a fast rendering path for text.
+});
+
+// Configure the 'Josefin Slab' font similarly to 'Inter'.
+// This font also targets the Latin subset and uses the 'swap' strategy for consistency across the application's typography.
+export const josefin_slab = Josefin_Slab({
+  subsets: ['latin'],  // Consistent with 'inter', targeting the Latin subset.
+  display: 'swap',      // Ensures text is visible early, swapping with the web font once it loads.
+});
+
+// Configure the 'Climate_Crisis'.
+// This font also targets the Latin subset and uses the 'swap' strategy for consistency across the application's typography.
+export const climate_crisis = Climate_Crisis({
+  subsets: ['latin'],  // Consistent with 'inter', targeting the Latin subset.
+  display: 'swap',      // Ensures text is visible early, swapping with the web font once it loads.
+});
+
+// Configure the 'Tilt_Warp'.
+// This font also targets the Latin subset and uses the 'swap' strategy for consistency across the application's typography.
+export const tiltWarp = Tilt_Warp({
+  subsets: ['latin'],  // Consistent with 'inter', targeting the Latin subset.
+  display: 'swap',      // Ensures text is visible early, swapping with the web font once it loads.
+});
+
+// These configured fonts can then be used throughout the application to ensure a consistent and performant typography experience.
+
+---
+File Path: app/layout.tsx
+/**
+ * File Path: app/layout.tsx
+ *
+ * RootLayout Component
+ * --------------------
+ * This file defines the RootLayout component, which serves as the top-level layout for the entire application.
+ * It integrates global styles, the ToastProvider for managing notifications, and sets foundational metadata
+ * for SEO optimization.
+ */
+
+import type { Metadata } from "next"; // Import type definitions for Metadata from Next.js.
+import { ToastProvider } from "@/contexts/ToastContext"; // Import the ToastProvider to manage toast notifications throughout the app.
+import Toast from "@/components/Toast"; // Import the Toast component to display toast messages.
+import { inter } from "@/app/fonts"; // Import the 'inter' font configuration for consistent typography.
+import "./globals.css"; // Import global CSS styles.
+
+/**
+ * Metadata configuration for the application.
+ * This object provides SEO-related information such as the page title and description.
+ *
+ * @constant
+ * @type {Metadata}
+ */
+export const metadata: Metadata = {
+  title: "Meet A Drifter", // Application title used in the browser tab and search engine results.
+  description:
+    "A website that exists solely as the base of a tutorial of sorts, for now.", // Description of the application for SEO.
+};
+
+/**
+ * RootLayout Component
+ * --------------------
+ * This component acts as the root layout wrapper around all other components in the application.
+ * It sets the HTML document language, applies global font styles, and integrates the ToastProvider
+ * for handling notifications throughout the app.
+ *
+ * @component
+ * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
+ * @param {React.ReactNode} props.children - The child components to be wrapped within the RootLayout.
+ * @returns {JSX.Element} The rendered layout component.
+ */
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode; // Ensure that children are valid React nodes.
+}>): JSX.Element {
+  return (
+    <html lang="en">
+      {/* Set the document language to English for accessibility and SEO. */}
+      <body className={inter.className}>
+        {/* Apply the 'inter' font class to the body for consistent typography across the application. */}
+        <ToastProvider>
+          {/* Include the ToastProvider to manage toast notifications across the app. */}
+          <Toast />{" "}
+          {/* Render the Toast component to display notifications at the top level. */}
+          {children}
+          {/* Render child components passed to the RootLayout. */}
+        </ToastProvider>
+      </body>
+    </html>
+  );
+}
+
+---
+File Path: app/page.tsx
+/**
+ * File Path: app/page.tsx
+ *
+ * Home Component
+ * --------------
+ * This file defines the Home component, which serves as the main landing page of the application.
+ * It includes interactive elements such as login links and implements animations using Framer Motion.
+ */
+
+"use client";
+
+import { useEffect } from "react";
+import { motion, useAnimation, AnimationControls } from "framer-motion";
+import { climate_crisis, tiltWarp } from "@/app/fonts";
+import Link from "next/link";
+import { Background } from "@/components/Background";
+
+export default function Home(): JSX.Element {
+  // Animation controls for the center div, top div, button, lines, and footer.
+  const centerControls: AnimationControls = useAnimation();
+  const topControls: AnimationControls = useAnimation();
+  const buttonControls: AnimationControls = useAnimation();
+  const line1Controls: AnimationControls = useAnimation();
+  const line2Controls: AnimationControls = useAnimation();
+  const line3Controls: AnimationControls = useAnimation();
+  const footerControls: AnimationControls = useAnimation();
+
+  // useEffect to sequence the animations.
+  useEffect(() => {
+    async function sequenceAnimations() {
+      // Wait 500ms after page load.
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Slide in the center div with a reduced bounce effect.
+      await centerControls.start("visible");
+
+      // Wait for 2 seconds.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Slide out the center div to the right at a faster rate.
+      await centerControls.start("slideOut");
+
+      // Start fading in the top div 500ms after slide-out begins.
+      setTimeout(async () => {
+        await topControls.start("visible");
+
+        // After the top div has fully appeared, start fading in the button.
+        await buttonControls.start("visible");
+      }, 500);
+
+      // Delay before starting the animation for line 1
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed
+
+      // Animate the lines with existing delays
+      await line1Controls.start("visible");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await line2Controls.start("visible");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await line3Controls.start("visible");
+
+      // Fade in the footer after the lines
+      await footerControls.start("visible");
+    }
+
+    sequenceAnimations();
+  }, [
+    centerControls,
+    topControls,
+    buttonControls,
+    line1Controls,
+    line2Controls,
+    line3Controls,
+    footerControls,
+  ]);
+
+  // Variants for the center div animations.
+  const centerVariants = {
+    hidden: {
+      x: "-100vw", // Start completely off-screen to the left.
+      opacity: 1,
+    },
+    visible: {
+      x: 0, // Slide to center with a reduced bounce effect.
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300, // Reduced stiffness to lessen the bounce.
+        damping: 25, // Increased damping to reduce oscillations.
+      },
+    },
+    slideOut: {
+      x: "100vw", // Slide off-screen to the right.
+      opacity: 1,
+      transition: {
+        duration: 0.3, // Slide out faster than slide-in.
+        ease: "easeIn",
+      },
+    },
+  };
+
+  // Variants for the top div animations.
+  const topVariants = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 1, // Fade in over 1s.
+        ease: "easeIn",
+      },
+    },
+  };
+
+  // Variants for the button animations.
+  const buttonVariants = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.3, // Fade in quickly over 0.3s.
+        ease: "easeOut",
+      },
+    },
+  };
+
+  // Variants for the lines animations.
+  const lineVariants = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5, // Fade in over 0.5s.
+        ease: "easeIn",
+      },
+    },
+  };
+
+  // Variants for the footer animation.
+  const footerVariants = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.25, // Fade in over 0.5s.
+        ease: "easeIn",
+      },
+    },
+  };
+
+  // Render the main structure of the home page.
+  return (
+    <>
+      <Background />
+      <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden">
+        <div>
+          
+          <div className="">
+            <div>
+              {/* Top div with fade-in animation. */}
+              <motion.div
+                className={`${climate_crisis.className} fixed top-6 left-4 text-white text-base sm:text-xl md:text-2xl lg:text-3xl`}
+                variants={topVariants}
+                initial="hidden"
+                animate={topControls}
+              >
+                Meet A Drifter
+              </motion.div>
+              {/* Button with fade-in animation. */}
+              <motion.div
+                className=" fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700 "
+                variants={buttonVariants}
+                initial="hidden"
+                animate={buttonControls}
+              >
+                <Link href="/members">Join/Login</Link>
+              </motion.div>
+            </div>
+          </div>
+          {/* Center div that slides in with reduced bounce and slides out faster to the right. */}
+          <motion.div
+            className={`${climate_crisis.className} text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white`}
+            variants={centerVariants}
+            initial="hidden"
+            animate={centerControls}
+          >
+            Meet A Drifter
+          </motion.div>
+        </div>
+        <div className={`${tiltWarp.className} leading-relaxed text-xl sm:text-3xl md:text-4xl md:leading-loose`}>
+          {/* Animate each line with fade-in and delay */}
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line1Controls}
+          >
+            The website you join
+          </motion.div>
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line2Controls}
+          >
+            so that you can build for yourself
+          </motion.div>
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line3Controls}
+          >
+            the website you just joined.
+          </motion.div>
+        </div>
+        {/* Footer with fade-in animation */}
+        <motion.a
+          href="https://www.matterandgas.com"
+          className="text-white p-2 fixed bottom-2 right-3 text-xs"
+          variants={footerVariants}
+          initial="hidden"
+          animate={footerControls}
+        >
+          © {new Date().getFullYear()} matterandgas
+        </motion.a>
+      </main>
+    </>
+  );
+}
+
+---
+File Path: app/globals.css
+/* globals.css
+   Purpose: This file sets up global styles that are applied across the entire application.
+   It leverages Tailwind CSS to manage base, component, and utility styles, ensuring a consistent and modern design language.
+
+   The `@tailwind` directives import various layers of Tailwind's utility classes,
+   while custom styles within the `@layer base` are defined to tailor the foundational appearance of HTML elements. */
+
+   @tailwind base;     /* Imports the base styles from Tailwind, which reset and normalize default browser styles. */
+   @tailwind components; /* Imports component styles, allowing the definition of CSS classes that are reusable across components. */
+   @tailwind utilities; /* Imports utility classes from Tailwind, providing a wide range of quick-to-apply styles for spacing, sizing, typography, and more. */
+   
+   /* Define base layer modifications:
+      This section customizes the default styling of HTML elements, particularly the <body> tag,
+      to ensure that the application has a unified look and feel from the start. */
+   @layer base {
+       body {
+           @apply bg-black text-white; /* Sets the background color to black and the text color to white for all text within the <body>. */
+       }
+   }
+
+   @layer components {
+    .memberBtn {
+        @apply w-24 mx-2 mt-4 text-xs text-white py-2 px-3 rounded-md shadow-md;
+    }
+   }
+   
+   /* Additional styles can be added here as needed to further customize the application's global aesthetics. */
+   
+---
+File Path: app/members/layout.tsx
+/**
+ * File Path: app/members/layout.tsx
+ * 
+ * Member Layout Component
+ * -----------------------
+ * This file defines the Layout component specifically for member areas. It incorporates authentication,
+ * dynamic styling elements like background image opacity control, and a toggleable menu.
+ */
+
+"use client";
+
+import { useState } from "react";
+import { Authenticator } from "@aws-amplify/ui-react";
+import { Amplify } from "aws-amplify";
+import { motion } from "framer-motion";
+import outputs from "@/amplify_outputs.json";
+import Image from "next/image";
+import bg from "@/public/nacho-champion.png";
+import "@aws-amplify/ui-react/styles.css";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import MembersMenu from "@/components/MembersMenu";
+import { Bars3Icon, XCircleIcon } from "@heroicons/react/24/solid";
+import { climate_crisis } from "@/app/fonts";
+
+// Configure AWS Amplify
+Amplify.configure(outputs);
+
+/**
+ * Layout Component
+ * ----------------
+ * This component serves as the layout wrapper for member-specific areas of the application.
+ * It handles authentication, manages background opacity, and controls the visibility of the navigation menu.
+ * 
+ * @component
+ * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
+ * @returns {JSX.Element} The rendered Layout component.
+ */
+export default function Layout({
+  children,
+}: Readonly<{ children: React.ReactNode }>): JSX.Element {
+  const [bgOpacity, setBgOpacity] = useState<number>(0.75); // State to manage the background opacity level.
+  const [menuOpen, setMenuOpen] = useState<boolean>(false); // State to track menu open/close status.
+
+  /**
+   * handleOpacityChange Function
+   * ----------------------------
+   * Updates the background opacity state based on user input.
+   * 
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event.
+   */
+  const handleOpacityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setBgOpacity(parseFloat(event.target.value));
+  };
+
+  /**
+   * toggleMenu Function
+   * -------------------
+   * Toggles the menu's open/close state.
+   */
+  const toggleMenu = () => {
+    setMenuOpen((prev) => !prev);
+  };
+
+  return (
+    <Authenticator variation="modal" hideSignUp={false}>
+      {({ signOut, user }) => (
+        <AuthProvider user={user || null} signOut={signOut || (() => {})}>
+          <LayoutContent
+            bgOpacity={bgOpacity}
+            handleOpacityChange={handleOpacityChange}
+            menuOpen={menuOpen}
+            toggleMenu={toggleMenu}
+          >
+            {children}
+          </LayoutContent>
+        </AuthProvider>
+      )}
+    </Authenticator>
+  );
+}
+
+/**
+ * LayoutContent Component
+ * -----------------------
+ * This component handles the rendering of the main layout content, including background image,
+ * menu control, and member-specific child components.
+ * 
+ * @component
+ * @param {number} bgOpacity - The current opacity level of the background image.
+ * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
+ * @param {boolean} menuOpen - State indicating whether the menu is open or closed.
+ * @param {() => void} toggleMenu - Function to toggle the menu open/close state.
+ * @param {React.ReactNode} children - The child components to be rendered within the layout.
+ * @returns {JSX.Element} The rendered LayoutContent component.
+ */
+function LayoutContent({
+  bgOpacity,
+  handleOpacityChange,
+  menuOpen,
+  toggleMenu,
+  children,
+}: {
+  bgOpacity: number;
+  handleOpacityChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  menuOpen: boolean;
+  toggleMenu: () => void;
+  children: React.ReactNode;
+}): JSX.Element {
+  const { loading } = useAuth(); // Access authentication context to determine if the user is an admin and if the status is still loading.
+
+  if (loading) {
+    return <div>Loading...</div>; // Render a loading state while determining admin status.
+  }
+
+  return (
+    <div>
+      <div
+        className="w-full h-screen fixed top-0 left-0 -z-50"
+        style={{ opacity: bgOpacity }}
+      >
+        <Image
+          src={bg}
+          alt="Nacho Champion - The greatest moment of one man's life."
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+        />
+      </div>
+      <div
+            className={`${climate_crisis.className} fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
+     
+          >
+            Meet A Drifter
+          </div>
+      <div className="fixed top-0 w-full h-12 z-50 backdrop:blur-3xl">
+        {/* Menu Button */}
+        <button
+          className="fixed top-4 right-4 text-white px-4 rounded-lg"
+          onClick={toggleMenu}
+        >
+          {menuOpen ? (
+            <XCircleIcon className="size-6 text-white" />
+          ) : (
+            <Bars3Icon className="size-6 text-white" />
+          )}
+        </button>
+      </div>
+      {/* Members Menu */}
+      <motion.div
+        initial={{ y: "-100%" }}
+        animate={{ y: menuOpen ? 0 : "-100%" }}
+        exit={{ y: "-100%" }}
+        transition={{ type: "spring", stiffness: 50 }}
+        className="fixed top-0 w-full z-40"
+        style={{ height: "100vh" }} // Ensures the menu takes up the full screen height.
+      >
+        <MembersMenu
+          bgOpacity={bgOpacity}
+          handleOpacityChange={handleOpacityChange}
+          toggleMenu={toggleMenu}
+          isMenuOpen={menuOpen} // Pass the menuOpen state as a prop.
+        />
+      </motion.div>
+
+      {children}
+    </div>
+  );
+}
+
+---
+File Path: app/members/page.tsx
+/**
+ * File Path: app/members/page.tsx
+ *
+ * Member Home Component
+ * ---------------------
+ * This file defines the Home component for member areas. It features personalized user information,
+ * actions like sign-out, and demonstrates the integration of authentication context and toast notifications
+ * to enhance user experience.
+ */
+
+"use client";
+
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
+import Poll from "@/components/Poll"; // Import Poll component for rendering active polls.
+
+/**
+ * Home Component
+ * --------------
+ * This component serves as the landing page for members, displaying personalized information
+ * and providing actions such as signing out. It also showcases the use of toast notifications.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered Home component for member areas.
+ */
+export default function Home(): JSX.Element {
+  const { user } = useAuth(); // Access user details and signOut function from authentication context.
+
+  // Render the component with user-specific content and actions.
+  return (
+    <main className="flex min-h-screen flex-col text-center items-center justify-between py-12">
+      <div>
+        {/* Display the welcoming message with user-specific details. */}
+        <div className="mt-12 text-lg">User ID: {user?.username}</div>
+      </div>
+      {/* Render the Poll component */}
+      <Poll />
+    </main>
+  );
+}
+
+---
+File Path: app/members/admin/layout.tsx
+/**
+ * File Path: @/members/admin/layout.tsx
+ *
+ * Admin Layout Component
+ * ----------------------
+ * This file defines the AdminLayout component, which serves as the layout wrapper for all admin-specific pages.
+ * It ensures that only users with admin privileges can access these pages. If a non-admin user attempts to access
+ * the admin area, they are redirected to the members' homepage. The component also integrates with ToastContext
+ * for displaying notifications and handles loading states during admin status checks.
+ */
+
+"use client";
+
+import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
+import { useRouter, usePathname } from "next/navigation"; // Import useRouter and usePathname from Next.js.
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+/**
+ * AdminLayout Component
+ * ---------------------
+ * Renders the layout for admin pages, handling user authentication and admin status checks.
+ * It highlights the active navigation link based on the current pathname.
+ *
+ * @component
+ * @param {Readonly<{ children: ReactNode }>} props - The children elements to render within the layout.
+ * @returns {JSX.Element} The rendered AdminLayout component.
+ */
+export default function AdminLayout({
+  children,
+}: Readonly<{ children: ReactNode }>): JSX.Element {
+  const { isAdmin, loading } = useAuth(); // Access user details, admin status, and loading state from authentication context.
+  const router = useRouter(); // Access useRouter to handle navigation.
+  const pathname = usePathname(); // Get the current pathname.
+
+  useEffect(() => {
+    /**
+     * Admin Status Check
+     * ------------------
+     * Monitors the loading state and admin status. If loading is complete and the user is not an admin,
+     * the user is redirected to the members' homepage.
+     */
+    if (!loading) {
+      if (!isAdmin) {
+        console.log("User is not an admin, redirecting...");
+        router.push("/members");
+      }
+    }
+  }, [loading, isAdmin, router]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Optionally render a loading state while checking admin status.
+  }
+
+  // Define the navigation links for the admin area.
+  const navLinks = [
+    { href: "/members/admin", label: "Admin Home" },
+    { href: "/members/admin/users", label: "Manage Users" },
+    { href: "/members/admin/polls", label: "Manage Polls" },
+    { href: "/members/admin/messaging", label: "Messaging" }
+  ];
+
+  // Render the component with user-specific content and actions.
+  return (
+    <main className="flex min-h-screen flex-col text-center items-center justify-between py-12">
+      <div className=" fixed top-16 flex space-x-6">
+        {navLinks.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`${
+              pathname === link.href
+                ? "underline decoration-solid decoration-2 underline-offset-4"
+                : ""
+            } hover:underline`}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+      {children}
+    </main>
+  );
+}
+
+---
+File Path: app/members/admin/page.tsx
+/**
+ * File Path: @/app/members/admin/page.tsx
+ * 
+ * Admin Page Component
+ * --------------------
+ * This file defines the AdminPage component, which serves as the main page for admin functionalities.
+ * It includes components for listing existing polls and creating new polls. The page layout is responsive,
+ * ensuring a consistent user experience across different screen sizes.
+ */
+
+import CurrentPoll from "@/components/CurrentPoll";
+
+/**
+ * AdminPage Component
+ * -------------------
+ * Renders the admin dashboard with sections for listing and creating polls.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered AdminPage component.
+ */
+export default function AdminPage(): JSX.Element {
+  return (
+    <main className="w-full justify-center">
+      <div className="mt-16">
+        <div className="md:flex md:justify-around sm:p-4">
+          {/* Section for listing existing polls */}
+          <div className="mt-3 md:w-full md:m-2">
+            <CurrentPoll />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+---
+File Path: app/members/admin/polls/page.tsx
+/**
+ * File Path: @/app/members/admin/polls/page.tsx
+ * 
+ * Polls Page Component
+ * --------------------
+ * This file defines the 
+ */
+
+import CreatePoll from "@/components/CreatePoll"; // Import the CreatePoll component to handle poll creation.
+import ListPolls from "@/components/ListPolls"; // Import the ListPolls component to display existing polls.
+
+/**
+ *  Component
+ * -------------------
+ * Renders the admin dashboard with sections for listing and creating polls.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered AdminPage component.
+ */
+export default function AdminPollPage(): JSX.Element {
+  return (
+    <main className="w-full justify-center">
+      <div className="mt-16">
+        <div className="md:flex md:justify-around sm:p-4">
+          {/* Section for listing existing polls */}
+          <div className="mt-3 md:w-full md:m-2">
+            <ListPolls />
+          </div>
+          {/* Section for creating new polls */}
+          <div className="mt-3 md:w-full md:m-2">
+            <CreatePoll />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+---
+File Path: app/members/admin/users/page.tsx
+/**
+ * File Path: @/app/members/admin/users/page.tsx
+ * 
+ * Users Page Component
+ * --------------------
+ * This file defines the 
+ */
+
+
+/**
+ * Users pagr Component
+ * -------------------
+ * Renders the 
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered AdminPage component.
+ */
+export default function AdminPollPage(): JSX.Element {
+  return (
+    <main className="w-full justify-center">
+      <div className="mt-16">
+        users
+      </div>
+    </main>
+  );
+}
+
+---
+File Path: app/members/admin/messaging/page.tsx
+/**
+ * File Path: @/app/members/admin/messaging/page.tsx
+ * 
+ * Messaging Page Component
+ * --------------------
+ * This file defines the AdminPage component, which serves as the main page for admin functionalities.
+ * It includes components for listing existing polls and creating new polls. The page layout is responsive,
+ * ensuring a consistent user experience across different screen sizes.
+ */
+
+
+
+/**
+ * Component
+ * -------------------
+ * Renders the d with sections for listing and creating polls.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered AdminPage component.
+ */
+export default function AdminPollPage(): JSX.Element {
+  return (
+    <main className="w-full justify-center">
+      <div className="mt-16">
+        messaging
+      </div>
+    </main>
+  );
+}
+
+---
+File Path: components/MembersMenu.tsx
+/**
+ * File Path: components/MembersMenu.tsx
+ * 
+ * Members Menu Component
+ * ----------------------
+ * This file defines the MembersMenu component, which is responsible for rendering the navigation
+ * menu within the member areas of the application. It includes links, background opacity control,
+ * and account management features such as sign-out.
+ */
+
+"use client";
+
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
+import { useRouter } from "next/navigation"; // Import useRouter for programmatic navigation.
+import { useEffect, useRef } from "react";
+
+/**
+ * MembersMenuProps Interface
+ * --------------------------
+ * Defines the structure of the props passed to the MembersMenu component.
+ * 
+ * @interface MembersMenuProps
+ * @property {number} bgOpacity - The current opacity level of the background image.
+ * @property {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
+ * @property {() => void} toggleMenu - Function to toggle the menu open/close state.
+ * @property {boolean} isMenuOpen - State indicating whether the menu is open or closed.
+ */
+interface MembersMenuProps {
+  bgOpacity: number;
+  handleOpacityChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  toggleMenu: () => void;
+  isMenuOpen: boolean;
+}
+
+/**
+ * MembersMenu Component
+ * ---------------------
+ * This component renders the navigation menu for member areas, including links, background opacity control,
+ * and account management options like sign-out. The menu can be toggled open and closed, and it closes automatically
+ * when clicking outside of it.
+ * 
+ * @component
+ * @param {MembersMenuProps} props - The component props.
+ * @returns {JSX.Element} The rendered MembersMenu component.
+ */
+export default function MembersMenu({
+  bgOpacity,
+  handleOpacityChange,
+  toggleMenu,
+  isMenuOpen,
+}: MembersMenuProps): JSX.Element {
+  const { user, signOut, isAdmin } = useAuth(); // Access user details, signOut function, and admin status from authentication context.
+  const router = useRouter(); // Access useRouter to handle navigation.
+  const menuRef = useRef<HTMLDivElement>(null); // Create a ref for the menu to detect outside clicks.
+
+  // Define the list of links based on user authentication and admin status.
+  const Links = [
+    { href: "/", text: "Home" },
+    ...(user ? [{ href: "/members/", text: "Members Home" }] : []),
+    ...(isAdmin ? [{ href: "/members/admin", text: "Admin" }] : []),
+  ];
+
+  /**
+   * handleSignout Function
+   * ----------------------
+   * Signs out the user and redirects to the homepage. Also closes the menu.
+   */
+  const handleSignout = (): void => {
+    signOut();
+    router.push("/");
+    toggleMenu(); // Close the menu after signing out.
+  };
+
+  useEffect(() => {
+    /**
+     * handleClickOutside Function
+     * ---------------------------
+     * Closes the menu if the user clicks outside of it and the menu is open.
+     * 
+     * @param {MouseEvent} event - The mouse event triggered by the user's click.
+     */
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (
+        isMenuOpen &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        toggleMenu(); // Close the menu if the click was outside.
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen, toggleMenu]);
+
+  return (
+    <div ref={menuRef} className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 shadow-md">
+      {/* Links Section */}
+      <div className="mb-6">
+        <nav className="mt-2">
+          {Links.map((link) => (
+            <div key={link.href} className="py-2">
+              <Link
+                href={link.href}
+                className="text-white hover:text-blue-500 mb-2"
+                onClick={toggleMenu} // Close the menu when a link is clicked.
+              >
+                {link.text}
+              </Link>
+            </div>
+          ))}
+        </nav>
+      </div>
+
+      {/* Background Section */}
+      <div className="mb-6">
+        <span className="text-white text-xs">Background Opacity</span>
+        <div className="mt-2 max-w-sm">
+          <input
+            id="bg-opacity-slider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={bgOpacity}
+            onChange={handleOpacityChange}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      {/* Account Section */}
+      <div>
+        <div className="mt-2">
+          <button
+            className="memberBtn m-0 bg-red-600 hover:bg-red-500 text-white text-xs rounded-lg px-4 py-2"
+            onClick={handleSignout}
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+---
+File Path: components/CreatePoll.tsx
+/**
+ * File Path: components/CreatePoll.tsx
+ * 
+ * Create Poll Component
+ * ---------------------
+ * This file defines the CreatePoll component, which allows users to create a new poll by specifying a title
+ * and multiple options. The component integrates with AWS Amplify to store the poll data and provides feedback
+ * through toast notifications.
+ */
+
+"use client";
+
+import React, { useState, useContext } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
+
+// This type alias could be used for typing the Poll-related state or parameters if needed in the future.
+// For example: const [poll, setPoll] = useState<Poll | null>(null);
+// or: const handlePollUpdate = (updatedPoll: Poll) => { ... };
+// Currently, it's not being used, so it's commented out to avoid TypeScript warnings.
+// type Poll = Schema["Poll"]["type"];
+
+// Generate a client instance for interacting with the data schema.
+const client = generateClient<Schema>();
+
+/**
+ * CreatePoll Component
+ * --------------------
+ * Renders a form for creating a new poll. Allows users to add multiple options and submit the poll.
+ * Provides feedback through toast notifications.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered CreatePoll component.
+ */
+export default function CreatePoll(): JSX.Element {
+  const [title, setTitle] = useState<string>(""); // State to store the poll title.
+  const [options, setOptions] = useState<string[]>([""]); // State to store the poll options.
+
+  const { addToast } = useContext<ToastContextType>(ToastContext); // Access the addToast function from ToastContext.
+
+  /**
+   * addOption Function
+   * ------------------
+   * Adds a new option input field if the limit of 10 options has not been reached.
+   */
+  const addOption = (): void => {
+    if (options.length < 10) {
+      setOptions([...options, ""]);
+    } else {
+      addToast({
+        messageType: "error",
+        message: "You can only add up to 10 options.",
+      });
+    }
+  };
+
+  /**
+   * handleOptionChange Function
+   * ---------------------------
+   * Updates the value of a specific option based on user input.
+   * 
+   * @param {number} index - The index of the option being updated.
+   * @param {string} value - The new value for the option.
+   */
+  const handleOptionChange = (index: number, value: string): void => {
+    const updatedOptions = [...options];
+    updatedOptions[index] = value;
+    setOptions(updatedOptions);
+  };
+
+  /**
+   * handleOptionRemove Function
+   * ---------------------------
+   * Removes a specific option from the list.
+   * 
+   * @param {number} index - The index of the option to be removed.
+   */
+  const handleOptionRemove = (index: number): void => {
+    const updatedOptions = options.filter((_, i) => i !== index);
+    setOptions(updatedOptions);
+  };
+
+  /**
+   * handleSubmit Function
+   * ---------------------
+   * Submits the new poll to the backend and provides feedback through toast notifications.
+   * Validates that all fields are filled before submission.
+   */
+  const handleSubmit = async (): Promise<void> => {
+    if (!title || options.some((option) => !option)) {
+      addToast({
+        messageType: "error",
+        message: "Please fill in all fields.",
+      });
+      return;
+    }
+
+    try {
+      const { errors } = await client.models.Poll.create({
+        title,
+        options,
+        createdAt: new Date().toISOString(),
+        status: "draft", // Default status is draft.
+      });
+
+      if (errors) {
+        addToast({
+          messageType: "error",
+          message: "Failed to create poll.",
+        });
+        console.error("Errors:", errors);
+      } else {
+        addToast({
+          messageType: "success",
+          message: "Poll created successfully.",
+        });
+        setTitle("");
+        setOptions([""]);
+      }
+    } catch (err) {
+      addToast({
+        messageType: "error",
+        message: "An unexpected error occurred.",
+      });
+      console.error("Unexpected error:", err);
+    }
+  };
+
+  return (
+    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+      <h1 className="p-3 font-extralight text-2xl text-left">Create a New Poll</h1>
+      <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
+        <div className="mb-4 w-full">
+          <label className="block text-white text-xs text-left">Poll Title</label>
+          <input
+            className="p-2 my-2 text-black w-full rounded border border-blue-600"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+        <div className="mb-4 w-full">
+          <label className="block text-white text-xs text-left">Poll Options</label>
+          {options.map((option, index) => (
+            <div key={index} className="flex items-center mb-2">
+              <input
+                className="p-2 my-2 text-black w-full rounded border border-blue-600"
+                type="text"
+                value={option}
+                onChange={(e) => handleOptionChange(index, e.target.value)}
+              />
+              <button
+                className="ml-2 p-2 text-xs text-white bg-red-600 rounded-lg hover:bg-red-700 border border-red-500"
+                type="button"
+                onClick={() => handleOptionRemove(index)}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between mt-4">
+          {options.length < 10 && (
+            <button
+              className="p-2 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 border border-green-500"
+              type="button"
+              onClick={addOption}
+            >
+              Add Option
+            </button>
+          )}
+          <button
+            className="p-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 border border-blue-500"
+            type="button"
+            onClick={handleSubmit}
+          >
+            Create Poll
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+---
+File Path: components/CurrentPoll.tsx
+/**
+ * File Path: components/CurrentPoll.tsx
+ * 
+ * Current Poll Component
+ * ----------------------
+ * This file defines the CurrentPoll component, which displays the currently active poll
+ * along with the vote counts for each option.
+ */
+
+"use client";
+
+import React, { useState, useEffect } from "react";
+//import { motion, AnimatePresence } from "framer-motion";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+
+type Poll = Schema["Poll"]["type"];
+//type Vote = Schema["Vote"]["type"];
+
+// Generate a client instance for interacting with the data schema.
+const client = generateClient<Schema>();
+
+/**
+ * CurrentPoll Component
+ * ---------------------
+ * Renders the currently active poll along with vote counts for each option.
+ * It handles real-time updates via subscriptions.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered CurrentPoll component.
+ */
+export default function CurrentPoll(): JSX.Element {
+  const [poll, setPoll] = useState<Poll | null>(null); // State to store the active poll.
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store the vote counts.
+  const [loading, setLoading] = useState<boolean>(true); // State to track loading status.
+  const [error, setError] = useState<string | null>(null); // State to store any error messages.
+
+  useEffect(() => {
+    /**
+     * fetchActivePoll Function
+     * ------------------------
+     * Fetches the currently active poll from the backend.
+     */
+    const fetchActivePoll = async (): Promise<void> => {
+      try {
+        const { data: polls, errors } = await client.models.Poll.list({
+          filter: { status: { eq: "active" } },
+        });
+
+        if (errors || !polls || polls.length === 0) {
+          setError("No active poll found.");
+          console.error("Errors:", errors);
+        } else {
+          setPoll(polls[0]);
+        }
+      } catch (err) {
+        setError("An unexpected error occurred while fetching the active poll.");
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivePoll();
+  }, []);
+
+  useEffect(() => {
+    /**
+     * fetchVoteCounts Function
+     * ------------------------
+     * Fetches the vote counts for the current poll and sets up a subscription for real-time updates.
+     */
+    const fetchVoteCounts = async (): Promise<void> => {
+      if (!poll) return;
+
+      try {
+        const { data: votes, errors } = await client.models.Vote.list({
+          filter: { pollId: { eq: poll.id } },
+        });
+
+        if (errors) {
+          setError("Failed to fetch votes.");
+          console.error("Errors:", errors);
+        } else {
+          const counts: Record<string, number> = {};
+          poll.options.forEach((option) => {
+            if (option) {
+              counts[option] = votes.filter((vote) => vote.option === option).length;
+            }
+          });
+          setVoteCounts(counts);
+        }
+      } catch (err) {
+        setError("An unexpected error occurred while fetching votes.");
+        console.error("Unexpected error:", err);
+      }
+    };
+
+    fetchVoteCounts();
+
+    // Subscribe to real-time vote updates
+    let subscription: { unsubscribe: () => void };
+    if (poll) {
+      subscription = client.models.Vote.onCreate({
+        filter: { pollId: { eq: poll.id } },
+      }).subscribe({
+        next: (newVote) => {
+          setVoteCounts((prevCounts) => ({
+            ...prevCounts,
+            [newVote.option]: (prevCounts[newVote.option] || 0) + 1,
+          }));
+        },
+        error: (error) => console.error("Error in vote subscription:", error),
+      });
+    }
+
+    // Cleanup subscription on component unmount
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
+  }, [poll]);
+
+  if (loading) {
+    return <div>Loading current poll...</div>;
+  }
+
+  if (error || !poll) {
+    return <div>Error: {error || "No active poll available."}</div>;
+  }
+
+  return (
+    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+      <div className="p-3 font-extralight text-2xl text-left">
+        Current Poll
+      </div>
+      <div className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
+        <div className="p-4">
+          <div className="text-lg font-semibold pb-2">{poll.title}</div>
+          <table className="w-full text-left table-auto">
+            <thead>
+              <tr>
+                <th className="p-2">Option</th>
+                <th className="p-2">Votes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {poll.options.map((option, index) => (
+                <tr key={index}>
+                  <td className="p-2">{option}</td>
+                  <td className="p-2">
+                    {voteCounts[option as string] || 0}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+---
+File Path: components/Background.tsx
+"use client";
+
+import { motion } from "framer-motion";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
+
+export function Background() {
+ 
+
+  // Background animation variants for other routes
+  const backgroundVariants = {
+    enter: { opacity: 0.5 },
+    active: { opacity: 1, transition: { duration: 25, ease: "easeInOut" } },
+    exit: { opacity: 0.5, transition: { duration: 25, ease: "easeInOut" } },
+  };
+
+  return (
+    <motion.div
+      initial="enter"
+      animate="active"
+      exit="exit"
+      variants={backgroundVariants}
+      className="fixed inset-0 -z-50 overflow-hidden h-screen w-screen"
+    >
+      <AnimatedBackground />
+    </motion.div>
+  );
+}
+
+---
+File Path: components/ListPolls.tsx
+/**
+ * File Path: components/ListPolls.tsx
+ * 
+ * List Polls Component
+ * --------------------
+ * This file defines the ListPolls component, which is responsible for displaying a list of polls,
+ * allowing users to view poll details, activate polls, and delete polls. The component integrates
+ * with AWS Amplify for data fetching, real-time updates, and state management.
+ */
+
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+
+type Poll = Schema["Poll"]["type"];
+
+// Generate a client instance for interacting with the data schema.
+const client = generateClient<Schema>();
+
+/**
+ * AccordionProps Interface
+ * ------------------------
+ * Defines the props for the Accordion component.
+ */
+interface AccordionProps {
+  poll: Poll; // The poll object for this accordion section.
+  expanded: string | null; // The ID of the currently expanded poll (if any).
+  setExpanded: React.Dispatch<React.SetStateAction<string | null>>; // Function to set the expanded poll ID.
+  handleActivatePoll: (pollId: string) => Promise<void>; // Function to handle poll activation.
+  handleDeletePoll: (pollId: string) => Promise<void>; // Function to handle poll deletion.
+}
+
+interface Subscription {
+  unsubscribe: () => void;
+}
+
+
+/**
+ * Accordion Component
+ * -------------------
+ * Renders an accordion section for a single poll, including poll details, vote counts, and actions.
+ * 
+ * @component
+ * @param {AccordionProps} props - The props for the component.
+ * @returns {JSX.Element} The rendered Accordion component.
+ */
+const Accordion: React.FC<AccordionProps> = ({
+  poll,
+  expanded,
+  setExpanded,
+  handleActivatePoll,
+  handleDeletePoll,
+}) => {
+  const isOpen = poll.id === expanded; // Check if this accordion is open.
+  const isActive = poll.status === "active"; // Check if this poll is active.
+
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store the vote counts for each option.
+
+  useEffect(() => {
+    /**
+     * fetchVotes Function
+     * -------------------
+     * Fetches the votes for this poll and updates the vote counts state.
+     */
+    const fetchVotes = async () => {
+      const { data: votes, errors } = await client.models.Vote.list({
+        filter: { pollId: { eq: poll.id } },
+      });
+
+      if (!errors) {
+        const counts: Record<string, number> = {};
+        poll.options.forEach((option) => {
+          if (option) {
+            counts[option] = votes.filter(
+              (vote) => vote.option === option
+            ).length;
+          }
+        });
+        setVoteCounts(counts);
+      } else {
+        console.error("Failed to fetch votes:", errors);
+      }
+    };
+
+    if (isOpen) {
+      fetchVotes();
+    }
+
+    // Subscribe to real-time vote updates
+    let subscription: Subscription;
+    if (isOpen || isActive) {
+      subscription = client.models.Vote.onCreate({
+        filter: { pollId: { eq: poll.id } },
+      }).subscribe({
+        next: (newVote) => {
+          setVoteCounts((prevCounts) => ({
+            ...prevCounts,
+            [newVote.option]: (prevCounts[newVote.option] || 0) + 1,
+          }));
+        },
+        error: (error) => console.error("Error in subscription:", error),
+      });
+    }
+
+    // Cleanup the subscription on component unmount
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
+  }, [isOpen, isActive, poll.id, poll.options]);
+
+  return (
+    <div className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
+      <motion.header
+        className="cursor-pointer p-4 flex items-center justify-between"
+        initial={false}
+        onClick={() => setExpanded(isOpen ? null : poll.id)}
+      >
+        <div className="flex flex-col w-full">
+          <div className="flex items-center justify-between">
+            <button
+              className={`w-14 h-14 p-2 rounded-lg ${
+                isActive
+                  ? "bg-blue-400 text-blue-50 border border-blue-200"
+                  : "bg-blue-800 text-blue-700 border border-blue-600"
+              } bg-opacity-75 `}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleActivatePoll(poll.id);
+              }}
+            >
+              Active
+            </button>
+            <div className="flex flex-col flex-grow pl-4">
+              <div className="flex items-center justify-between">
+                <span>{poll.title}</span>
+                <div className="flex space-x-4">
+                  <span>{new Date(poll.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div className="flex mt-2 space-x-2">
+                <button
+                  className="p-2 px-4 bg-red-600 text-white rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeletePoll(poll.id);
+                  }}
+                >
+                  Delete
+                </button>
+                <button
+                  className="p-2 px-4 bg-blue-600 text-white rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpanded(isOpen ? null : poll.id);
+                  }}
+                >
+                  {isOpen ? "Show Less" : "Show More"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.header>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.section
+            key="content"
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={{
+              open: { opacity: 1, height: "auto" },
+              collapsed: { opacity: 0, height: 0 },
+            }}
+            transition={{ duration: 0.8, ease: [0.04, 0.62, 0.23, 0.98] }}
+          >
+            <div className="w-full">
+              <div className="text-lg font-semibold pb-2">Poll Details</div>
+              <div className="grid grid-cols-2 gap-2 text-left pb-3">
+                <div className="font-bold text-center">Title</div>
+                <div>{poll.title}</div>
+
+                <div className="font-bold text-center">Status</div>
+                <div>{poll.status}</div>
+
+                <div className="font-bold text-center">Created</div>
+                <div>{new Date(poll.createdAt).toLocaleString()}</div>
+              </div>
+              <table className="w-full text-left table-auto">
+                <thead>
+                  <tr>
+                    <th className="p-2">Option</th>
+                    <th className="p-2">Votes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {poll.options.map((option, index) => (
+                    <tr key={index}>
+                      <td className="p-2">{option}</td>
+                      <td className="p-2">
+                        {voteCounts[option as string] || 0}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/**
+ * ListPolls Component
+ * -------------------
+ * Renders a list of polls with the ability to expand each poll for more details, 
+ * activate polls, and delete polls. Also handles real-time updates via subscriptions.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered ListPolls component.
+ */
+export default function ListPolls(): JSX.Element {
+  const [polls, setPolls] = useState<Poll[]>([]); // State to store the list of polls.
+  const [loading, setLoading] = useState<boolean>(true); // State to track loading status.
+  const [error, setError] = useState<string | null>(null); // State to store any error messages.
+  const [expanded, setExpanded] = useState<string | null>(null); // State to track the expanded accordion section.
+
+  useEffect(() => {
+    /**
+     * fetchPolls Function
+     * -------------------
+     * Fetches the list of polls from the backend and sorts them by status and creation date.
+     */
+    const fetchPolls = async (): Promise<void> => {
+      try {
+        const { data: pollList, errors } = await client.models.Poll.list();
+
+        if (errors) {
+          setError("Failed to fetch polls");
+          console.error("Errors:", errors);
+        } else {
+          const sortedPolls = pollList.sort((a, b) => {
+            if (a.status === "active") return -1;
+            if (b.status === "active") return 1;
+            return (
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          });
+          setPolls(sortedPolls);
+        }
+      } catch (err) {
+        setError("An unexpected error occurred");
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPolls();
+
+    // Subscribe to new poll creations
+    const subscription = client.models.Poll.onCreate().subscribe({
+      next: (newPoll) => {
+        setPolls((prevPolls) => {
+          const updatedPolls = [newPoll, ...prevPolls];
+          return updatedPolls.sort((a, b) => {
+            if (a.status === "active") return -1;
+            if (b.status === "active") return 1;
+            return (
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          });
+        });
+      },
+      error: (error) => console.error("Error in subscription:", error),
+    });
+
+    // Cleanup subscription on component unmount
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Find the active poll and subscribe to it
+    const activePoll = polls.find((poll) => poll.status === "active");
+
+    if (activePoll) {
+      const subscription = client.models.Vote.onCreate({
+        filter: { pollId: { eq: activePoll.id } },
+      }).subscribe({
+        next: () => {
+          setPolls((prevPolls) =>
+            prevPolls.map((poll) => {
+              if (poll.id === activePoll.id) {
+                return {
+                  ...poll,
+                  // voteCounts is not on the poll type, so handle it in the Accordion
+                };
+              }
+              return poll;
+            })
+          );
+        },
+        error: (error) => console.error("Error in vote subscription:", error),
+      });
+
+      return () => subscription.unsubscribe();
+    }
+  }, [polls]);
+
+  /**
+   * handleActivatePoll Function
+   * ---------------------------
+   * Activates a specific poll and deactivates all others.
+   * 
+   * @param {string} pollId - The ID of the poll to activate.
+   */
+  const handleActivatePoll = async (pollId: string): Promise<void> => {
+    try {
+      // Step 1: Set all polls to inactive
+      const { data: polls, errors } = await client.models.Poll.list();
+      if (errors) {
+        console.error("Failed to fetch polls for deactivation:", errors);
+        return;
+      }
+      await Promise.all(
+        polls.map(async (poll) => {
+          if (poll.id !== pollId && poll.status === "active") {
+            await client.models.Poll.update({
+              id: poll.id,
+              status: "inactive",
+            });
+          }
+        })
+      );
+
+      // Step 2: Set the selected poll to active
+      await client.models.Poll.update({ id: pollId, status: "active" });
+
+      // Step 3: Update state
+      setPolls((prevPolls) =>
+        prevPolls.map((poll) =>
+          poll.id === pollId
+            ? { ...poll, status: "active" }
+            : { ...poll, status: "inactive" }
+        )
+      );
+    } catch (err) {
+      console.error("Failed to activate poll:", err);
+    }
+  };
+
+  /**
+   * handleDeletePoll Function
+   * -------------------------
+   * Deletes a specific poll and its associated votes.
+   * 
+   * @param {string} pollId - The ID of the poll to delete.
+   */
+  const handleDeletePoll = async (pollId: string): Promise<void> => {
+    try {
+      // Fetch all votes associated with the poll
+      const { data: votes, errors } = await client.models.Vote.list({
+        filter: { pollId: { eq: pollId } },
+      });
+
+      if (errors) {
+        console.error("Failed to fetch associated votes:", errors);
+        return;
+      }
+
+      // Delete each vote individually
+      if (votes) {
+        await Promise.all(
+          votes.map(async (vote) => {
+            await client.models.Vote.delete({ id: vote.id });
+          })
+        );
+      }
+
+      // Delete the poll
+      await client.models.Poll.delete({ id: pollId });
+
+      // Remove the poll from the state
+      setPolls((prevPolls) => prevPolls.filter((poll) => poll.id !== pollId));
+    } catch (err) {
+      console.error("Failed to delete poll:", err);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading polls...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  return (
+    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+      <div className="p-3 font-extralight text-2xl text-left">
+        Current Polls
+      </div>
+      {polls.map((poll) => (
+        <Accordion
+          key={poll.id}
+          poll={poll}
+          expanded={expanded}
+          setExpanded={setExpanded}
+          handleActivatePoll={handleActivatePoll}
+          handleDeletePoll={handleDeletePoll}
+        />
+      ))}
+    </div>
+  );
+}
+
+---
+File Path: components/Poll.tsx
+/**
+ * File Path: components/Poll.tsx
+ * 
+ * Poll Component
+ * --------------
+ * This file defines the Poll component, which is responsible for displaying the current active poll,
+ * allowing users to vote, and showing the current results. The component integrates with AWS Amplify
+ * for data fetching and real-time updates.
+ */
+
+import { useEffect, useState } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Generate a client instance for interacting with the data schema.
+const client = generateClient<Schema>();
+
+/**
+ * Poll Component
+ * --------------
+ * Renders the current active poll, allows voting, and displays real-time results.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered Poll component.
+ */
+export default function Poll(): JSX.Element {
+  const { user } = useAuth(); // Access user details from authentication context.
+  const [poll, setPoll] = useState<Schema["Poll"]["type"] | null>(null); // State to store the current poll.
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store the vote counts for each option.
+  //const [selectedOption, setSelectedOption] = useState<string | null>(null); // State to store the user's selected option.
+  const [hasVoted, setHasVoted] = useState<boolean>(false); // State to track if the user has already voted.
+  const [loading, setLoading] = useState<boolean>(true); // State to track if data is still loading.
+  const [error, setError] = useState<string | null>(null); // State to store any error messages.
+
+  useEffect(() => {
+    /**
+     * fetchPollData Function
+     * ----------------------
+     * Fetches the current active poll and its associated votes from the backend.
+     */
+    const fetchPollData = async (): Promise<void> => {
+      try {
+        const { data: pollList, errors } = await client.models.Poll.list({
+          filter: { status: { eq: "active" } },
+        });
+
+        if (errors || !pollList || pollList.length === 0) {
+          setError("Error fetching poll data.");
+          return;
+        }
+
+        const activePoll = pollList[0];
+        setPoll(activePoll);
+
+        if (!activePoll) return;
+
+        // Fetch all votes for the active poll
+        const { data: voteData } = await client.models.Vote.list({
+          filter: { pollId: { eq: activePoll.id } },
+        });
+
+        // Check if the user has already voted
+        const userVote = voteData.find(
+          (vote) => vote.userId === user?.username
+        );
+        if (userVote) {
+          setHasVoted(true);
+          //setSelectedOption(userVote.option);
+        }
+
+        // Initialize and count votes
+        const initialVoteCounts: Record<string, number> = {};
+        activePoll.options.forEach((option) => {
+          if (option !== null) {
+            initialVoteCounts[option] = 0;
+          }
+        });
+
+        voteData.forEach((vote) => {
+          if (vote.option && vote.option in initialVoteCounts) {
+            initialVoteCounts[vote.option]++;
+          }
+        });
+
+        setVoteCounts(initialVoteCounts);
+      } catch (error) {
+        setError("Error fetching poll data.");
+        console.error("Error fetching poll data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPollData();
+  }, [user]);
+
+  useEffect(() => {
+    /**
+     * Subscribe to real-time poll updates once the user has voted.
+     */
+    if (poll && hasVoted) {
+      const subscription = client.models.Vote.onCreate({
+        filter: { pollId: { eq: poll.id } },
+      }).subscribe({
+        next: (data) => {
+          const updatedVoteCounts = { ...voteCounts };
+          if (data.option && data.option in updatedVoteCounts) {
+            updatedVoteCounts[data.option] += 1;
+            setVoteCounts(updatedVoteCounts);
+          }
+        },
+        error: (error) => console.error("Error in subscription:", error),
+      });
+
+      return () => subscription.unsubscribe();
+    }
+  }, [poll, hasVoted, voteCounts]);
+
+  /**
+   * handleVote Function
+   * -------------------
+   * Handles the user's vote submission and updates the vote counts optimistically.
+   * 
+   * @param {string} option - The option the user has selected to vote for.
+   */
+  const handleVote = async (option: string): Promise<void> => {
+    if (!hasVoted && option) {
+      try {
+        await client.models.Vote.create({
+          userId: user?.username || "",
+          pollId: poll!.id,
+          option,
+        });
+
+        //setSelectedOption(option);
+        setHasVoted(true);
+
+        // Optimistically update vote counts
+        setVoteCounts((prev) => ({
+          ...prev,
+          [option]: (prev[option] || 0) + 1,
+        }));
+      } catch (error) {
+        setError("Error casting vote.");
+        console.error("Error casting vote:", error);
+      }
+    }
+  };
+
+  if (loading) return <div>Loading active poll...</div>;
+  if (error || !poll) return <div>{error || "There is no active poll currently"}</div>;
+
+  return (
+    <div className="w-full shadow-black shadow-lg border-l border-r border-white md:w-2/3 lg:w-1/2 mx-auto p-6 md:rounded-lg bg-gradient-to-b from-blue-900 to-sky-950 via-blue-950">
+      <div className="text-lg mb-2">Current Poll Question</div>
+      <div className="text-2xl font-bold mb-4">{poll.title}</div>
+      {hasVoted ? (
+        <div className="max-w-md mx-auto">
+          <div className="text-lg mb-2 text-center">Current Results</div>
+          <ul className="space-y-2 w-full">
+            {Object.entries(voteCounts).map(([option, count]) => (
+              <li key={option} className="text-sm">
+                <div className="grid grid-cols-3 gap-4">
+                  <span className="col-span-2 text-left">{option}</span>
+                  <span className="text-left">
+                    {count} vote{`${count !== 1 ? "s" : ""}`}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {poll.options.map((option) => (
+            <button
+              key={option}
+              className="block w-full py-2 px-4 bg-blue-950 rounded-lg border border-blue-500 hover:border-blue-50"
+              onClick={() => handleVote(option as string)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+---
+File Path: components/AnimatedBackground.tsx
+// @/components/AnimatedBackground.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
+export function AnimatedBackground() {
+  // Define the ColorState type
+  type ColorState = 0 | 1 | 2;
+
+  // State variables
+  const [boxSize, setBoxSize] = useState<number>(75); // Default size for larger screens
+  const [gridColumns, setGridColumns] = useState<number>(0);
+  const [gridRows, setGridRows] = useState<number>(0);
+  const [totalBoxes, setTotalBoxes] = useState<number>(0);
+  const [colorStates, setColorStates] = useState<ColorState[]>([]); // Explicitly define as ColorState array
+
+  // Mapping from color state to color value
+  const colorMap: { [key in ColorState]: string } = {
+    0: "#000000", // black
+    1: "#1e3a8a", // bg-blue-800
+    2: "#F97316", // bg-orange-500
+  };
+
+  // Function to update dimensions based on window size
+  const updateDimensions = () => {
+    const newBoxSize = window.innerWidth <= 768 ? 50 : 75;
+    setBoxSize(newBoxSize);
+
+    const columns = Math.ceil(window.innerWidth / newBoxSize);
+    const rows = Math.ceil(window.innerHeight / newBoxSize);
+    const total = columns * rows;
+
+    setGridColumns(columns);
+    setGridRows(rows);
+    setTotalBoxes(total);
+
+    // Initialize colorStates array with zeros
+    setColorStates(Array(total).fill(0));
+  };
+
+  // useEffect to handle window resize and initial setup
+  useEffect(() => {
+    // Only run if window is defined
+    if (typeof window !== "undefined") {
+      updateDimensions();
+
+      // Add event listener for window resize
+      window.addEventListener("resize", updateDimensions);
+
+      // Cleanup on unmount
+      return () => window.removeEventListener("resize", updateDimensions);
+    }
+  }, []);
+
+  // useEffect for animating color states
+  useEffect(() => {
+    if (totalBoxes === 0) return; // Avoid running if totalBoxes is not set
+
+    const intervalId = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * totalBoxes);
+      setColorStates((prevColorStates) => {
+        const newColorStates = [...prevColorStates];
+        // Cycle through colors: 0 (black) -> 1 (blue) -> 2 (orange) -> 0 (black)
+        newColorStates[randomIndex] = ((prevColorStates[randomIndex] + 1) % 3) as ColorState;
+        return newColorStates;
+      });
+    }, 100); // Adjust interval as needed
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, [totalBoxes]);
+
+  // Don't render until gridColumns and gridRows are set
+  if (gridColumns === 0 || gridRows === 0) {
+    return null; // Or a loading indicator
+  }
+
+  return (
+    <div
+      className="inset-0 grid gap-2 opacity-70"
+      style={{
+        gridTemplateColumns: `repeat(${gridColumns}, ${boxSize}px)`, // Define grid columns based on screen width and box size
+        gridTemplateRows: `repeat(${gridRows}, ${boxSize}px)`, // Define grid rows based on screen height and box size
+      }}
+    >
+      {colorStates.map((colorState, index) => (
+        <motion.div
+          key={index}
+          className="rounded-xl w-full h-full"
+          animate={{ backgroundColor: colorMap[colorState] }}
+          transition={{ duration: 0.5 }} // Fade effect duration
+        />
+      ))}
+    </div>
+  );
+}
+
+---
+File Path: components/Toast.tsx
+/**
+ * File Path: components/Toast.tsx
+ * 
+ * Toast Component
+ * ---------------
+ * This file defines the Toast component, which is responsible for displaying toast notifications.
+ * It leverages animations for showing and hiding toasts and listens to the ToastContext for any updates.
+ */
+
+'use client';
+
+import React, { useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion"; // Import motion components for animations.
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Import ToastContext to access toast logic and state.
+
+/**
+ * Animation Variants
+ * ------------------
+ * Define the animation variants for the toast notifications.
+ * These control how the toast will appear, behave, and disappear.
+ */
+const variants = {
+  hidden: { y: "-100%", opacity: 0 }, // Start from above and fade in.
+  visible: { y: 0, opacity: 1 },      // End at the original position fully visible.
+  exit: { y: "-100%", opacity: 0 }    // Exit by moving up and fading out.
+};
+
+/**
+ * Toast Component
+ * ---------------
+ * This functional component renders toast notifications by mapping over the toasts array in the context.
+ * It uses framer-motion for smooth animations when the toasts appear or disappear.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered Toast component.
+ */
+const Toast: React.FC = (): JSX.Element => {
+  // Access the toasts array and removeToast function from the ToastContext.
+  const { toasts, removeToast } = useContext<ToastContextType>(ToastContext);
+
+  // Render the toast notifications with animations.
+  return (
+    <div className="fixed top-0 w-full z-50">
+      <AnimatePresence>
+        {toasts.map((toast) => (
+          <motion.div
+            key={toast.id} // Use unique key for each toast for React list rendering.
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={variants} // Apply the defined variants for animation.
+            transition={{ duration: 0.5 }} // Set the animation duration to 0.5 seconds.
+            className={`text-lg p-3 max-w-md m-auto rounded-lg shadow bg-opacity-90 mt-1 ${
+              toast.messageType === "success"
+                ? "shadow-green-900 bg-green-600 text-green-50" // Style for success messages.
+                : "shadow-red-900 bg-red-600 text-red-50" // Style for error messages.
+            }`}
+          >
+            <div className="p-3 grid grid-cols-[auto,1fr] gap-2 items-center font-extralight">
+              <div className="flex-grow">{toast.message}</div>
+              <button
+                onClick={() => toast.id && removeToast(toast.id)} // Remove toast when the close button is clicked.
+                className="justify-self-end"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default Toast;
+
+---
+File Path: amplify/backend.ts
+/**
+ * File Path: amplify/backend.ts
+ * 
+ * Backend Definition
+ * ------------------
+ * This file defines the backend configuration for the application using AWS Amplify.
+ * It imports and integrates the authentication and data resources into the backend setup.
+ */
+
+import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
+import { auth } from './auth/resource'; // Import the authentication resource configuration.
+import { data } from './data/resource'; // Import the data resource configuration.
+
+/**
+ * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
+ * 
+ * Backend Configuration
+ * ---------------------
+ * This function call sets up the backend by integrating the auth and data configurations.
+ */
+defineBackend({
+  auth,
+  data,
+});
+
+---
+File Path: amplify/auth/resource.ts
+/**
+ * File Path: amplify/auth/resource.ts
+ * 
+ * Authentication Resource Configuration
+ * -------------------------------------
+ * This file defines the authentication resource for the application using Gen 2 AWS Amplify.
+ * It configures the login method via email and customizes the verification email content.
+ */
+
+import { defineAuth } from '@aws-amplify/backend'; // Import the defineAuth function from AWS Amplify.
+
+/**
+ * Auth Configuration
+ * ------------------
+ * Defines the authentication setup for the application.
+ * Configures email-based login with a verification code and custom email content.
+ * 
+ * @constant
+ * @type {ReturnType<typeof defineAuth>}
+ */
+export const auth = defineAuth({
+  loginWith: {
+    email: {
+      verificationEmailStyle: "CODE", // Specifies the style of the verification email (e.g., code or link).
+      verificationEmailSubject: "Welcome to Meet A Drifter", // Subject line for the verification email.
+      verificationEmailBody: (createCode: () => string) => 
+        `Use this code to confirm your Meet A Drifter account: ${createCode()}`, // Custom body of the verification email.
+    },
+  },
+});
+
+---
+File Path: amplify/data/resource.ts
+/**
+ * File Path: amplify/data/resource.ts
+ * 
+ * Data Resource Configuration
+ * ---------------------------
+ * This file defines the data model for the application using Gen 2 AWS Amplify.
+ * It sets up the schema for the `Poll` and `Vote` models, including their fields,
+ * relationships, and authorization rules.
+ */
+
+import { type ClientSchema, a, defineData } from '@aws-amplify/backend'; // Import necessary types and functions from AWS Amplify.
+
+/**
+ * Schema Definition
+ * -----------------
+ * Defines the data models and their respective fields and authorization rules.
+ * 
+ * - `Poll`: Represents a poll with a title, options, creation date, and status.
+ * - `Vote`: Represents a vote with references to the poll and user, along with the selected option.
+ */
+const schema = a.schema({
+  Poll: a.model({
+    title: a.string().required(), // The title of the poll, a required string.
+    options: a.string().array().required(), // An array of possible options for the poll, required.
+    createdAt: a.datetime().required(), // The date and time the poll was created, required.
+    status: a.string().required(), // The status of the poll (e.g., 'active', 'inactive'), required.
+  }).authorization((allow) => [
+    allow.group('admin').to(['create', 'update', 'delete']), // Admins can create, update, and delete polls.
+    allow.authenticated('userPools').to(['read']), // Authenticated users can read polls.
+  ]),
+  Vote: a.model({
+    pollId: a.id().required(), // The ID of the associated poll, required.
+    userId: a.string().required(), // The ID of the user who voted, required.
+    option: a.string().required(), // The selected option for the vote, required.
+  }).authorization((allow) => [
+    allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create and read votes.
+  ]),
+});
+
+/**
+ * Schema Type Definition
+ * ----------------------
+ * Exports the schema type for use in other parts of the application.
+ * 
+ * @type {ClientSchema<typeof schema>}
+ */
+export type Schema = ClientSchema<typeof schema>;
+
+/**
+ * Data Configuration
+ * ------------------
+ * Defines the data configuration using the defined schema.
+ * 
+ * @constant
+ * @type {ReturnType<typeof defineData>}
+ */
+export const data = defineData({
+  schema,
+});
+
+---
+File Path: contexts/ToastContext.tsx
+/**
+ * File Path: contexts/ToastContext.tsx
+ * 
+ * ToastContext
+ * ------------
+ * This file provides a React context for managing toast notifications throughout the application.
+ * Components can trigger toast messages for success and error notifications, with support for 
+ * automatic timeout and removal of toasts.
+ */
+
+'use client';
+
+import React, { createContext, useState, useCallback, ReactNode } from 'react';
+import { v4 as uuidv4 } from 'uuid'; // Import UUID to generate unique identifiers for each toast.
+
+/**
+ * Toast Interface
+ * ---------------
+ * Defines the structure of a toast notification object.
+ * 
+ * @interface Toast
+ * @property {string} [id] - Optional unique identifier. If not provided, one will be generated.
+ * @property {'success' | 'error'} messageType - Type of message, either 'success' or 'error'.
+ * @property {string} message - The text content of the toast message.
+ * @property {number} [duration] - Optional duration in milliseconds after which the toast will automatically disappear.
+ */
+interface Toast {
+  id?: string;
+  messageType: 'success' | 'error';
+  message: string;
+  duration?: number;
+}
+
+/**
+ * ToastContextType Interface
+ * --------------------------
+ * Defines the shape of the context's value, specifying what can be accessed or performed.
+ * 
+ * @interface ToastContextType
+ * @property {Toast[]} toasts - Array of current toast messages being displayed.
+ * @property {(toast: Toast) => void} addToast - Function to add a new toast to the display queue.
+ * @property {(id: string) => void} removeToast - Function to remove a specific toast by ID.
+ */
+export interface ToastContextType {
+  toasts: Toast[];
+  addToast: (toast: Toast) => void;
+  removeToast: (id: string) => void;
+}
+
+// Initializing the context with default empty implementations to prevent null checks.
+const defaultContextValue: ToastContextType = {
+  toasts: [],
+  addToast: () => {}, // Empty function placeholder.
+  removeToast: () => {} // Empty function placeholder.
+};
+
+// Creating the ToastContext with the default value.
+export const ToastContext = createContext<ToastContextType>(defaultContextValue);
+
+/**
+ * ToastProviderProps Interface
+ * ----------------------------
+ * Defines the structure for the props passed to the ToastProvider component.
+ * 
+ * @interface ToastProviderProps
+ * @property {ReactNode} children - Accepts any valid React children.
+ */
+interface ToastProviderProps {
+  children: ReactNode;
+}
+
+/**
+ * ToastProvider Component
+ * -----------------------
+ * Encapsulates all children components that need access to toast functionalities.
+ * 
+ * @component
+ * @param {ToastProviderProps} props - The component props.
+ * @returns {JSX.Element} The rendered ToastProvider component.
+ */
+export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
+  const [toasts, setToasts] = useState<Toast[]>([]); // State to track the current toasts.
+
+  /**
+   * removeToast Function
+   * --------------------
+   * Removes a toast based on its ID. Uses useCallback to memoize the function.
+   * 
+   * @function
+   * @param {string} id - The ID of the toast to remove.
+   */
+  const removeToast = useCallback((id: string) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+  }, []);
+
+  /**
+   * addToast Function
+   * -----------------
+   * Adds a new toast to the state. It also sets a timer to automatically remove the toast.
+   * 
+   * @function
+   * @param {Toast} toast - The toast object to add.
+   */
+  const addToast = useCallback((toast: Toast) => {
+    const toastWithDefaultId = { ...toast, id: toast.id || uuidv4() }; // Assign a default ID if not provided.
+    setToasts((prevToasts) => [...prevToasts, toastWithDefaultId]); // Append the new toast to the existing array.
+
+    const duration = toast.duration || 3000; // Use provided duration or default to 3000ms.
+    setTimeout(() => { // Set a timeout to remove the toast after the specified duration.
+      removeToast(toastWithDefaultId.id!);
+    }, duration);
+  }, [removeToast]);
+
+  // Providing the context value to all child components.
+  return (
+    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+      {children}
+    </ToastContext.Provider>
+  );
+};
+
+---
+File Path: contexts/AuthContext.tsx
+/**
+ * File Path: contexts/AuthContext.tsx
+ * 
+ * Authentication Context
+ * ----------------------
+ * This file provides a React context for managing authentication throughout the application.
+ * It handles user state, provides functions for signing out, and checks if the current user has admin status.
+ */
+
+import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types and functions for authentication from AWS Amplify.
+
+/**
+ * AuthContextProps Interface
+ * --------------------------
+ * Defines the structure of the authentication context properties.
+ * 
+ * @interface AuthContextProps
+ * @property {AuthUser | null | undefined} user - The authenticated user.
+ * @property {() => void} signOut - Function to handle user sign-out.
+ * @property {boolean} isAdmin - Indicates if the current user belongs to the admin group.
+ * @property {boolean} loading - Indicates if the admin status is still being determined.
+ */
+export interface AuthContextProps {
+  user: AuthUser | null | undefined;
+  signOut: () => void;
+  isAdmin: boolean;
+  loading: boolean;
+}
+
+// Creating the AuthContext with a default value to ensure type safety and avoid the need for null checks.
+const AuthContext = createContext<AuthContextProps | null>(null);
+
+/**
+ * useAuth Hook
+ * ------------
+ * Custom hook to provide easy access to the AuthContext.
+ * Throws an error if it is used outside of an AuthProvider, ensuring proper usage.
+ * 
+ * @returns {AuthContextProps} The authentication context properties.
+ */
+export const useAuth = (): AuthContextProps => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider to access the user and authentication functions.");
+  }
+  return context;
+};
+
+/**
+ * AuthProviderProps Interface
+ * ---------------------------
+ * Defines the structure for the props passed to the AuthProvider component.
+ * 
+ * @interface AuthProviderProps
+ * @property {ReactNode} children - Any valid React child components that may consume authentication context.
+ * @property {AuthUser | null} user - The authenticated user object.
+ * @property {() => void} signOut - Function to sign out the user.
+ */
+interface AuthProviderProps {
+  children: ReactNode;
+  user: AuthUser | null;
+  signOut: () => void;
+}
+
+/**
+ * AuthProvider Component
+ * ----------------------
+ * Wraps child components that need access to the authentication context.
+ * It accepts the authenticated user and a signOut function as props.
+ * 
+ * @component
+ * @param {AuthProviderProps} props - The component props.
+ * @returns {JSX.Element} The rendered AuthProvider component.
+ */
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, signOut }) => {
+  const [isAdmin, setIsAdmin] = useState<boolean>(false); // State to track admin status.
+  const [loading, setLoading] = useState<boolean>(true); // State to track the loading status.
+
+  useEffect(() => {
+    async function checkAdminStatus() {
+      if (user) {
+        try {
+          const session = await fetchAuthSession();
+          const groups = session.tokens?.idToken?.payload["cognito:groups"];
+          if (Array.isArray(groups) && groups.includes("admin")) {
+            
+            setIsAdmin(true);
+          } else {
+            
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user session:", error);
+        } finally {
+          setLoading(false); // Admin status check is complete.
+        }
+      } else {
+        setLoading(false); // No user, so no admin check needed.
+      }
+    }
+
+    checkAdminStatus();
+  }, [user]);
+
+  return (
+    <AuthContext.Provider value={{ user, signOut, isAdmin, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+---

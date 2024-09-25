@@ -401,7 +401,7 @@ export default function ListPolls(): JSX.Element {
   }
 
   return (
-    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+    <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
       <div className="p-3 font-extralight text-2xl text-left">
         Current Polls
       </div>
