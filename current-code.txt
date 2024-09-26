@@ -1,3 +1,427 @@
+File Path: amplify/backend.ts
+// amplify/backend.ts
+
+/**
+ * File Path: amplify/backend.ts
+ * 
+ * Backend Definition
+ * ------------------
+ * This file defines the backend configuration for the application using AWS Amplify.
+ * It imports and integrates the authentication and data resources into the backend setup.
+ */
+
+import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
+import { auth } from './auth/resource'; // Import the authentication resource configuration.
+import { data } from './data/resource'; // Import the data resource configuration.
+import { manageUsers } from './functions/manage-users/resource'; // Import the manageUsers function
+
+/**
+ * Backend Configuration
+ * ---------------------
+ * This function call sets up the backend by integrating the auth, data, and manageUsers configurations.
+ */
+defineBackend({
+  auth,
+  data,
+  manageUsers,
+});
+
+---
+File Path: amplify/auth/resource.ts
+/**
+ * File Path: amplify/auth/resource.ts
+ * 
+ * Authentication Resource Configuration
+ * -------------------------------------
+ * This file defines the authentication resource for the application using Gen 2 AWS Amplify.
+ * It configures the login method via email and customizes the verification email content.
+ */
+
+import { defineAuth } from '@aws-amplify/backend'; // Import the defineAuth function from AWS Amplify.
+import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function
+
+/**
+ * Auth Configuration
+ * ------------------
+ * Defines the authentication setup for the application.
+ * Configures email-based login with a verification code and custom email content.
+ * 
+ * @constant
+ * @type {ReturnType<typeof defineAuth>}
+ */
+export const auth = defineAuth({
+  loginWith: {
+    email: {
+      verificationEmailStyle: "CODE", // Specifies the style of the verification email (e.g., code or link).
+      verificationEmailSubject: "Welcome to Meet A Drifter", // Subject line for the verification email.
+      verificationEmailBody: (createCode: () => string) =>
+        `Use this code to confirm your Meet A Drifter account: ${createCode()}`, // Custom body of the verification email.
+    },
+  },
+  userAttributes: {
+    familyName: {
+      required: true, // Makes the family name (lastName) attribute required.
+    },
+    givenName: {
+      required: true, // Makes the given name (firstName) attribute required.
+    },
+    preferredUsername: {
+      required: true, // Makes the preferred username attribute required.
+    },
+  },
+  /**
+   * User Groups Configuration
+   * -------------------------
+   * Defines user groups for authorization purposes.
+   */
+  groups: ['admin'], // Create new group
+
+  /**
+   * Access Permissions
+   * ------------------
+   * Grants the `manage-users` function the necessary permissions to interact with Cognito.
+   */
+  access: (allow) => [
+    allow.resource(manageUsers).to([
+      "listUsers",
+      "listGroupsForUser",
+      "addUserToGroup",          // Corrected action name
+      "removeUserFromGroup",     // Corrected action name
+    ]),
+  ],
+});
+
+---
+File Path: amplify/functions/manage-users/resource.ts
+// amplify/functions/manage-users/resource.ts
+
+import { defineFunction } from "@aws-amplify/backend";
+
+/**
+ * Amplify Function Resource: manage-users
+ *
+ * This function is responsible for user management tasks, including:
+ * - Listing users
+ * - Retrieving groups for each user
+ * - Adding users to groups
+ * - Removing users from groups
+ *
+ * The function leverages AWS Cognito Identity Provider APIs to interact with the user pool.
+ */
+export const manageUsers = defineFunction({
+  /**
+   * The name of the function. This will be used in the generated AWS resources
+   * and should be unique within your Amplify project.
+   */
+  name: "manage-users",
+
+  /**
+   * Entry point for the function handler.
+   * By default, it looks for 'handler.ts' in the same directory.
+   * You can specify a different path if needed.
+   */
+  entry: "./handler.ts",
+
+  /**
+   * Optional configuration settings can be added here, such as environment variables,
+   * timeout settings, memory allocation, etc.
+   * Example:
+   * timeoutSeconds: 30,
+   * memoryMB: 512,
+   */
+});
+
+---
+File Path: amplify/functions/manage-users/handler.ts
+import {
+  CognitoIdentityProviderClient,
+  ListUsersCommand,
+  AdminListGroupsForUserCommand,
+  AdminAddUserToGroupCommand,
+  AdminRemoveUserFromGroupCommand,
+  UserType,
+  GroupType,
+} from '@aws-sdk/client-cognito-identity-provider';
+import { env } from '$amplify/env/manage-users';
+import { AppSyncIdentityIAM, AppSyncIdentityCognito, AppSyncIdentityOIDC } from 'aws-lambda';
+
+/**
+ * Interface for the manage-users function arguments.
+ * Defines optional fields based on the type of operation.
+ */
+interface ManageUsersArguments {
+  username?: string;
+  groupName?: string;
+}
+
+/**
+ * Interface for a user with their associated groups.
+ */
+interface UserWithGroups {
+  user: UserType & { Username: string };
+  groups: GroupType[];
+}
+
+/**
+ * Custom event type to match the actual event structure.
+ */
+interface CustomAppSyncResolverEvent<T> {
+  fieldName: string;
+  arguments: T;
+  identity?: AppSyncIdentityIAM | AppSyncIdentityCognito | AppSyncIdentityOIDC;
+  request?: {
+    headers: Record<string, string>;
+    domainName: string | null;
+  };
+  source?: Record<string, unknown> | null;
+}
+
+/**
+ * Handler for the manage-users function.
+ *
+ * This function handles user management tasks, including:
+ * - Listing users and their groups
+ * - Adding a user to a group
+ * - Removing a user from a group
+ *
+ * The function distinguishes actions based on the `event.fieldName`.
+ *
+ * @param event - The event data from AppSync.
+ * @returns The result of the requested action.
+ */
+export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArguments>) => {
+  console.log('Received event:', JSON.stringify(event, null, 2));
+
+  const cognitoClient = new CognitoIdentityProviderClient({});
+
+  const fieldName = event.fieldName;
+
+  if (!fieldName) {
+    throw new Error('Cannot determine the field name from the event.');
+  }
+
+  try {
+    switch (fieldName) {
+      case 'listUsersAndGroups':
+        // List all users
+        const listUsersCommand = new ListUsersCommand({
+          UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
+        });
+        const usersResponse = await cognitoClient.send(listUsersCommand);
+        const users: UserType[] = usersResponse.Users || [];
+
+        // Filter out users without a Username
+        const validUsers: (UserType & { Username: string })[] = users.filter(
+          (user): user is UserType & { Username: string } => !!user.Username
+        );
+
+        // Get groups for each user
+        const usersWithGroups: UserWithGroups[] = await Promise.all(
+          validUsers.map(async (user) => {
+            const listGroupsCommand = new AdminListGroupsForUserCommand({
+              UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
+              Username: user.Username,
+            });
+            const groupsResponse = await cognitoClient.send(listGroupsCommand);
+            const groups: GroupType[] = groupsResponse.Groups
+              ? groupsResponse.Groups.filter(
+                  (group): group is GroupType & { GroupName: string } => !!group.GroupName
+                )
+              : [];
+            return {
+              user,
+              groups,
+            };
+          })
+        );
+
+        // Return the users with groups directly
+        return usersWithGroups;
+
+      case 'addUserToGroup':
+        const { username: addUsername, groupName: addGroupName } = event.arguments;
+
+        if (!addUsername || !addGroupName) {
+          throw new Error("Missing 'username' or 'groupName' parameter");
+        }
+
+        const addCommand = new AdminAddUserToGroupCommand({
+          UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
+          Username: addUsername,
+          GroupName: addGroupName,
+        });
+        await cognitoClient.send(addCommand);
+
+        return `User ${addUsername} added to group ${addGroupName}`;
+
+      case 'removeUserFromGroup':
+        const { username: removeUsername, groupName: removeGroupName } = event.arguments;
+
+        if (!removeUsername || !removeGroupName) {
+          throw new Error("Missing 'username' or 'groupName' parameter");
+        }
+
+        const removeCommand = new AdminRemoveUserFromGroupCommand({
+          UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
+          Username: removeUsername,
+          GroupName: removeGroupName,
+        });
+        await cognitoClient.send(removeCommand);
+
+        return `User ${removeUsername} removed from group ${removeGroupName}`;
+
+      default:
+        throw new Error('Invalid action parameter');
+    }
+  } catch (error) {
+    console.error('Error in manage-users function:', error);
+    throw error; // Let Amplify handle the error appropriately
+  }
+};
+
+---
+File Path: amplify/data/resource.ts
+/**
+ * File Path: amplify/data/resource.ts
+ * 
+ * Data Resource Configuration
+ * ---------------------------
+ * This file defines the data model for the application using Gen 2 AWS Amplify.
+ * It sets up the schema for the `Poll`, `Vote`, and `SiteNotification` models, 
+ * including their fields, relationships, and authorization rules.
+ * 
+ * Additionally, it includes custom queries and mutations for user management tasks:
+ * - Listing users and their groups
+ * - Adding users to groups
+ * - Removing users from groups
+ */
+
+import { type ClientSchema, a, defineData } from '@aws-amplify/backend'; // Import necessary types and functions from AWS Amplify.
+import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function
+
+/**
+ * Schema Definition
+ * -----------------
+ * Defines the data models and their respective fields and authorization rules.
+ * 
+ * - `Poll`: Represents a poll with a title, options, creation date, and status.
+ * - `Vote`: Represents a vote with references to the poll and user, along with the selected option.
+ * - `SiteNotification`: Represents a site-wide notification message that can be created, updated, and deleted by an admin.
+ * 
+ * Custom Queries and Mutations:
+ * - `listUsersAndGroups`: Lists all users and their associated groups.
+ * - `addUserToGroup`: Adds a user to a specified group.
+ * - `removeUserFromGroup`: Removes a user from a specified group.
+ */
+const schema = a.schema({
+  // Existing models
+  Poll: a.model({
+    title: a.string().required(), // The title of the poll, a required string.
+    options: a.string().array().required(), // An array of possible options for the poll, required.
+    createdAt: a.datetime().required(), // The date and time the poll was created, required.
+    status: a.string().required(), // The status of the poll (e.g., 'active', 'inactive'), required.
+  }).authorization((allow) => [
+    allow.group('admin').to(['create', 'update', 'delete']), // Admins can create, update, and delete polls.
+    allow.authenticated('userPools').to(['read']), // Authenticated users can read polls.
+  ]),
+  
+  Vote: a.model({
+    pollId: a.id().required(), // The ID of the associated poll, required.
+    userId: a.string().required(), // The ID of the user who voted, required.
+    option: a.string().required(), // The selected option for the vote, required.
+  }).authorization((allow) => [
+    allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create and read votes.
+  ]),
+
+  SiteNotification: a.model({
+    message: a.string().required(), // The content of the notification message, required.
+  }).authorization((allow) => [
+    allow.authenticated('userPools').to(['read']),
+    allow.group('admin').to(['create', 'update', 'delete', 'read']), // Admins can create, update, delete, and read notifications.
+  ]),
+
+  // Custom Queries and Mutations for User Management
+  /**
+   * Query: listUsersAndGroups
+   *
+   * Lists all users in the Cognito User Pool along with their associated groups.
+   * Only accessible by users in the "admin" group.
+   */
+  listUsersAndGroups: a
+    .query()
+    .authorization((allow) => [allow.group('admin')])
+    .handler(a.handler.function(manageUsers))
+    .returns(a.json()),
+
+  /**
+   * Mutation: addUserToGroup
+   *
+   * Adds a specified user to a specified group.
+   * Only accessible by users in the "admin" group.
+   *
+   * @param username - The username of the user to add.
+   * @param groupName - The name of the group to add the user to.
+   */
+  addUserToGroup: a
+    .mutation()
+    .arguments({
+      username: a.string().required(),
+      groupName: a.string().required(),
+    })
+    .authorization((allow) => [allow.group('admin')])
+    .handler(a.handler.function(manageUsers))
+    .returns(a.string()),
+
+  /**
+   * Mutation: removeUserFromGroup
+   *
+   * Removes a specified user from a specified group.
+   * Only accessible by users in the "admin" group.
+   *
+   * @param username - The username of the user to remove.
+   * @param groupName - The name of the group to remove the user from.
+   */
+  removeUserFromGroup: a
+    .mutation()
+    .arguments({
+      username: a.string().required(),
+      groupName: a.string().required(),
+    })
+    .authorization((allow) => [allow.group('admin')])
+    .handler(a.handler.function(manageUsers))
+    .returns(a.string()),
+});
+
+/**
+ * Schema Type Definition
+ * ----------------------
+ * Exports the schema type for use in other parts of the application.
+ * 
+ * @type {ClientSchema<typeof schema>}
+ */
+export type Schema = ClientSchema<typeof schema>;
+
+/**
+ * Data Configuration
+ * ------------------
+ * Defines the data configuration using the defined schema.
+ * 
+ * @constant
+ * @type {ReturnType<typeof defineData>}
+ */
+export const data = defineData({
+  schema,
+  /**
+   * Authorization Modes
+   * -------------------
+   * Defines the default authorization mode for the API.
+   */
+  authorizationModes: {
+    defaultAuthorizationMode: 'userPool'
+  },
+});
+
+---
 File Path: app/fonts.ts
 // fonts.ts
 // Purpose: This module configures the Google fonts used throughout the application.
@@ -92,7 +516,7 @@ export default function RootLayout({
         {/* Apply the 'inter' font class to the body for consistent typography across the application. */}
         <ToastProvider>
           {/* Include the ToastProvider to manage toast notifications across the app. */}
-          <Toast />{" "}
+          <Toast />
           {/* Render the Toast component to display notifications at the top level. */}
           {children}
           {/* Render child components passed to the RootLayout. */}
@@ -104,35 +528,35 @@ export default function RootLayout({
 
 ---
 File Path: app/page.tsx
-/**
- * File Path: app/page.tsx
- *
- * Home Component
- * --------------
- * This file defines the Home component, which serves as the main landing page of the application.
- * It includes interactive elements such as login links and implements animations using Framer Motion.
- */
-
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, useAnimation, AnimationControls } from "framer-motion";
 import { climate_crisis, tiltWarp } from "@/app/fonts";
 import Link from "next/link";
 import { Background } from "@/components/Background";
 
 export default function Home(): JSX.Element {
-  // Animation controls for the center div, top div, button, lines, and footer.
+  // Animation controls for the center div, top div, button+footer, lines.
   const centerControls: AnimationControls = useAnimation();
   const topControls: AnimationControls = useAnimation();
-  const buttonControls: AnimationControls = useAnimation();
   const line1Controls: AnimationControls = useAnimation();
   const line2Controls: AnimationControls = useAnimation();
   const line3Controls: AnimationControls = useAnimation();
-  const footerControls: AnimationControls = useAnimation();
+  const footerControls: AnimationControls = useAnimation(); // Button and footer now use the same controls
 
-  // useEffect to sequence the animations.
+  // State to track if the component has mounted and if animations are in progress.
+  const [mounted, setMounted] = useState(false);
+  const [animationsComplete, setAnimationsComplete] = useState(false); // Track if animations are complete
+
+  // Ensure component is mounted before triggering animations
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return; // Prevent animations from starting before component is mounted
+
     async function sequenceAnimations() {
       // Wait 500ms after page load.
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -149,13 +573,10 @@ export default function Home(): JSX.Element {
       // Start fading in the top div 500ms after slide-out begins.
       setTimeout(async () => {
         await topControls.start("visible");
-
-        // After the top div has fully appeared, start fading in the button.
-        await buttonControls.start("visible");
       }, 500);
 
       // Delay before starting the animation for line 1
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Adjust delay as needed
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Animate the lines with existing delays
       await line1Controls.start("visible");
@@ -164,20 +585,31 @@ export default function Home(): JSX.Element {
       await new Promise((resolve) => setTimeout(resolve, 500));
       await line3Controls.start("visible");
 
-      // Fade in the footer after the lines
+      // Fade in the footer and button at the same time after the lines
       await footerControls.start("visible");
+
+      // Mark animations as complete after everything is done
+      setAnimationsComplete(true);
     }
 
     sequenceAnimations();
   }, [
+    mounted,
     centerControls,
     topControls,
-    buttonControls,
+    footerControls,
     line1Controls,
     line2Controls,
     line3Controls,
-    footerControls,
   ]);
+
+  // Handle button clicks only when animations are complete
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!animationsComplete) {
+      e.preventDefault();
+      return;
+    }
+  };
 
   // Variants for the center div animations.
   const centerVariants = {
@@ -218,16 +650,16 @@ export default function Home(): JSX.Element {
     },
   };
 
-  // Variants for the button animations.
-  const buttonVariants = {
+  // Variants for the footer+button animations (now they animate together).
+  const footerVariants = {
     hidden: {
       opacity: 0,
     },
     visible: {
       opacity: 1,
       transition: {
-        duration: 0.3, // Fade in quickly over 0.3s.
-        ease: "easeOut",
+        duration: 0.5, // Fade in over 0.5s.
+        ease: "easeIn",
       },
     },
   };
@@ -246,28 +678,13 @@ export default function Home(): JSX.Element {
     },
   };
 
-  // Variants for the footer animation.
-  const footerVariants = {
-    hidden: {
-      opacity: 0,
-    },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.25, // Fade in over 0.5s.
-        ease: "easeIn",
-      },
-    },
-  };
-
   // Render the main structure of the home page.
   return (
     <>
       <Background />
       <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden">
         <div>
-          
-          <div className="">
+          <div>
             <div>
               {/* Top div with fade-in animation. */}
               <motion.div
@@ -277,15 +694,6 @@ export default function Home(): JSX.Element {
                 animate={topControls}
               >
                 Meet A Drifter
-              </motion.div>
-              {/* Button with fade-in animation. */}
-              <motion.div
-                className=" fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700 "
-                variants={buttonVariants}
-                initial="hidden"
-                animate={buttonControls}
-              >
-                <Link href="/members">Join/Login</Link>
               </motion.div>
             </div>
           </div>
@@ -323,7 +731,17 @@ export default function Home(): JSX.Element {
             the website you just joined.
           </motion.div>
         </div>
-        {/* Footer with fade-in animation */}
+        {/* Footer and button with fade-in animation */}
+        <motion.div
+          className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
+          variants={footerVariants}
+          initial="hidden"
+          animate={footerControls}
+        >
+          <Link href="/members" onClick={handleClick}>
+            Join/Login
+          </Link>
+        </motion.div>
         <motion.a
           href="https://www.matterandgas.com"
           className="text-white p-2 fixed bottom-2 right-3 text-xs"
@@ -372,7 +790,7 @@ File Path: app/globals.css
 File Path: app/members/layout.tsx
 /**
  * File Path: app/members/layout.tsx
- * 
+ *
  * Member Layout Component
  * -----------------------
  * This file defines the Layout component specifically for member areas. It incorporates authentication,
@@ -382,7 +800,7 @@ File Path: app/members/layout.tsx
 "use client";
 
 import { useState } from "react";
-import { Authenticator } from "@aws-amplify/ui-react";
+import { Authenticator, View } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
 import { motion } from "framer-motion";
 import outputs from "@/amplify_outputs.json";
@@ -391,18 +809,72 @@ import bg from "@/public/nacho-champion.png";
 import "@aws-amplify/ui-react/styles.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import MembersMenu from "@/components/MembersMenu";
-import { Bars3Icon, XCircleIcon } from "@heroicons/react/24/solid";
+import { Bars3Icon } from "@heroicons/react/24/solid";
 import { climate_crisis } from "@/app/fonts";
 
 // Configure AWS Amplify
 Amplify.configure(outputs);
+
+// Custom form fields configuration
+const formFields = {
+  signUp: {
+    email: {
+      order: 1,
+      label: "Email",
+      placeholder: "Enter your email address",
+    },
+    password: {
+      order: 2,
+      label: "Password",
+      placeholder: "Enter your password",
+    },
+    confirm_password: {
+      order: 3,
+      label: "Confirm Password",
+      placeholder: "Confirm your password",
+    },
+    preferred_username: {
+      order: 4,
+      label: "Username",
+      placeholder: "Enter your unique username",
+    },
+    given_name: {
+      order: 5,
+      label: "First Name",
+      placeholder: "Enter your first name",
+    },
+    family_name: {
+      order: 6,
+      label: "Last Name",
+      placeholder: "Enter your last name",
+    },
+  },
+};
+
+// Custom components for Authenticator
+const components = {
+  Header() {
+    return (
+      <View
+        as="div"
+        fontFamily={climate_crisis.style.fontFamily}
+        textAlign="center"
+        margin="16px 0"
+        fontSize="2rem"
+        color="var(--amplify-colors-white)"
+      >
+        Meet A Drifter
+      </View>
+    );
+  },
+};
 
 /**
  * Layout Component
  * ----------------
  * This component serves as the layout wrapper for member-specific areas of the application.
  * It handles authentication, manages background opacity, and controls the visibility of the navigation menu.
- * 
+ *
  * @component
  * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
  * @returns {JSX.Element} The rendered Layout component.
@@ -417,7 +889,7 @@ export default function Layout({
    * handleOpacityChange Function
    * ----------------------------
    * Updates the background opacity state based on user input.
-   * 
+   *
    * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event.
    */
   const handleOpacityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -434,7 +906,7 @@ export default function Layout({
   };
 
   return (
-    <Authenticator variation="modal" hideSignUp={false}>
+    <Authenticator formFields={formFields} components={components} variation="modal" hideSignUp={false}>
       {({ signOut, user }) => (
         <AuthProvider user={user || null} signOut={signOut || (() => {})}>
           <LayoutContent
@@ -456,7 +928,7 @@ export default function Layout({
  * -----------------------
  * This component handles the rendering of the main layout content, including background image,
  * menu control, and member-specific child components.
- * 
+ *
  * @component
  * @param {number} bgOpacity - The current opacity level of the background image.
  * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
@@ -485,7 +957,7 @@ function LayoutContent({
   }
 
   return (
-    <div>
+    <div className="w-full">
       <div
         className="w-full h-screen fixed top-0 left-0 -z-50"
         style={{ opacity: bgOpacity }}
@@ -499,23 +971,20 @@ function LayoutContent({
         />
       </div>
       <div
-            className={`${climate_crisis.className} fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
-     
-          >
-            Meet A Drifter
-          </div>
-      <div className="fixed top-0 w-full h-12 z-50 backdrop:blur-3xl">
+        className={`${climate_crisis.className} fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
+      >
+        Meet A Drifter
+      </div>
+      <div className="fixed top-0 w-full h-12 z-40 backdrop:blur-3xl">
         {/* Menu Button */}
-        <button
-          className="fixed top-4 right-4 text-white px-4 rounded-lg"
-          onClick={toggleMenu}
-        >
-          {menuOpen ? (
-            <XCircleIcon className="size-6 text-white" />
-          ) : (
+        {!menuOpen && (
+          <button
+            className="fixed top-4 right-4 text-white px-4 rounded-lg"
+            onClick={toggleMenu}
+          >
             <Bars3Icon className="size-6 text-white" />
-          )}
-        </button>
+          </button>
+        )}
       </div>
       {/* Members Menu */}
       <motion.div
@@ -553,8 +1022,21 @@ File Path: app/members/page.tsx
 
 "use client";
 
+import { useEffect, useState } from "react";
+import { generateClient } from "aws-amplify/data"; // Import Amplify Data Client.
+import type { Schema } from "@/amplify/data/resource"; // Import the data schema type.
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
 import Poll from "@/components/Poll"; // Import Poll component for rendering active polls.
+
+/**
+ * Interface for the Site Notification.
+ */
+interface SiteNotification {
+  message: string;
+}
+
+// Generate the Amplify client with the schema
+const client = generateClient<Schema>();
 
 /**
  * Home Component
@@ -566,17 +1048,56 @@ import Poll from "@/components/Poll"; // Import Poll component for rendering act
  * @returns {JSX.Element} The rendered Home component for member areas.
  */
 export default function Home(): JSX.Element {
-  const { user } = useAuth(); // Access user details and signOut function from authentication context.
+  const { user } = useAuth(); // Access user details from authentication context.
+  const [notification, setNotification] = useState<string | null>(null); // State for site notification
 
-  // Render the component with user-specific content and actions.
+  // Fetch the current site notification on component mount
+  useEffect(() => {
+    const fetchNotification = async () => {
+      try {
+        const { data, errors } = await client.models.SiteNotification.list({});
+        if (errors) {
+          console.error("Failed to fetch notification");
+          return;
+        }
+        // Assume there's only one notification for simplicity
+        const currentNotification = data[0] as SiteNotification | undefined;
+        setNotification(currentNotification?.message || null);
+      } catch (err) {
+        console.error("Error fetching notification:", err);
+      }
+    };
+
+    fetchNotification();
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col text-center items-center justify-between py-12">
-      <div>
-        {/* Display the welcoming message with user-specific details. */}
-        <div className="mt-12 text-lg">User ID: {user?.username}</div>
+    <main className="flex min-h-screen flex-col items-center py-8">
+      <div className="w-full mt-12 pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+        {/* Flex adjustments for md screen size */}
+        <div className="flex flex-col items-center justify-center mt-12 text-lg bg-amber-400">
+          <div>User ID: {user?.username}</div>
+        </div>
+        {/* Display the site notification */}
+        {notification && (
+          <div className="w-full bg-yellow-200 text-black text-center p-4 mb-4">
+            {notification}
+          </div>
+        )}
+        <div className="flex flex-col sm:flex-row justify-between md:space-x-8">
+          {/* Display user-specific details */}
+
+          {/* Render the Profile component */}
+          <div className="flex flex-col items-center justify-center bg-teal-300">
+            placeholder for Profile component
+          </div>
+
+          {/* Render the Poll component */}
+          <div className="flex flex-col items-center justify-center bg-purple-300">
+            <Poll />
+          </div>
+        </div>
       </div>
-      {/* Render the Poll component */}
-      <Poll />
     </main>
   );
 }
@@ -643,18 +1164,20 @@ export default function AdminLayout({
     { href: "/members/admin", label: "Admin Home" },
     { href: "/members/admin/users", label: "Manage Users" },
     { href: "/members/admin/polls", label: "Manage Polls" },
-    { href: "/members/admin/messaging", label: "Messaging" }
+    { href: "/members/admin/messaging", label: "Messaging" },
+    { href: "/members/admin/files", label: "Files" },
   ];
 
   // Render the component with user-specific content and actions.
   return (
-    <main className="flex min-h-screen flex-col text-center items-center justify-between py-12">
-      <div className=" fixed top-16 flex space-x-6">
+    <main className="flex flex-col w-full min-h-screen py-12 items-center">
+      {/* Navigation links */}
+      <div className="fixed text-xs w-auto mx-auto p-3 sm:p-5 sm:px-6 top-16 m-1 bg-blue-950 bg-opacity-50 rounded-lg shadow flex justify-center space-x-2 sm:space-x-8 md:space-x-16">
         {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`${
+            className={`p-1 text-xs sm:text-sm ${
               pathname === link.href
                 ? "underline decoration-solid decoration-2 underline-offset-4"
                 : ""
@@ -664,7 +1187,11 @@ export default function AdminLayout({
           </Link>
         ))}
       </div>
-      {children}
+
+      {/* Content */}
+      <div className="flex-grow w-full mt-20 px-4">
+        {children}
+      </div>
     </main>
   );
 }
@@ -713,31 +1240,32 @@ File Path: app/members/admin/polls/page.tsx
  * 
  * Polls Page Component
  * --------------------
- * This file defines the 
+ * This file defines the AdminPollPage component that displays the list of polls and the poll creation form.
  */
 
 import CreatePoll from "@/components/CreatePoll"; // Import the CreatePoll component to handle poll creation.
 import ListPolls from "@/components/ListPolls"; // Import the ListPolls component to display existing polls.
 
 /**
- *  Component
- * -------------------
+ * AdminPollPage Component
+ * -----------------------
  * Renders the admin dashboard with sections for listing and creating polls.
+ * Ensures that components are responsive and take full width or flex to share space evenly.
  * 
  * @component
- * @returns {JSX.Element} The rendered AdminPage component.
+ * @returns {JSX.Element} The rendered AdminPollPage component.
  */
 export default function AdminPollPage(): JSX.Element {
   return (
-    <main className="w-full justify-center">
+    <main className="w-full">
       <div className="mt-16">
-        <div className="md:flex md:justify-around sm:p-4">
+        <div className="flex flex-col md:flex-row justify-center md:space-x-6 w-full">
           {/* Section for listing existing polls */}
-          <div className="mt-3 md:w-full md:m-2">
+          <div className="w-full md:w-1/2 p-2">
             <ListPolls />
           </div>
           {/* Section for creating new polls */}
-          <div className="mt-3 md:w-full md:m-2">
+          <div className="w-full md:w-1/2 p-2">
             <CreatePoll />
           </div>
         </div>
@@ -750,26 +1278,264 @@ export default function AdminPollPage(): JSX.Element {
 File Path: app/members/admin/users/page.tsx
 /**
  * File Path: @/app/members/admin/users/page.tsx
- * 
+ *
  * Users Page Component
  * --------------------
+ * This file defines the Admin User Page component, allowing administrators
+ * to view all users, see their group memberships, and add or remove users from groups.
+ * It is optimized for both mobile and desktop screens, ensuring a flexible, usable layout on smaller screens.
+ */
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+
+// Define TypeScript interfaces for the expected data structures
+
+/**
+ * Interface for individual user attributes such as email and verification status.
+ */
+interface UserAttribute {
+  Name: string;
+  Value: string;
+}
+
+/**
+ * Interface for Cognito user data with associated attributes.
+ */
+interface CognitoUser {
+  Username: string;
+  Attributes: UserAttribute[];
+}
+
+/**
+ * Interface for Cognito groups that a user is associated with.
+ */
+interface CognitoGroup {
+  GroupName: string;
+}
+
+/**
+ * Interface for a user with their associated groups.
+ */
+interface UserWithGroups {
+  user: CognitoUser;
+  groups: CognitoGroup[];
+}
+
+// Generate the Amplify client with the schema
+const client = generateClient<Schema>();
+
+/**
+ * AdminUserPage Component
+ * -----------------------
+ * This component renders a page where administrators can view and manage users
+ * and their associated groups, with the ability to add or remove users from groups.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered AdminUserPage component.
+ */
+export default function AdminUserPage(): JSX.Element {
+  const [users, setUsers] = useState<UserWithGroups[]>([]); // State for storing the list of users with groups
+  const [error, setError] = useState<string | null>(null); // State for handling errors
+
+  /**
+   * fetchUsers
+   * ----------
+   * Asynchronously fetches users and their groups from the backend API
+   * and updates the component's state.
+   */
+  const fetchUsers = async () => {
+    try {
+      // Fetch the users and groups data
+      const response = await client.queries.listUsersAndGroups({});
+      let responseData = response.data;
+
+      // If the response data is a string, attempt to parse it as JSON
+      if (typeof responseData === "string") {
+        responseData = JSON.parse(responseData);
+      }
+
+      // Check if the response data is an array and update the state
+      if (Array.isArray(responseData)) {
+        setUsers(responseData as UserWithGroups[]);
+      } else {
+        console.error("Invalid response structure:", responseData);
+        setError("Failed to load users.");
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError("Failed to load users.");
+    }
+  };
+
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  /**
+   * handleAddUserToGroup
+   * --------------------
+   * Adds a user to a specified group and refetches the user list.
+   *
+   * @param {string} username - The username of the user.
+   * @param {string} groupName - The name of the group to add the user to.
+   */
+  const handleAddUserToGroup = async (username: string, groupName: string) => {
+    try {
+      await client.mutations.addUserToGroup({ username, groupName });
+      await fetchUsers(); // Refresh the user list after adding
+    } catch (err) {
+      console.error("Error adding user to group:", err);
+    }
+  };
+
+  /**
+   * handleRemoveUserFromGroup
+   * -------------------------
+   * Removes a user from a specified group and refetches the user list.
+   *
+   * @param {string} username - The username of the user.
+   * @param {string} groupName - The name of the group to remove the user from.
+   */
+  const handleRemoveUserFromGroup = async (username: string, groupName: string) => {
+    try {
+      await client.mutations.removeUserFromGroup({ username, groupName });
+      await fetchUsers(); // Refresh the user list after removing
+    } catch (err) {
+      console.error("Error removing user from group:", err);
+    }
+  };
+
+  /**
+   * isUserAdmin
+   * -----------
+   * Checks if a given user belongs to the "admin" group.
+   *
+   * @param {CognitoGroup[]} groups - The groups the user belongs to.
+   * @returns {boolean} True if the user is in the "admin" group.
+   */
+  const isUserAdmin = (groups: CognitoGroup[]): boolean => {
+    return groups.some((group) => group.GroupName === "admin");
+  };
+
+  return (
+    <main className="w-full mt-16 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+      <div className="text-xs mb-2 bg-white bg-opacity-10 pb-2 shadow-lg rounded-lg overflow-hidden">
+        <div className="px-5 text-white pt-5 font-extralight text-2xl text-left">
+          Users
+        </div>
+        {error && <p className="text-red-500">{error}</p>}
+        <div className="p-4 flex flex-col space-y-4">
+          {users.length === 0 && !error ? (
+            <p className="text-center text-white">No users found.</p>
+          ) : (
+            users.map((userWithGroups) => {
+              const isAdmin = isUserAdmin(userWithGroups.groups);
+
+              return (
+                <div
+                  key={userWithGroups.user.Username}
+                  className="bg-black bg-opacity-70 p-4 rounded-lg flex flex-col sm:flex-row sm:justify-between items-start sm:items-center space-y-4 sm:space-y-0"
+                >
+                  {/* Left aligned user info */}
+                  <div className="flex flex-col text-left text-xs sm:text-sm space-y-2 w-full sm:w-auto">
+                    <div>
+                      <span className="font-bold">Username: </span>
+                      {userWithGroups.user.Username}
+                    </div>
+                    <div>
+                      <span className="font-bold">Email: </span>
+                      {userWithGroups.user.Attributes.find(
+                        (attr) => attr.Name === "email"
+                      )?.Value || "N/A"}
+                    </div>
+                    <div>
+                      <span className="font-bold">Groups: </span>
+                      {userWithGroups.groups.length > 0
+                        ? userWithGroups.groups.map((group) => group.GroupName).join(", ")
+                        : "No groups assigned"}
+                    </div>
+                  </div>
+
+                  {/* Conditionally render action buttons based on admin status */}
+                  <div className="flex flex-row justify-center w-full sm:w-auto space-x-4">
+                    {!isAdmin && (
+                      <button
+                        onClick={() =>
+                          handleAddUserToGroup(userWithGroups.user.Username, "admin")
+                        }
+                        className="bg-blue-500 text-white px-4 py-2 rounded text-xs"
+                      >
+                        Add to admin Group
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={() =>
+                          handleRemoveUserFromGroup(userWithGroups.user.Username, "admin")
+                        }
+                        className="bg-red-500 text-white px-4 py-2 rounded text-xs"
+                      >
+                        Remove from admin Group
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+---
+File Path: app/members/admin/files/page.tsx
+/**
+ * File Path: @/app/members/admin/files/page.tsx
+ *
+ * Files Page Component
+ * ------------------------
  * This file defines the 
  */
 
+"use client";
+
+import React from "react";
+//import { generateClient } from "aws-amplify/data";
+//import type { Schema } from "@/amplify/data/resource";
+//import { useContext } from "react";
+//import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Import the toast notifications context
+
+// Generate the Amplify client with the schema
+//const client = generateClient<Schema>();
 
 /**
- * Users pagr Component
- * -------------------
- * Renders the 
- * 
+ * AdminFilesPage Component
+ * ----------------------------
+ * This component renders a textarea allowing admins to manage the site notification message.
+ * It includes functionality for creating, updating, and deleting the notification.
+ *
  * @component
- * @returns {JSX.Element} The rendered AdminPage component.
+ * @returns {JSX.Element} The rendered AdminMessagingPage component.
  */
-export default function AdminPollPage(): JSX.Element {
+export default function AdminFilesPage(): JSX.Element {
+  //const [error, setError] = useState<string | null>(null); // Error handling state
+  //const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast notifications from ToastContext
+
+  
+
+  
+
   return (
-    <main className="w-full justify-center">
-      <div className="mt-16">
-        users
+    <main className="w-full flex justify-center">
+      <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg mt-16">
+        
       </div>
     </main>
   );
@@ -779,29 +1545,160 @@ export default function AdminPollPage(): JSX.Element {
 File Path: app/members/admin/messaging/page.tsx
 /**
  * File Path: @/app/members/admin/messaging/page.tsx
- * 
+ *
  * Messaging Page Component
- * --------------------
- * This file defines the AdminPage component, which serves as the main page for admin functionalities.
- * It includes components for listing existing polls and creating new polls. The page layout is responsive,
- * ensuring a consistent user experience across different screen sizes.
+ * ------------------------
+ * This file defines the Admin Messaging Page component, allowing administrators
+ * to create, update, and delete a site-wide notification message.
  */
 
+"use client";
 
+import React, { useState, useEffect } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import { useContext } from "react";
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Import the toast notifications context
+
+// Define TypeScript interface for notification
+interface SiteNotification {
+  id: string;
+  message: string;
+}
+
+// Generate the Amplify client with the schema
+const client = generateClient<Schema>();
 
 /**
- * Component
- * -------------------
- * Renders the d with sections for listing and creating polls.
- * 
+ * AdminMessagingPage Component
+ * ----------------------------
+ * This component renders a textarea allowing admins to manage the site notification message.
+ * It includes functionality for creating, updating, and deleting the notification.
+ *
  * @component
- * @returns {JSX.Element} The rendered AdminPage component.
+ * @returns {JSX.Element} The rendered AdminMessagingPage component.
  */
-export default function AdminPollPage(): JSX.Element {
+export default function AdminMessagingPage(): JSX.Element {
+  const [notification, setNotification] = useState<SiteNotification | null>(null); // State to store current notification
+  const [message, setMessage] = useState<string>(""); // State to store textarea message
+  const [error, setError] = useState<string | null>(null); // Error handling state
+  const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast notifications from ToastContext
+
+  // Fetch the current site notification on component mount
+  useEffect(() => {
+    const fetchNotification = async () => {
+      try {
+        const { data, errors } = await client.models.SiteNotification.list({});
+        if (errors) {
+          setError("Failed to fetch notification");
+          addToast({
+            messageType: "error",
+            message: "Failed to fetch site notification.",
+          });
+          return;
+        }
+        // Assume there's only one notification for simplicity
+        const currentNotification = data[0] as SiteNotification | undefined;
+        setNotification(currentNotification || null);
+        setMessage(currentNotification?.message || "");
+      } catch (err) {
+        console.error("Error fetching notification:", err);
+        setError("Failed to fetch notification");
+        addToast({
+          messageType: "error",
+          message: "An error occurred while fetching the notification.",
+        });
+      }
+    };
+
+    fetchNotification();
+  }, [addToast]);
+
+  // Handle save/update of the notification
+  const handleSave = async () => {
+    try {
+      if (notification) {
+        // Update existing notification
+        const { errors } = await client.models.SiteNotification.update({
+          id: notification.id,
+          message,
+        });
+        if (errors) throw new Error("Failed to update notification");
+      } else {
+        // Create new notification
+        const { errors } = await client.models.SiteNotification.create({
+          message,
+        });
+        if (errors) throw new Error("Failed to create notification");
+      }
+      addToast({
+        messageType: "success",
+        message: "Notification saved successfully!",
+      });
+    } catch (err) {
+      console.error("Error saving notification:", err);
+      setError("Failed to save notification");
+      addToast({
+        messageType: "error",
+        message: "An error occurred while saving the notification.",
+      });
+    }
+  };
+
+  // Handle delete of the notification
+  const handleDelete = async () => {
+    try {
+      if (!notification) return;
+      const { errors } = await client.models.SiteNotification.delete({ id: notification.id });
+      if (errors) throw new Error("Failed to delete notification");
+      setNotification(null);
+      setMessage("");
+      addToast({
+        messageType: "success",
+        message: "Notification deleted successfully!",
+      });
+    } catch (err) {
+      console.error("Error deleting notification:", err);
+      setError("Failed to delete notification");
+      addToast({
+        messageType: "error",
+        message: "An error occurred while deleting the notification.",
+      });
+    }
+  };
+
   return (
-    <main className="w-full justify-center">
-      <div className="mt-16">
-        messaging
+    <main className="w-full flex justify-center">
+      <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg mt-16">
+        <h2 className="p-3 font-extralight text-2xl text-left">Manage Site Notification</h2>
+        <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+          <div className="mb-4 w-full">
+            <label className="block text-white text-xs text-left">Notification Message</label>
+            <textarea
+              className="p-2 my-2 text-black w-full h-40 rounded border border-blue-600"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Enter the site-wide notification message..."
+            />
+          </div>
+          <div className="flex justify-between mt-4">
+            <button
+              onClick={handleSave}
+              className="p-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 border border-blue-500"
+            >
+              Save Notification
+            </button>
+            {notification && (
+              <button
+                onClick={handleDelete}
+                className="p-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 border border-red-500"
+              >
+                Delete Notification
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </main>
   );
@@ -811,7 +1708,7 @@ export default function AdminPollPage(): JSX.Element {
 File Path: components/MembersMenu.tsx
 /**
  * File Path: components/MembersMenu.tsx
- * 
+ *
  * Members Menu Component
  * ----------------------
  * This file defines the MembersMenu component, which is responsible for rendering the navigation
@@ -825,12 +1722,13 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
 import { useRouter } from "next/navigation"; // Import useRouter for programmatic navigation.
 import { useEffect, useRef } from "react";
+import { XCircleIcon } from "@heroicons/react/24/outline";
 
 /**
  * MembersMenuProps Interface
  * --------------------------
  * Defines the structure of the props passed to the MembersMenu component.
- * 
+ *
  * @interface MembersMenuProps
  * @property {number} bgOpacity - The current opacity level of the background image.
  * @property {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
@@ -850,7 +1748,7 @@ interface MembersMenuProps {
  * This component renders the navigation menu for member areas, including links, background opacity control,
  * and account management options like sign-out. The menu can be toggled open and closed, and it closes automatically
  * when clicking outside of it.
- * 
+ *
  * @component
  * @param {MembersMenuProps} props - The component props.
  * @returns {JSX.Element} The rendered MembersMenu component.
@@ -888,7 +1786,7 @@ export default function MembersMenu({
      * handleClickOutside Function
      * ---------------------------
      * Closes the menu if the user clicks outside of it and the menu is open.
-     * 
+     *
      * @param {MouseEvent} event - The mouse event triggered by the user's click.
      */
     const handleClickOutside = (event: MouseEvent): void => {
@@ -909,8 +1807,17 @@ export default function MembersMenu({
   }, [isMenuOpen, toggleMenu]);
 
   return (
-    <div ref={menuRef} className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 shadow-md">
+    <div
+      ref={menuRef}
+      className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 shadow-md"
+    >
       {/* Links Section */}
+      <button
+        className="fixed top-4 right-4 text-white px-4 rounded-lg"
+        onClick={toggleMenu}
+      >
+        <XCircleIcon className="size-6 text-white" />
+      </button>
       <div className="mb-6">
         <nav className="mt-2">
           {Links.map((link) => (
@@ -1091,7 +1998,7 @@ export default function CreatePoll(): JSX.Element {
   };
 
   return (
-    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+    <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
       <h1 className="p-3 font-extralight text-2xl text-left">Create a New Poll</h1>
       <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
         <div className="mb-4 w-full">
@@ -1745,7 +2652,7 @@ export default function ListPolls(): JSX.Element {
   }
 
   return (
-    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+    <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
       <div className="p-3 font-extralight text-2xl text-left">
         Current Polls
       </div>
@@ -2147,128 +3054,6 @@ const Toast: React.FC = (): JSX.Element => {
 export default Toast;
 
 ---
-File Path: amplify/backend.ts
-/**
- * File Path: amplify/backend.ts
- * 
- * Backend Definition
- * ------------------
- * This file defines the backend configuration for the application using AWS Amplify.
- * It imports and integrates the authentication and data resources into the backend setup.
- */
-
-import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
-import { auth } from './auth/resource'; // Import the authentication resource configuration.
-import { data } from './data/resource'; // Import the data resource configuration.
-
-/**
- * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
- * 
- * Backend Configuration
- * ---------------------
- * This function call sets up the backend by integrating the auth and data configurations.
- */
-defineBackend({
-  auth,
-  data,
-});
-
----
-File Path: amplify/auth/resource.ts
-/**
- * File Path: amplify/auth/resource.ts
- * 
- * Authentication Resource Configuration
- * -------------------------------------
- * This file defines the authentication resource for the application using Gen 2 AWS Amplify.
- * It configures the login method via email and customizes the verification email content.
- */
-
-import { defineAuth } from '@aws-amplify/backend'; // Import the defineAuth function from AWS Amplify.
-
-/**
- * Auth Configuration
- * ------------------
- * Defines the authentication setup for the application.
- * Configures email-based login with a verification code and custom email content.
- * 
- * @constant
- * @type {ReturnType<typeof defineAuth>}
- */
-export const auth = defineAuth({
-  loginWith: {
-    email: {
-      verificationEmailStyle: "CODE", // Specifies the style of the verification email (e.g., code or link).
-      verificationEmailSubject: "Welcome to Meet A Drifter", // Subject line for the verification email.
-      verificationEmailBody: (createCode: () => string) => 
-        `Use this code to confirm your Meet A Drifter account: ${createCode()}`, // Custom body of the verification email.
-    },
-  },
-});
-
----
-File Path: amplify/data/resource.ts
-/**
- * File Path: amplify/data/resource.ts
- * 
- * Data Resource Configuration
- * ---------------------------
- * This file defines the data model for the application using Gen 2 AWS Amplify.
- * It sets up the schema for the `Poll` and `Vote` models, including their fields,
- * relationships, and authorization rules.
- */
-
-import { type ClientSchema, a, defineData } from '@aws-amplify/backend'; // Import necessary types and functions from AWS Amplify.
-
-/**
- * Schema Definition
- * -----------------
- * Defines the data models and their respective fields and authorization rules.
- * 
- * - `Poll`: Represents a poll with a title, options, creation date, and status.
- * - `Vote`: Represents a vote with references to the poll and user, along with the selected option.
- */
-const schema = a.schema({
-  Poll: a.model({
-    title: a.string().required(), // The title of the poll, a required string.
-    options: a.string().array().required(), // An array of possible options for the poll, required.
-    createdAt: a.datetime().required(), // The date and time the poll was created, required.
-    status: a.string().required(), // The status of the poll (e.g., 'active', 'inactive'), required.
-  }).authorization((allow) => [
-    allow.group('admin').to(['create', 'update', 'delete']), // Admins can create, update, and delete polls.
-    allow.authenticated('userPools').to(['read']), // Authenticated users can read polls.
-  ]),
-  Vote: a.model({
-    pollId: a.id().required(), // The ID of the associated poll, required.
-    userId: a.string().required(), // The ID of the user who voted, required.
-    option: a.string().required(), // The selected option for the vote, required.
-  }).authorization((allow) => [
-    allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create and read votes.
-  ]),
-});
-
-/**
- * Schema Type Definition
- * ----------------------
- * Exports the schema type for use in other parts of the application.
- * 
- * @type {ClientSchema<typeof schema>}
- */
-export type Schema = ClientSchema<typeof schema>;
-
-/**
- * Data Configuration
- * ------------------
- * Defines the data configuration using the defined schema.
- * 
- * @constant
- * @type {ReturnType<typeof defineData>}
- */
-export const data = defineData({
-  schema,
-});
-
----
 File Path: contexts/ToastContext.tsx
 /**
  * File Path: contexts/ToastContext.tsx
@@ -2393,15 +3178,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
 ---
 File Path: contexts/AuthContext.tsx
-/**
- * File Path: contexts/AuthContext.tsx
- * 
- * Authentication Context
- * ----------------------
- * This file provides a React context for managing authentication throughout the application.
- * It handles user state, provides functions for signing out, and checks if the current user has admin status.
- */
-
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types and functions for authentication from AWS Amplify.
 
@@ -2414,7 +3190,7 @@ import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types 
  * @property {AuthUser | null | undefined} user - The authenticated user.
  * @property {() => void} signOut - Function to handle user sign-out.
  * @property {boolean} isAdmin - Indicates if the current user belongs to the admin group.
- * @property {boolean} loading - Indicates if the admin status is still being determined.
+ * @property {boolean} loading - Indicates if admin status is still being determined.
  */
 export interface AuthContextProps {
   user: AuthUser | null | undefined;
@@ -2477,18 +3253,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, sign
       if (user) {
         try {
           const session = await fetchAuthSession();
+          const attributes = await fetchAuthSession();
+          console.log("User attributes:", attributes);
           const groups = session.tokens?.idToken?.payload["cognito:groups"];
-          if (Array.isArray(groups) && groups.includes("admin")) {
-            
-            setIsAdmin(true);
-          } else {
-            
-            setIsAdmin(false);
-          }
+          setIsAdmin(Array.isArray(groups) && groups.includes("admin"));
+
+         
+          
         } catch (error) {
           console.error("Failed to fetch user session:", error);
         } finally {
-          setLoading(false); // Admin status check is complete.
+          setLoading(false); // Admin status is complete.
         }
       } else {
         setLoading(false); // No user, so no admin check needed.

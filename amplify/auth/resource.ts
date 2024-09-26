@@ -24,11 +24,21 @@ export const auth = defineAuth({
     email: {
       verificationEmailStyle: "CODE", // Specifies the style of the verification email (e.g., code or link).
       verificationEmailSubject: "Welcome to Meet A Drifter", // Subject line for the verification email.
-      verificationEmailBody: (createCode: () => string) => 
+      verificationEmailBody: (createCode: () => string) =>
         `Use this code to confirm your Meet A Drifter account: ${createCode()}`, // Custom body of the verification email.
     },
   },
-
+  userAttributes: {
+    familyName: {
+      required: true, // Makes the family name (lastName) attribute required.
+    },
+    givenName: {
+      required: true, // Makes the given name (firstName) attribute required.
+    },
+    preferredUsername: {
+      required: true, // Makes the preferred username attribute required.
+    },
+  },
   /**
    * User Groups Configuration
    * -------------------------

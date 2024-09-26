@@ -132,6 +132,18 @@ export default function AdminUserPage(): JSX.Element {
     }
   };
 
+  /**
+   * isUserAdmin
+   * -----------
+   * Checks if a given user belongs to the "admin" group.
+   *
+   * @param {CognitoGroup[]} groups - The groups the user belongs to.
+   * @returns {boolean} True if the user is in the "admin" group.
+   */
+  const isUserAdmin = (groups: CognitoGroup[]): boolean => {
+    return groups.some((group) => group.GroupName === "admin");
+  };
+
   return (
     <main className="w-full mt-16 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
       <div className="text-xs mb-2 bg-white bg-opacity-10 pb-2 shadow-lg rounded-lg overflow-hidden">
@@ -143,58 +155,60 @@ export default function AdminUserPage(): JSX.Element {
           {users.length === 0 && !error ? (
             <p className="text-center text-white">No users found.</p>
           ) : (
-            users.map((userWithGroups) => (
-              <div
-                key={userWithGroups.user.Username}
-                className="bg-black bg-opacity-70 p-4 rounded-lg flex flex-col sm:flex-row sm:justify-between items-start sm:items-center space-y-4 sm:space-y-0"
-              >
-                {/* Left aligned user info */}
-                <div className="flex flex-col text-left text-xs sm:text-sm space-y-2 w-full sm:w-auto">
-                  <div>
-                    <span className="font-bold">Username: </span>
-                    {userWithGroups.user.Username}
-                  </div>
-                  <div>
-                    <span className="font-bold">Email: </span>
-                    {userWithGroups.user.Attributes.find(
-                      (attr) => attr.Name === "email"
-                    )?.Value || "N/A"}
-                  </div>
-                  <div>
-                    <span className="font-bold">Groups: </span>
-                    {userWithGroups.groups.length > 0
-                      ? userWithGroups.groups.map((group) => group.GroupName).join(", ")
-                      : "No groups assigned"}
-                  </div>
-                </div>
+            users.map((userWithGroups) => {
+              const isAdmin = isUserAdmin(userWithGroups.groups);
 
-                {/* Centered action buttons */}
-                <div className="flex flex-row justify-center w-full sm:w-auto space-x-4">
-                  <button
-                    onClick={() =>
-                      handleAddUserToGroup(
-                        userWithGroups.user.Username,
-                        "YourGroupName"
-                      )
-                    }
-                    className="bg-blue-500 text-white px-4 py-2 rounded text-xs"
-                  >
-                    Add to Group
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleRemoveUserFromGroup(
-                        userWithGroups.user.Username,
-                        "YourGroupName"
-                      )
-                    }
-                    className="bg-red-500 text-white px-4 py-2 rounded text-xs"
-                  >
-                    Remove from Group
-                  </button>
+              return (
+                <div
+                  key={userWithGroups.user.Username}
+                  className="bg-black bg-opacity-70 p-4 rounded-lg flex flex-col sm:flex-row sm:justify-between items-start sm:items-center space-y-4 sm:space-y-0"
+                >
+                  {/* Left aligned user info */}
+                  <div className="flex flex-col text-left text-xs sm:text-sm space-y-2 w-full sm:w-auto">
+                    <div>
+                      <span className="font-bold">Username: </span>
+                      {userWithGroups.user.Username}
+                    </div>
+                    <div>
+                      <span className="font-bold">Email: </span>
+                      {userWithGroups.user.Attributes.find(
+                        (attr) => attr.Name === "email"
+                      )?.Value || "N/A"}
+                    </div>
+                    <div>
+                      <span className="font-bold">Groups: </span>
+                      {userWithGroups.groups.length > 0
+                        ? userWithGroups.groups.map((group) => group.GroupName).join(", ")
+                        : "No groups assigned"}
+                    </div>
+                  </div>
+
+                  {/* Conditionally render action buttons based on admin status */}
+                  <div className="flex flex-row justify-center w-full sm:w-auto space-x-4">
+                    {!isAdmin && (
+                      <button
+                        onClick={() =>
+                          handleAddUserToGroup(userWithGroups.user.Username, "admin")
+                        }
+                        className="bg-blue-500 text-white px-4 py-2 rounded text-xs"
+                      >
+                        Add to admin Group
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={() =>
+                          handleRemoveUserFromGroup(userWithGroups.user.Username, "admin")
+                        }
+                        className="bg-red-500 text-white px-4 py-2 rounded text-xs"
+                      >
+                        Remove from admin Group
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

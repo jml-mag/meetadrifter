@@ -1,13 +1,11 @@
-// amplify/data/resource.ts
-
 /**
  * File Path: amplify/data/resource.ts
  * 
  * Data Resource Configuration
  * ---------------------------
  * This file defines the data model for the application using Gen 2 AWS Amplify.
- * It sets up the schema for the `Poll`, `Vote`, and `User` models, including their fields,
- * relationships, and authorization rules.
+ * It sets up the schema for the `Poll`, `Vote`, and `SiteNotification` models, 
+ * including their fields, relationships, and authorization rules.
  * 
  * Additionally, it includes custom queries and mutations for user management tasks:
  * - Listing users and their groups
@@ -25,7 +23,7 @@ import { manageUsers } from '../functions/manage-users/resource'; // Import the 
  * 
  * - `Poll`: Represents a poll with a title, options, creation date, and status.
  * - `Vote`: Represents a vote with references to the poll and user, along with the selected option.
- * - `User`: Represents a user profile with fields like screen name, first name, last name, and location.
+ * - `SiteNotification`: Represents a site-wide notification message that can be created, updated, and deleted by an admin.
  * 
  * Custom Queries and Mutations:
  * - `listUsersAndGroups`: Lists all users and their associated groups.
@@ -40,7 +38,7 @@ const schema = a.schema({
     createdAt: a.datetime().required(), // The date and time the poll was created, required.
     status: a.string().required(), // The status of the poll (e.g., 'active', 'inactive'), required.
   }).authorization((allow) => [
-    allow.group('admin').to(['create', 'update', 'delete']), // admins can create, update, and delete polls.
+    allow.group('admin').to(['create', 'update', 'delete']), // Admins can create, update, and delete polls.
     allow.authenticated('userPools').to(['read']), // Authenticated users can read polls.
   ]),
   
@@ -52,14 +50,11 @@ const schema = a.schema({
     allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create and read votes.
   ]),
 
-  User: a.model({
-    id: a.id().required(), 
-    screenName: a.string().required(), // The user's chosen screen name.
-    firstName: a.string().required(), // The user's first name.
-    lastName: a.string(), // Optional user's last name.
-    location: a.string(), // Optional location field.
+  SiteNotification: a.model({
+    message: a.string().required(), // The content of the notification message, required.
   }).authorization((allow) => [
-    allow.authenticated('userPools').to(['create', 'read', 'update']), // Authenticated users can create, read, and update their profiles.
+    allow.authenticated('userPools').to(['read']),
+    allow.group('admin').to(['create', 'update', 'delete', 'read']), // Admins can create, update, delete, and read notifications.
   ]),
 
   // Custom Queries and Mutations for User Management

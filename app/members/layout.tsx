@@ -10,7 +10,7 @@
 "use client";
 
 import { useState } from "react";
-import { Authenticator } from "@aws-amplify/ui-react";
+import { Authenticator, View } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
 import { motion } from "framer-motion";
 import outputs from "@/amplify_outputs.json";
@@ -24,6 +24,60 @@ import { climate_crisis } from "@/app/fonts";
 
 // Configure AWS Amplify
 Amplify.configure(outputs);
+
+// Custom form fields configuration
+const formFields = {
+  signUp: {
+    email: {
+      order: 1,
+      label: "Email",
+      placeholder: "Enter your email address",
+    },
+    password: {
+      order: 2,
+      label: "Password",
+      placeholder: "Enter your password",
+    },
+    confirm_password: {
+      order: 3,
+      label: "Confirm Password",
+      placeholder: "Confirm your password",
+    },
+    preferred_username: {
+      order: 4,
+      label: "Username",
+      placeholder: "Enter your unique username",
+    },
+    given_name: {
+      order: 5,
+      label: "First Name",
+      placeholder: "Enter your first name",
+    },
+    family_name: {
+      order: 6,
+      label: "Last Name",
+      placeholder: "Enter your last name",
+    },
+  },
+};
+
+// Custom components for Authenticator
+const components = {
+  Header() {
+    return (
+      <View
+        as="div"
+        fontFamily={climate_crisis.style.fontFamily}
+        textAlign="center"
+        margin="16px 0"
+        fontSize="2rem"
+        color="var(--amplify-colors-white)"
+      >
+        Meet A Drifter
+      </View>
+    );
+  },
+};
 
 /**
  * Layout Component
@@ -62,7 +116,7 @@ export default function Layout({
   };
 
   return (
-    <Authenticator variation="modal" hideSignUp={false}>
+    <Authenticator formFields={formFields} components={components} variation="modal" hideSignUp={false}>
       {({ signOut, user }) => (
         <AuthProvider user={user || null} signOut={signOut || (() => {})}>
           <LayoutContent
