@@ -152,8 +152,8 @@ export default function Poll(): JSX.Element {
   if (error || !poll) return <div>{error || "There is no active poll currently"}</div>;
 
   return (
-    <div className="w-full shadow-black shadow-lg border-l border-r border-white md:w-2/3 lg:w-1/2 mx-auto p-6 md:rounded-lg bg-gradient-to-b from-blue-900 to-sky-950 via-blue-950">
-      <div className="text-lg mb-2">Current Poll Question</div>
+    <div className="section-container shadow-black shadow-lg border-l border-r border-white md:w-2/3 lg:w-1/2 mx-auto p-6 md:rounded-lg bg-gradient-to-b from-blue-900 to-sky-950 via-blue-950">
+      <div className="heading mb-2">Current Poll Question</div>
       <div className="text-2xl font-bold mb-4">{poll.title}</div>
       {hasVoted ? (
         <div className="max-w-md mx-auto">
@@ -176,7 +176,7 @@ export default function Poll(): JSX.Element {
           {poll.options.map((option) => (
             <button
               key={option}
-              className="block w-full py-2 px-4 bg-blue-950 rounded-lg border border-blue-500 hover:border-blue-50"
+              className="btn-primary block w-full"
               onClick={() => handleVote(option as string)}
             >
               {option}
@@ -186,4 +186,5 @@ export default function Poll(): JSX.Element {
       )}
     </div>
   );
+
 }

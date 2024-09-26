@@ -129,10 +129,8 @@ export default function CurrentPoll(): JSX.Element {
   }
 
   return (
-    <div className="w-full pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
-      <div className="p-3 font-extralight text-2xl text-left">
-        Current Poll
-      </div>
+    <div className="section-container pb-4 sm:p-4">
+      <div className="heading">Current Poll</div>
       <div className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
         <div className="p-4">
           <div className="text-lg font-semibold pb-2">{poll.title}</div>
@@ -158,4 +156,5 @@ export default function CurrentPoll(): JSX.Element {
       </div>
     </div>
   );
+
 }

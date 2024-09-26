@@ -61,7 +61,7 @@ export default function Home(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col items-center py-8">
-      <div className="w-full mt-12 pb-4 sm:p-4 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+      <div className="section-container w-full mt-12 pb-4 sm:p-4">
         {/* Flex adjustments for md screen size */}
         <div className="flex flex-col items-center justify-center mt-12 text-lg bg-amber-400">
           <div>User ID: {user?.username}</div>
@@ -74,12 +74,12 @@ export default function Home(): JSX.Element {
         )}
         <div className="flex flex-col sm:flex-row justify-between md:space-x-8">
           {/* Display user-specific details */}
-
+  
           {/* Render the Profile component */}
           <div className="flex flex-col items-center justify-center bg-teal-300">
             placeholder for Profile component
           </div>
-
+  
           {/* Render the Poll component */}
           <div className="flex flex-col items-center justify-center bg-purple-300">
             <Poll />
@@ -88,4 +88,5 @@ export default function Home(): JSX.Element {
       </div>
     </main>
   );
+  
 }

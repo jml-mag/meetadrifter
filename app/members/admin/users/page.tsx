@@ -145,9 +145,9 @@ export default function AdminUserPage(): JSX.Element {
   };
 
   return (
-    <main className="w-full mt-16 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
+    <main className="w-full mt-16 section-container">
       <div className="text-xs mb-2 bg-white bg-opacity-10 pb-2 shadow-lg rounded-lg overflow-hidden">
-        <div className="px-5 text-white pt-5 font-extralight text-2xl text-left">
+        <div className="px-5 text-white pt-5 heading">
           Users
         </div>
         {error && <p className="text-red-500">{error}</p>}
@@ -190,7 +190,7 @@ export default function AdminUserPage(): JSX.Element {
                         onClick={() =>
                           handleAddUserToGroup(userWithGroups.user.Username, "admin")
                         }
-                        className="bg-blue-500 text-white px-4 py-2 rounded text-xs"
+                        className="btn btn-primary"
                       >
                         Add to admin Group
                       </button>
@@ -200,7 +200,7 @@ export default function AdminUserPage(): JSX.Element {
                         onClick={() =>
                           handleRemoveUserFromGroup(userWithGroups.user.Username, "admin")
                         }
-                        className="bg-red-500 text-white px-4 py-2 rounded text-xs"
+                        className="btn btn-secondary"
                       >
                         Remove from admin Group
                       </button>
@@ -214,4 +214,5 @@ export default function AdminUserPage(): JSX.Element {
       </div>
     </main>
   );
+
 }

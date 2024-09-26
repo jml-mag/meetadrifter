@@ -52,8 +52,8 @@ const Toast: React.FC = (): JSX.Element => {
             transition={{ duration: 0.5 }} // Set the animation duration to 0.5 seconds.
             className={`text-lg p-3 max-w-md m-auto rounded-lg shadow bg-opacity-90 mt-1 ${
               toast.messageType === "success"
-                ? "shadow-green-900 bg-green-600 text-green-50" // Style for success messages.
-                : "shadow-red-900 bg-red-600 text-red-50" // Style for error messages.
+                ? "btn-primary shadow-green-900 bg-green-600 text-green-50" // Style for success messages using existing classes.
+                : "btn-secondary shadow-red-900 bg-red-600 text-red-50" // Style for error messages using existing classes.
             }`}
           >
             <div className="p-3 grid grid-cols-[auto,1fr] gap-2 items-center font-extralight">
@@ -83,6 +83,7 @@ const Toast: React.FC = (): JSX.Element => {
       </AnimatePresence>
     </div>
   );
+
 };
 
 export default Toast;

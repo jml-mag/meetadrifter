@@ -128,13 +128,13 @@ export default function CreatePoll(): JSX.Element {
   };
 
   return (
-    <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
-      <h1 className="p-3 font-extralight text-2xl text-left">Create a New Poll</h1>
+    <div className="section-container p-2">
+      <h1 className="heading">Create a New Poll</h1>
       <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
         <div className="mb-4 w-full">
           <label className="block text-white text-xs text-left">Poll Title</label>
           <input
-            className="p-2 my-2 text-black w-full rounded border border-blue-600"
+            className="form-input"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -145,13 +145,13 @@ export default function CreatePoll(): JSX.Element {
           {options.map((option, index) => (
             <div key={index} className="flex items-center mb-2">
               <input
-                className="p-2 my-2 text-black w-full rounded border border-blue-600"
+                className="form-input"
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
               />
               <button
-                className="ml-2 p-2 text-xs text-white bg-red-600 rounded-lg hover:bg-red-700 border border-red-500"
+                className="btn btn-secondary ml-2"
                 type="button"
                 onClick={() => handleOptionRemove(index)}
               >
@@ -163,7 +163,7 @@ export default function CreatePoll(): JSX.Element {
         <div className="flex justify-between mt-4">
           {options.length < 10 && (
             <button
-              className="p-2 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 border border-green-500"
+              className="btn bg-green-600 hover:bg-green-700 border border-green-500 text-white"
               type="button"
               onClick={addOption}
             >
@@ -171,7 +171,7 @@ export default function CreatePoll(): JSX.Element {
             </button>
           )}
           <button
-            className="p-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 border border-blue-500"
+            className="btn btn-primary"
             type="button"
             onClick={handleSubmit}
           >
@@ -181,4 +181,7 @@ export default function CreatePoll(): JSX.Element {
       </div>
     </div>
   );
+
+
+
 }

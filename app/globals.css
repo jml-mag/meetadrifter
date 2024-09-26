@@ -1,28 +1,73 @@
 /* globals.css
-   Purpose: This file sets up global styles that are applied across the entire application.
-   It leverages Tailwind CSS to manage base, component, and utility styles, ensuring a consistent and modern design language.
+   Purpose: Consolidates shared styles and reduces redundant inline classes across components.
+*/
 
-   The `@tailwind` directives import various layers of Tailwind's utility classes,
-   while custom styles within the `@layer base` are defined to tailor the foundational appearance of HTML elements. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-   @tailwind base;     /* Imports the base styles from Tailwind, which reset and normalize default browser styles. */
-   @tailwind components; /* Imports component styles, allowing the definition of CSS classes that are reusable across components. */
-   @tailwind utilities; /* Imports utility classes from Tailwind, providing a wide range of quick-to-apply styles for spacing, sizing, typography, and more. */
-   
-   /* Define base layer modifications:
-      This section customizes the default styling of HTML elements, particularly the <body> tag,
-      to ensure that the application has a unified look and feel from the start. */
-   @layer base {
-       body {
-           @apply bg-black text-white; /* Sets the background color to black and the text color to white for all text within the <body>. */
-       }
-   }
+/* Base Layer Modifications */
+@layer base {
+  body {
+    @apply bg-black text-white;
+  }
+}
 
-   @layer components {
-    .memberBtn {
-        @apply w-24 mx-2 mt-4 text-xs text-white py-2 px-3 rounded-md shadow-md;
-    }
-   }
-   
-   /* Additional styles can be added here as needed to further customize the application's global aesthetics. */
-   
+/* Custom Components */
+@layer components {
+  /* Shared button styles for general use */
+  .btn {
+    @apply text-xs py-2 px-3 rounded-md shadow-md;
+  }
+  
+  /* Primary button (e.g., for save, submit) */
+  .btn-primary {
+    @apply bg-blue-600 text-white border border-blue-500 hover:bg-blue-700;
+  }
+  
+  /* Secondary button (e.g., for cancel, delete) */
+  .btn-secondary {
+    @apply bg-red-600 text-white border border-red-500 hover:bg-red-700;
+  }
+
+  /* Tertiary button for other actions (e.g., links) */
+  .btn-tertiary {
+    @apply bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200;
+  }
+
+  /* General container styling for sections */
+  .section-container {
+    @apply w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg;
+  }
+
+  /* Shared text heading styles */
+  .heading {
+    @apply font-extralight text-2xl text-left p-3;
+  }
+  
+  /* Styling for forms */
+  .form-input {
+    @apply p-2 my-2 text-black w-full rounded border border-blue-600;
+  }
+
+  /* Background Image Styling */
+  .bg-image {
+    @apply w-full h-screen fixed top-0 left-0 -z-50;
+    object-fit: cover;
+  }
+
+  /* Centered text content for page headings */
+  .centered-heading {
+    @apply fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white;
+  }
+
+  /* Custom member button */
+  .member-btn {
+    @apply btn w-24 mx-2 mt-4 bg-teal-600 hover:bg-teal-500;
+  }
+}
+
+/* Global Classes */
+@layer utilities {
+  /* Add any additional global utility classes here as needed */
+}

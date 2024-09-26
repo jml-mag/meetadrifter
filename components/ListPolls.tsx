@@ -401,10 +401,8 @@ export default function ListPolls(): JSX.Element {
   }
 
   return (
-    <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
-      <div className="p-3 font-extralight text-2xl text-left">
-        Current Polls
-      </div>
+    <div className="section-container p-2">
+      <div className="heading">Current Polls</div>
       {polls.map((poll) => (
         <Accordion
           key={poll.id}
@@ -417,4 +415,5 @@ export default function ListPolls(): JSX.Element {
       ))}
     </div>
   );
+
 }
