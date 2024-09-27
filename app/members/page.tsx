@@ -60,7 +60,7 @@ export default function Home(): JSX.Element {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center py-8">
+    <main className="flex min-h-screen m-2 flex-col items-center py-8">
       <div className="section-container w-full mt-12 pb-4 sm:p-4">
         {/* Flex adjustments for md screen size */}
         <div className="flex flex-col items-center justify-center mt-12 text-lg bg-amber-400">
