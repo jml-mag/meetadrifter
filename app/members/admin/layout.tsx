@@ -59,7 +59,7 @@ export default function AdminLayout({
     { href: "/members/admin/users", label: "Manage Users" },
     { href: "/members/admin/polls", label: "Manage Polls" },
     { href: "/members/admin/messaging", label: "Messaging" },
-    { href: "/members/admin/files", label: "Files" },
+    { href: "/members/admin/code", label: "Code" },
   ];
 
   // Render the component with user-specific content and actions.
