@@ -101,7 +101,7 @@ export default function MembersMenu({
   return (
     <div
       ref={menuRef}
-      className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 shadow-md"
+      className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 pt-16 shadow-md"
     >
       {/* Links Section */}
       <button

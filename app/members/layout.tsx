@@ -94,7 +94,7 @@ const components = {
 export default function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>): JSX.Element {
-  const [bgOpacity, setBgOpacity] = useState<number>(0.75); // State to manage the background opacity level.
+  const [bgOpacity, setBgOpacity] = useState<number>(0.65); // State to manage the background opacity level.
   const [menuOpen, setMenuOpen] = useState<boolean>(false); // State to track menu open/close status.
 
   /**
@@ -184,7 +184,6 @@ function LayoutContent({
           alt="Nacho Champion - The greatest moment of one man's life."
           fill
           style={{ objectFit: "cover" }}
-          priority
         />
       </div>
       <div

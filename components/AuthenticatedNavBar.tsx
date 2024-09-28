@@ -28,8 +28,8 @@ const adminNavLinks: NavLink[] = [
   { href: "/members/admin", label: "Admin Home" },
   { href: "/members/admin/users", label: "Manage Users" },
   { href: "/members/admin/polls", label: "Manage Polls" },
-  { href: "/members/admin/messaging", label: "Messaging" },
   { href: "/members/admin/code", label: "Manage Code" },
+  { href: "/members/admin/messaging", label: "Messaging" },
 ];
 
 /**
@@ -48,12 +48,12 @@ export default function AuthenticatedNavBar(): JSX.Element {
     : membersNavLinks;
 
   return (
-    <div className="fixed z-40 text-xs text-center w-auto mx-auto  sm:px-6 top-16 px-2 m-1  rounded-lg flex justify-center space-x-1 sm:space-x-8 md:space-x-16">
+    <div className="fixed z-40 text-xs lg:text-sm text-center w-auto mx-auto top-16 px-2 m-1  rounded-lg flex justify-center space-x-1 sm:space-x-4 md:space-x-8 lg:space-x-16">
       {navLinks.map((link) => (
         <Link
           key={link.href}
           href={link.href}
-          className={`text-xs sm:text-sm p-3 sm:p-5 border-1 rounded ${
+          className={`p-2 sm:p-4 border-1 rounded ${
             pathname === link.href
               ? "text-white border white"
               : "text-yellow-400 border-0"
