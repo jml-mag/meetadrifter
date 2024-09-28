@@ -4,7 +4,8 @@
  * Member Layout Component
  * -----------------------
  * This file defines the Layout component specifically for member areas. It incorporates authentication,
- * dynamic styling elements like background image opacity control, and a toggleable menu.
+ * dynamic styling elements like background image opacity control, and conditionally renders either the
+ * members menu or admin menu based on the pathname.
  */
 
 "use client";
@@ -18,6 +19,7 @@ import Image from "next/image";
 import bg from "@/public/nacho-champion.png";
 import "@aws-amplify/ui-react/styles.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import AuthenticatedNavBar from "@/components/AuthenticatedNavBar"; // Import AuthenticatedNavBar component.
 import MembersMenu from "@/components/MembersMenu";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import { climate_crisis } from "@/app/fonts";
@@ -116,7 +118,12 @@ export default function Layout({
   };
 
   return (
-    <Authenticator formFields={formFields} components={components} variation="modal" hideSignUp={false}>
+    <Authenticator
+      formFields={formFields}
+      components={components}
+      variation="modal"
+      hideSignUp={false}
+    >
       {({ signOut, user }) => (
         <AuthProvider user={user || null} signOut={signOut || (() => {})}>
           <LayoutContent
@@ -181,10 +188,15 @@ function LayoutContent({
         />
       </div>
       <div
-        className={`${climate_crisis.className} fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
+        className={`${climate_crisis.className} fixed z-50 top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
       >
         Meet A Drifter
       </div>
+      <div className="flex justify-center items-center w-full mt-8">
+        {/* Render the navigation bar */}
+        <AuthenticatedNavBar />
+      </div>
+
       <div className="fixed top-0 w-full h-12 z-40 backdrop:blur-3xl">
         {/* Menu Button */}
         {!menuOpen && (
@@ -196,6 +208,7 @@ function LayoutContent({
           </button>
         )}
       </div>
+
       {/* Members Menu */}
       <motion.div
         initial={{ y: "-100%" }}
@@ -203,17 +216,20 @@ function LayoutContent({
         exit={{ y: "-100%" }}
         transition={{ type: "spring", stiffness: 50 }}
         className="fixed top-0 w-full z-40"
-        style={{ height: "100vh" }} // Ensures the menu takes up the full screen height.
+        style={{ height: "100vh" }}
       >
         <MembersMenu
           bgOpacity={bgOpacity}
           handleOpacityChange={handleOpacityChange}
           toggleMenu={toggleMenu}
-          isMenuOpen={menuOpen} // Pass the menuOpen state as a prop.
+          isMenuOpen={menuOpen}
         />
       </motion.div>
-
-      {children}
+      <div className="fixed top-0 h-32 w-full backdrop-blur-lg z-30"></div>
+      <div className="mt-24">
+        {children}
+      </div>
+      
     </div>
   );
 }

@@ -21,10 +21,10 @@ import CurrentPoll from "@/components/CurrentPoll";
 export default function AdminPage(): JSX.Element {
   return (
     <main className="w-full justify-center">
-      <div className="mt-16">
-        <div className="md:flex md:justify-around sm:p-4">
+      <div className="">
+        <div className="md:flex md:justify-around">
           {/* Section for listing existing polls */}
-          <div className="mt-3 md:w-full md:m-2">
+          <div className="md:w-full">
             <CurrentPoll />
           </div>
         </div>

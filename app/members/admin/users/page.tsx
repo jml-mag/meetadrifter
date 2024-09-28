@@ -145,7 +145,7 @@ export default function AdminUserPage(): JSX.Element {
   };
 
   return (
-    <main className="w-full mt-16 section-container">
+    <main className="w-full section-container">
       <div className="text-xs mb-2 bg-white bg-opacity-10 pb-2 shadow-lg rounded-lg overflow-hidden">
         <div className="px-5 text-white pt-5 heading">
           Users

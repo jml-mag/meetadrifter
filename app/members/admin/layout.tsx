@@ -13,8 +13,7 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
-import { useRouter, usePathname } from "next/navigation"; // Import useRouter and usePathname from Next.js.
-import Link from "next/link";
+import { useRouter } from "next/navigation"; // Import useRouter and usePathname from Next.js.
 import type { ReactNode } from "react";
 
 /**
@@ -32,8 +31,6 @@ export default function AdminLayout({
 }: Readonly<{ children: ReactNode }>): JSX.Element {
   const { isAdmin, loading } = useAuth(); // Access user details, admin status, and loading state from authentication context.
   const router = useRouter(); // Access useRouter to handle navigation.
-  const pathname = usePathname(); // Get the current pathname.
-
   useEffect(() => {
     /**
      * Admin Status Check
@@ -53,37 +50,12 @@ export default function AdminLayout({
     return <div>Loading...</div>; // Optionally render a loading state while checking admin status.
   }
 
-  // Define the navigation links for the admin area.
-  const navLinks = [
-    { href: "/members/admin", label: "Admin Home" },
-    { href: "/members/admin/users", label: "Manage Users" },
-    { href: "/members/admin/polls", label: "Manage Polls" },
-    { href: "/members/admin/messaging", label: "Messaging" },
-    { href: "/members/admin/code", label: "Code" },
-  ];
 
   // Render the component with user-specific content and actions.
   return (
     <main className="flex flex-col w-full min-h-screen py-12 items-center">
-      {/* Navigation links */}
-      <div className="fixed text-xs w-auto mx-auto p-3 sm:p-5 sm:px-6 top-16 m-1 bg-blue-950 bg-opacity-50 rounded-lg shadow flex justify-center space-x-2 sm:space-x-8 md:space-x-16">
-        {navLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`p-1 text-xs sm:text-sm ${
-              pathname === link.href
-                ? "underline decoration-solid decoration-2 underline-offset-4"
-                : ""
-            } hover:underline`}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </div>
-
       {/* Content */}
-      <div className="flex-grow w-full mt-20 px-4">
+      <div className="flex-grow w-full px-4">
         {children}
       </div>
     </main>

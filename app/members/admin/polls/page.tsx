@@ -21,14 +21,14 @@ import ListPolls from "@/components/ListPolls"; // Import the ListPolls componen
 export default function AdminPollPage(): JSX.Element {
   return (
     <main className="w-full">
-      <div className="mt-16">
+      <div className="">
         <div className="flex flex-col md:flex-row justify-center md:space-x-6 w-full">
           {/* Section for listing existing polls */}
-          <div className="w-full md:w-1/2 p-2">
+          <div className="w-full md:w-1/2">
             <ListPolls />
           </div>
           {/* Section for creating new polls */}
-          <div className="w-full md:w-1/2 p-2">
+          <div className="w-full md:w-1/2">
             <CreatePoll />
           </div>
         </div>

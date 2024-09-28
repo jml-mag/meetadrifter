@@ -124,7 +124,7 @@ export default function AdminMessagingPage(): JSX.Element {
 
   return (
     <main className="w-full flex justify-center">
-      <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg mt-16">
+      <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
         <h2 className="p-3 font-extralight text-2xl text-left">Manage Site Notification</h2>
         <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
           {error && <p className="text-red-500 mb-4">{error}</p>}

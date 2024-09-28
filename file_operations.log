@@ -193,3 +193,17 @@
 2024-09-26 13:36:26,869 - INFO - Appended content from contexts/AuthContext.tsx
 2024-09-26 13:36:26,869 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/contexts
 2024-09-26 13:36:26,870 - INFO - Operation completed. All code written to current-code.txt
+2024-09-27 09:54:57,263 - INFO - Appended content from amplify/backend.ts
+2024-09-27 09:54:57,263 - INFO - Appended content from amplify/auth/resource.ts
+2024-09-27 09:54:57,264 - INFO - Appended content from amplify/functions/manage-users/resource.ts
+2024-09-27 09:54:57,264 - INFO - Appended content from amplify/functions/manage-users/handler.ts
+2024-09-27 09:54:57,264 - INFO - Appended content from amplify/data/resource.ts
+2024-09-27 09:54:57,264 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/amplify
+2024-09-27 09:54:57,264 - INFO - Operation completed. All code written to current-code.txt
+2024-09-27 13:16:44,721 - INFO - Appended content from amplify/backend.ts
+2024-09-27 13:16:44,721 - INFO - Appended content from amplify/auth/resource.ts
+2024-09-27 13:16:44,722 - INFO - Appended content from amplify/functions/manage-users/resource.ts
+2024-09-27 13:16:44,723 - INFO - Appended content from amplify/functions/manage-users/handler.ts
+2024-09-27 13:16:44,723 - INFO - Appended content from amplify/data/resource.ts
+2024-09-27 13:16:44,723 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/amplify
+2024-09-27 13:16:44,724 - INFO - Operation completed. All code written to current-code.txt

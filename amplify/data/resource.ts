@@ -57,6 +57,16 @@ const schema = a.schema({
     allow.group('admin').to(['create', 'update', 'delete', 'read']), // Admins can create, update, delete, and read notifications.
   ]),
 
+  CodeAndDocs: a.model({
+    filepath: a.string().required(),
+    code: a.string().required(),
+    docs: a.string().required(),
+    slug: a.string().required(),
+  }).authorization((allow) => [
+    allow.authenticated('userPools').to(['read']),
+    allow.group('admin').to(['create', 'update', 'delete', 'read']),
+  ]),
+
   // Custom Queries and Mutations for User Management
   /**
    * Query: listUsersAndGroups
