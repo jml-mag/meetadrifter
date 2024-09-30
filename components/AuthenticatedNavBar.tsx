@@ -28,7 +28,7 @@ const adminNavLinks: NavLink[] = [
   { href: "/members/admin", label: "Admin Home" },
   { href: "/members/admin/users", label: "Manage Users" },
   { href: "/members/admin/polls", label: "Manage Polls" },
-  { href: "/members/admin/code", label: "Manage Code / Docs" },
+  { href: "/members/admin/code", label: "Manage Content" },
   { href: "/members/admin/messaging", label: "Messaging" },
 ];
 

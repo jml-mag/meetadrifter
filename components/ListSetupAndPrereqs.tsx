@@ -1,3 +1,15 @@
+/**
+ * File Path: @/components/ListSetupAndPrereqs.tsx
+ * 
+ * ListSetupAndPrereqs Component
+ * -----------------------------
+ * Renders a searchable list of setup and prerequisite items, which can be filtered 
+ * by their title, type, or slug. Allows selection of an item for viewing or editing.
+ * 
+ * This component interacts with Amplify to fetch data and uses the toast notification system
+ * for handling messages during data operations.
+ */
+
 "use client";
 
 import React, { useState, useEffect, useContext } from "react";
@@ -8,6 +20,19 @@ import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 // Generate the Amplify client with the schema
 const client = generateClient<Schema>();
 
+/**
+ * SetupAndPrereqData Interface
+ * ----------------------------
+ * Defines the shape of the data structure for a setup or prerequisite item.
+ * 
+ * @interface SetupAndPrereqData
+ * @property {string} id - Unique identifier of the item.
+ * @property {string} type - The type/category of the item.
+ * @property {string} title - The title of the item.
+ * @property {string} docs - Documentation or description of the item.
+ * @property {string | null} code - Optional code associated with the item, can be null.
+ * @property {string} slug - A URL-friendly identifier for the item.
+ */
 interface SetupAndPrereqData {
   id: string;
   type: string;
@@ -17,6 +42,14 @@ interface SetupAndPrereqData {
   slug: string;
 }
 
+/**
+ * ListSetupAndPrereqsProps Interface
+ * ----------------------------------
+ * Defines the props expected by the `ListSetupAndPrereqs` component.
+ * 
+ * @interface ListSetupAndPrereqsProps
+ * @property {(id: string | null) => void} onSelectItem - Callback function to handle selection of an item for viewing or editing.
+ */
 interface ListSetupAndPrereqsProps {
   onSelectItem: (id: string | null) => void;
 }
@@ -24,15 +57,26 @@ interface ListSetupAndPrereqsProps {
 /**
  * ListSetupAndPrereqs Component
  * -----------------------------
- * Displays a list of setup and prerequisites, provides a search box for filtering, 
- * and allows selection for updating.
+ * Displays a list of setup and prerequisite items retrieved from the Amplify datastore. 
+ * Provides a search functionality for filtering items by title, type, or slug.
+ * 
+ * @component
+ * @param {ListSetupAndPrereqsProps} props - The component props.
+ * @returns {JSX.Element} The rendered `ListSetupAndPrereqs` component.
  */
 const ListSetupAndPrereqs: React.FC<ListSetupAndPrereqsProps> = ({ onSelectItem }) => {
-  const [itemsList, setItemsList] = useState<SetupAndPrereqData[]>([]);
-  const [filteredItems, setFilteredItems] = useState<SetupAndPrereqData[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const { addToast } = useContext<ToastContextType>(ToastContext);
+  // State variables for managing the list and search functionality
+  const [itemsList, setItemsList] = useState<SetupAndPrereqData[]>([]); // Complete list of items fetched from the datastore.
+  const [filteredItems, setFilteredItems] = useState<SetupAndPrereqData[]>([]); // Filtered list based on search term.
+  const [searchTerm, setSearchTerm] = useState<string>(""); // State for managing the search term input.
+  const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast context for displaying notifications.
 
+  /**
+   * useEffect Hook - Fetch Items
+   * ----------------------------
+   * Fetches the list of setup and prerequisite items from Amplify on component mount.
+   * Displays a toast error notification if the fetching process fails.
+   */
   useEffect(() => {
     const fetchItems = async () => {
       const { data, errors } = await client.models.SetupAndPrereqs.list();
@@ -41,6 +85,7 @@ const ListSetupAndPrereqs: React.FC<ListSetupAndPrereqsProps> = ({ onSelectItem 
         addToast({ messageType: "error", message: "Failed to fetch items." });
         console.error("Fetch errors:", errors);
       } else {
+        // Update state with fetched data
         setItemsList(data || []);
         setFilteredItems(data || []);
       }
@@ -53,7 +98,10 @@ const ListSetupAndPrereqs: React.FC<ListSetupAndPrereqsProps> = ({ onSelectItem 
    * handleSearch Function
    * ---------------------
    * Updates the filtered item list based on the search term input.
-   * Filters items where the title, type, or slug includes the search term (case insensitive).
+   * Filters items where the title, type, or slug includes the search term (case-insensitive).
+   * Resets to the full list if the search term is shorter than 3 characters.
+   * 
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The input event for the search term.
    */
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const term = event.target.value.toLowerCase();
@@ -74,6 +122,7 @@ const ListSetupAndPrereqs: React.FC<ListSetupAndPrereqsProps> = ({ onSelectItem 
     }
   };
 
+  // Render the list of items and search functionality
   return (
     <div className="bg-black bg-opacity-70 p-2 rounded-lg w-full mb-4">
       {/* Header and search box container */}
@@ -88,7 +137,8 @@ const ListSetupAndPrereqs: React.FC<ListSetupAndPrereqsProps> = ({ onSelectItem 
           className="form-input max-w-3xl mt-2 md:mt-0 md:ml-4 p-2 rounded"
         />
       </div>
-      <div className="overflow-scroll">
+      <div className="h-48 overflow-scroll">
+        {/* Render the filtered list of items */}
         <ul className="text-sm mt-4 ml-6">
           {filteredItems.map((item) => (
             <li

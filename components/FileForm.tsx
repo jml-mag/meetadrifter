@@ -1,3 +1,14 @@
+/**
+ * File Path: @/components/FileForm.tsx
+ * 
+ * FileForm Component
+ * -------------------
+ * Provides a form interface for creating or updating file entries with associated metadata like file path, 
+ * summary (docs), and code content. This form dynamically loads file data for editing if a file ID is selected.
+ * On successful operations, the component triggers toast notifications and provides a way to return to the 
+ * file list view.
+ */
+
 "use client";
 
 import React, { useState, useContext, useEffect } from "react";
@@ -8,6 +19,15 @@ import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 // Generate the Amplify client with the schema
 const client = generateClient<Schema>();
 
+/**
+ * FileFormProps Interface
+ * -----------------------
+ * Defines the structure for the props passed to the `FileForm` component.
+ * 
+ * @interface FileFormProps
+ * @property {string | null} selectedFileId - The ID of the file being edited or `null` if creating a new file.
+ * @property {() => void} resetSelection - Function to reset the selection and return to the list view.
+ */
 interface FileFormProps {
   selectedFileId: string | null;
   resetSelection: () => void;
@@ -16,17 +36,26 @@ interface FileFormProps {
 /**
  * FileForm Component
  * -------------------
- * Renders a form for creating a new file or updating an existing one.
+ * Renders a form for creating a new file or updating an existing one, with fields for file path, summary, and code.
+ * It also provides options for saving, updating, and deleting file entries.
+ * 
+ * @component
+ * @param {FileFormProps} props - The component props.
+ * @returns {JSX.Element} The rendered `FileForm` component.
  */
 const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) => {
+  // State variables for managing file form inputs
   const [slug, setSlug] = useState<string>("");
   const [filePath, setFilePath] = useState<string>("");
   const [docs, setDocs] = useState<string>("");
   const [code, setCode] = useState<string>("");
-  const { addToast } = useContext<ToastContextType>(ToastContext);
+  const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast notifications
 
   /**
-   * Fetches the file data when an existing file is selected.
+   * useEffect Hook - Fetch File Data
+   * --------------------------------
+   * Fetches file data if `selectedFileId` is not "new", allowing the form to be pre-filled with existing file details.
+   * If `selectedFileId` is "new", the form fields are cleared for a new file creation.
    */
   useEffect(() => {
     if (selectedFileId && selectedFileId !== "new") {
@@ -40,6 +69,7 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
           addToast({ messageType: "error", message: "Failed to load file." });
           console.error("Fetch file errors:", errors);
         } else if (data) {
+          // Populate form fields with fetched data
           setSlug(data.slug);
           setFilePath(data.filepath);
           setDocs(data.docs);
@@ -58,16 +88,21 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
   }, [selectedFileId, addToast]);
 
   /**
-   * Handles saving or updating a file.
+   * handleSaveFile Function
+   * -----------------------
+   * Handles saving or updating a file entry. Generates a slug from the file path.
+   * Creates a new file if `selectedFileId` is "new", otherwise updates the existing file without modifying `lesson_order`.
+   * On successful save or update, triggers a toast notification and resets the view.
    */
   const handleSaveFile = async () => {
     try {
+      // Generate a slug by removing the file extension and replacing "/" with "-"
       const slugWithoutSuffix = filePath.split(".").slice(0, -1).join("");
       const newSlug = slugWithoutSuffix.replace(/\//g, "-");
 
       let result;
       if (selectedFileId && selectedFileId !== "new") {
-        // Update existing file without modifying lesson_order
+        // Update existing file
         result = await client.models.CodeAndDocs.update({
           id: selectedFileId,
           filepath: filePath,
@@ -76,13 +111,13 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
           slug: newSlug,
         });
       } else {
-        // Create a new file with lesson_order defaulted to 0
+        // Create a new file with default `lesson_order` of 0
         result = await client.models.CodeAndDocs.create({
           filepath: filePath,
           code,
           docs,
           slug: newSlug,
-          lesson_order: 0, // Default lesson_order to 0 for new files
+          lesson_order: 0, // Default `lesson_order` to 0 for new files
         });
       }
 
@@ -110,7 +145,10 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
   };
 
   /**
-   * Handles deletion of the selected file.
+   * handleDeleteFile Function
+   * -------------------------
+   * Deletes the selected file from the database.
+   * Triggers a success or error toast notification based on the result.
    */
   const handleDeleteFile = async () => {
     if (!selectedFileId) return;
@@ -128,8 +166,10 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
     }
   };
 
+  // Render the form for file creation or editing
   return (
     <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
+      {/* File Path Input */}
       <div className="mb-4">
         <label className="block text-sm mb-2">File Path</label>
         <input
@@ -141,6 +181,7 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
         />
       </div>
 
+      {/* Summary Input */}
       <div className="mb-4">
         <label className="block text-sm mb-2">Summary</label>
         <textarea
@@ -152,6 +193,7 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
         />
       </div>
 
+      {/* Code Input */}
       <div className="mb-4">
         <label className="block text-sm mb-2">Code</label>
         <textarea
@@ -163,16 +205,20 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
         />
       </div>
 
+      {/* Form Buttons */}
       <div className="flex justify-between">
         {selectedFileId && selectedFileId !== "new" ? (
           <>
+            {/* Delete Button */}
             <button className="btn btn-secondary" onClick={handleDeleteFile}>
               Delete
             </button>
             <div className="flex space-x-4">
+              {/* Cancel Button */}
               <button className="btn btn-secondary" onClick={resetSelection}>
                 Cancel
               </button>
+              {/* Update Button */}
               <button className="btn btn-primary" onClick={handleSaveFile}>
                 Update File
               </button>
@@ -180,9 +226,11 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
           </>
         ) : (
           <div className="flex space-x-4">
+            {/* Cancel Button */}
             <button className="btn btn-secondary" onClick={resetSelection}>
               Cancel
             </button>
+            {/* Save Button */}
             <button className="btn btn-primary" onClick={handleSaveFile}>
               Save File
             </button>
