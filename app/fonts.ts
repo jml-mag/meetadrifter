@@ -1,4 +1,4 @@
-// fonts.ts
+// app/fonts.ts
 // Purpose: This module configures the Google fonts used throughout the application.
 // It sets up 'Inter' and 'Josefin Slab' fonts with specific subsets and display settings.
 // These fonts are imported and configured using the new font API from Next.js.

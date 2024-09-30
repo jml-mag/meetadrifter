@@ -64,25 +64,25 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
     try {
       const slugWithoutSuffix = filePath.split(".").slice(0, -1).join("");
       const newSlug = slugWithoutSuffix.replace(/\//g, "-");
-      setSlug(newSlug);
 
       let result;
       if (selectedFileId && selectedFileId !== "new") {
-        // Update existing file
+        // Update existing file without modifying lesson_order
         result = await client.models.CodeAndDocs.update({
           id: selectedFileId,
           filepath: filePath,
           code,
           docs,
-          slug: slug,
+          slug: newSlug,
         });
       } else {
-        // Create a new file
+        // Create a new file with lesson_order defaulted to 0
         result = await client.models.CodeAndDocs.create({
           filepath: filePath,
           code,
           docs,
-          slug: slug,
+          slug: newSlug,
+          lesson_order: 0, // Default lesson_order to 0 for new files
         });
       }
 
@@ -94,10 +94,9 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
       } else {
         addToast({
           messageType: "success",
-          message:
-            selectedFileId && selectedFileId !== "new"
-              ? "File updated successfully!"
-              : "File saved successfully!",
+          message: selectedFileId && selectedFileId !== "new"
+            ? "File updated successfully!"
+            : "File saved successfully!",
         });
         resetSelection(); // Switch back to list view after saving
       }
@@ -149,7 +148,7 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
           onChange={(e) => setDocs(e.target.value)}
           className="form-input"
           placeholder="Enter file summary"
-          rows={4}
+          rows={8}
         />
       </div>
 
@@ -160,7 +159,7 @@ const FileForm: React.FC<FileFormProps> = ({ selectedFileId, resetSelection }) =
           onChange={(e) => setCode(e.target.value)}
           className="form-input"
           placeholder="Enter code content"
-          rows={8}
+          rows={16}
         />
       </div>
 

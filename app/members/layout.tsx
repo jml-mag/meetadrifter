@@ -187,7 +187,7 @@ function LayoutContent({
         />
       </div>
       <div
-        className={`${climate_crisis.className} fixed z-50 top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
+        className={`${climate_crisis.className} fixed z-40 top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
       >
         Meet A Drifter
       </div>

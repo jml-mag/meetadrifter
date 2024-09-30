@@ -1,73 +1,91 @@
-/* globals.css
-   Purpose: Consolidates shared styles and reduces redundant inline classes across components.
-*/
+/* File Path: app/globals.css
+ * 
+ * Purpose:
+ * --------
+ * Consolidates shared styles using Tailwind CSS to provide reusable classes across the application.
+ * Reduces redundant inline styles and ensures consistency in design.
+ */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Base Layer Modifications */
-@layer base {
-  body {
-    @apply bg-black text-white;
-  }
-}
-
-/* Custom Components */
-@layer components {
-  /* Shared button styles for general use */
-  .btn {
-    @apply text-xs py-2 px-3 rounded-md shadow-md;
-  }
-  
-  /* Primary button (e.g., for save, submit) */
-  .btn-primary {
-    @apply bg-blue-600 text-white border border-blue-500 hover:bg-blue-700;
-  }
-  
-  /* Secondary button (e.g., for cancel, delete) */
-  .btn-secondary {
-    @apply bg-red-600 text-white border border-red-500 hover:bg-red-700;
-  }
-
-  /* Tertiary button for other actions (e.g., links) */
-  .btn-tertiary {
-    @apply bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200;
-  }
-
-  /* General container styling for sections */
-  .section-container {
-    @apply w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg;
-  }
-
-  /* Shared text heading styles */
-  .heading {
-    @apply font-extralight text-2xl text-left p-3;
-  }
-  
-  /* Styling for forms */
-  .form-input {
-    @apply p-2 my-2 text-black w-full rounded border border-blue-600;
-  }
-
-  /* Background Image Styling */
-  .bg-image {
-    @apply w-full h-screen fixed top-0 left-0 -z-50;
-    object-fit: cover;
-  }
-
-  /* Centered text content for page headings */
-  .centered-heading {
-    @apply fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white;
-  }
-
-  /* Custom member button */
-  .member-btn {
-    @apply btn w-24 mx-2 mt-4 bg-teal-600 hover:bg-teal-500;
-  }
-}
-
-/* Global Classes */
-@layer utilities {
-  /* Add any additional global utility classes here as needed */
-}
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities;
+ 
+ /* Base Layer Modifications */
+ @layer base {
+   /* Apply global background and text color */
+   body {
+     @apply bg-black text-white;
+   }
+ }
+ 
+ /* Custom Components */
+ @layer components {
+   /* Button Styles */
+   
+   /* Generic button with basic styling */
+   .btn {
+     @apply text-xs py-2 px-3 rounded-md shadow-md;
+   }
+   
+   /* Primary button for main actions (e.g., save, submit) */
+   .btn-primary {
+     @apply bg-blue-600 text-white border border-blue-500 hover:bg-blue-700;
+   }
+   
+   /* Secondary button for less prominent actions (e.g., cancel, delete) */
+   .btn-secondary {
+     @apply bg-red-600 text-white border border-red-500 hover:bg-red-700;
+   }
+ 
+   /* Tertiary button for alternate actions (e.g., links) */
+   .btn-tertiary {
+     @apply bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200;
+   }
+ 
+   /* Container Styles */
+ 
+   /* Generic container for section content */
+   .section-container {
+     @apply w-full my-1 p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg;
+   }
+ 
+   /* Text Styling */
+ 
+   /* Shared heading styles for titles and section headers */
+   .heading {
+     @apply font-extralight text-2xl text-left p-3;
+   }
+   
+   /* Form Elements */
+ 
+   /* Standard input field styling for forms */
+   .form-input {
+     @apply p-2 mb-3 w-full text-xs sm:text-sm md:text-base text-white rounded border bg-blue-950 bg-opacity-20;
+   }
+ 
+   /* Background Image Styling */
+   
+   /* Full-screen fixed background image with a blur effect */
+   .bg-image {
+     @apply w-full h-screen fixed top-0 left-0 -z-50;
+     object-fit: cover;
+   }
+ 
+   /* Centered text content typically for page headings */
+   .centered-heading {
+     @apply fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white;
+   }
+ 
+   /* Custom Button for Members */
+ 
+   /* Custom-styled button specifically for member-related actions */
+   .member-btn {
+     @apply btn w-24 mx-2 mt-4 bg-teal-600 hover:bg-teal-500;
+   }
+ }
+ 
+ /* Global Utility Classes */
+ @layer utilities {
+   /* Define any additional global utility classes here as needed */
+ }
+ 

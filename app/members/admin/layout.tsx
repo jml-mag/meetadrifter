@@ -1,5 +1,5 @@
 /**
- * File Path: @/members/admin/layout.tsx
+ * File Path: @/app/members/admin/layout.tsx
  *
  * Admin Layout Component
  * ----------------------

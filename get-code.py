@@ -7,7 +7,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-
 def initialize_logging():
     """Initializes logging settings for the script."""
     logger.setLevel(logging.DEBUG)
@@ -15,7 +14,6 @@ def initialize_logging():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-
 
 class FileFinder:
     """
@@ -37,6 +35,7 @@ class FileFinder:
         self.output_filename = output_filename
         self.extensions = extensions
         self.all_file_contents = []
+        self.file_paths = []
 
     def find_and_append_files(self, folder_path: str):
         """
@@ -57,6 +56,7 @@ class FileFinder:
                             self.all_file_contents.extend([
                                 f'File Path: {relative_path}', file_content, '---'
                             ])
+                            self.file_paths.append(relative_path)
                             logger.info(
                                 f'Appended content from {relative_path}')
                     except Exception as e:
@@ -73,6 +73,7 @@ class FileFinder:
                 logger.warning(f"Folder {folder} does not exist.")
 
         self.write_to_file()
+        self.write_file_paths()
 
     def write_to_file(self):
         """Writes the collected file contents to the specified output file."""
@@ -84,14 +85,21 @@ class FileFinder:
         except Exception as e:
             logger.error(f"Failed to write to {self.output_filename}: {e}")
 
+    def write_file_paths(self):
+        """Writes all collected file paths to 'current-filenames.txt'."""
+        try:
+            with open(os.path.join(self.root_path, 'current-filenames.txt'), 'w', encoding='utf-8') as filenames_file:
+                filenames_file.write('\n'.join(self.file_paths))
+            logger.info("All file paths written to 'current-filenames.txt'")
+        except Exception as e:
+            logger.error(f"Failed to write file paths to 'current-filenames.txt': {e}")
 
 if __name__ == '__main__':
     initialize_logging()
     root_path = os.path.dirname(os.path.abspath(__file__))
-    folders_to_search = ['amplify']  # Edit folders as needed
+    folders_to_search = ['amplify'] # Edit folders as needed
     output_filename = 'current-code.txt'
-    extensions = {'.ts', '.tsx', '.js', '.jsx',
-                  '.css'}  # Edit extensions as needed
+    extensions = {'.ts', '.tsx', '.js', '.jsx', '.css'}  # Edit extensions as needed
 
     file_finder = FileFinder(
         root_path, folders_to_search, output_filename, extensions)

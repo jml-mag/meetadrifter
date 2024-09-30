@@ -1,207 +1,145 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, useAnimation, AnimationControls } from "framer-motion";
+/**
+ * File Path: app/page.tsx
+ * 
+ * Home Component
+ * --------------------
+ * Renders the main structure of the home page with animations for various elements.
+ * Integrates animations for the center text, top text, lines, and footer.
+ * Handles the sequence of animations on component mount.
+ */
+
+import { useEffect, useState, MouseEvent } from "react";
+import { motion, useAnimation, AnimationControls, Variants } from "framer-motion";
 import { climate_crisis, tiltWarp } from "@/app/fonts";
 import Link from "next/link";
 import { Background } from "@/components/Background";
 
 export default function Home(): JSX.Element {
-  // Animation controls for the center div, top div, button+footer, lines.
+  // Animation controls for various elements.
   const centerControls: AnimationControls = useAnimation();
   const topControls: AnimationControls = useAnimation();
   const line1Controls: AnimationControls = useAnimation();
   const line2Controls: AnimationControls = useAnimation();
   const line3Controls: AnimationControls = useAnimation();
-  const footerControls: AnimationControls = useAnimation(); // Button and footer now use the same controls
+  const footerControls: AnimationControls = useAnimation();
 
-  // State to track if the component has mounted and if animations are in progress.
-  const [mounted, setMounted] = useState(false);
-  const [animationsComplete, setAnimationsComplete] = useState(false); // Track if animations are complete
+  // State to track if component has mounted and if animations are complete.
+  const [mounted, setMounted] = useState<boolean>(false);
+  const [animationsComplete, setAnimationsComplete] = useState<boolean>(false);
 
-  // Ensure component is mounted before triggering animations
+  // Ensure component is mounted before triggering animations.
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Sequence the animations upon mounting.
   useEffect(() => {
-    if (!mounted) return; // Prevent animations from starting before component is mounted
+    if (!mounted) return;
 
-    async function sequenceAnimations() {
-      // Wait 500ms after page load.
+    const sequenceAnimations = async () => {
+      // Wait before starting animations.
       await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Slide in the center div with a reduced bounce effect.
       await centerControls.start("visible");
 
-      // Wait for 2 seconds.
+      // Wait before sliding out center text.
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Slide out the center div to the right at a faster rate.
       await centerControls.start("slideOut");
 
-      // Start fading in the top div 500ms after slide-out begins.
+      // Fade in top text after slide out begins.
       setTimeout(async () => {
         await topControls.start("visible");
       }, 500);
 
-      // Delay before starting the animation for line 1
+      // Animate lines sequentially.
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Animate the lines with existing delays
       await line1Controls.start("visible");
       await new Promise((resolve) => setTimeout(resolve, 500));
       await line2Controls.start("visible");
       await new Promise((resolve) => setTimeout(resolve, 500));
       await line3Controls.start("visible");
 
-      // Fade in the footer and button at the same time after the lines
+      // Fade in footer elements.
       await footerControls.start("visible");
 
-      // Mark animations as complete after everything is done
+      // Mark animations as complete.
       setAnimationsComplete(true);
-    }
+    };
 
     sequenceAnimations();
-  }, [
-    mounted,
-    centerControls,
-    topControls,
-    footerControls,
-    line1Controls,
-    line2Controls,
-    line3Controls,
-  ]);
+  }, [mounted, centerControls, topControls, line1Controls, line2Controls, line3Controls, footerControls]);
 
-  // Handle button clicks only when animations are complete
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!animationsComplete) {
-      e.preventDefault();
-      return;
-    }
+  // Handle click events only when animations are complete.
+  const handleClick = (e: MouseEvent<HTMLAnchorElement>): void => {
+    if (!animationsComplete) e.preventDefault();
   };
 
-  // Variants for the center div animations.
-  const centerVariants = {
-    hidden: {
-      x: "-100vw", // Start completely off-screen to the left.
-      opacity: 1,
-    },
+  // Variants for animations.
+  const centerVariants: Variants = {
+    hidden: { x: "-100vw", opacity: 1 },
     visible: {
-      x: 0, // Slide to center with a reduced bounce effect.
+      x: 0,
       opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 300, // Reduced stiffness to lessen the bounce.
-        damping: 25, // Increased damping to reduce oscillations.
-      },
+      transition: { type: "spring", stiffness: 300, damping: 25 },
     },
-    slideOut: {
-      x: "100vw", // Slide off-screen to the right.
-      opacity: 1,
-      transition: {
-        duration: 0.3, // Slide out faster than slide-in.
-        ease: "easeIn",
-      },
-    },
+    slideOut: { x: "100vw", opacity: 1, transition: { duration: 0.3, ease: "easeIn" } },
   };
 
-  // Variants for the top div animations.
-  const topVariants = {
-    hidden: {
-      opacity: 0,
-    },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 1, // Fade in over 1s.
-        ease: "easeIn",
-      },
-    },
+  const topVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 1, ease: "easeIn" } },
   };
 
-  // Variants for the footer+button animations (now they animate together).
-  const footerVariants = {
-    hidden: {
-      opacity: 0,
-    },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.5, // Fade in over 0.5s.
-        ease: "easeIn",
-      },
-    },
+  const footerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5, ease: "easeIn" } },
   };
 
-  // Variants for the lines animations.
-  const lineVariants = {
-    hidden: {
-      opacity: 0,
-    },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.5, // Fade in over 0.5s.
-        ease: "easeIn",
-      },
-    },
+  const lineVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5, ease: "easeIn" } },
   };
 
-  // Render the main structure of the home page.
+  // Render the home page structure.
   return (
     <>
       <Background />
       <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden">
-        <div>
-          <div>
-            <div>
-              {/* Top div with fade-in animation. */}
-              <motion.div
-                className={`${climate_crisis.className} fixed top-6 left-4 text-white text-base sm:text-xl md:text-2xl lg:text-3xl`}
-                variants={topVariants}
-                initial="hidden"
-                animate={topControls}
-              >
-                Meet A Drifter
-              </motion.div>
-            </div>
-          </div>
-          {/* Center div that slides in with reduced bounce and slides out faster to the right. */}
-          <motion.div
-            className={`${climate_crisis.className} text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white`}
-            variants={centerVariants}
-            initial="hidden"
-            animate={centerControls}
-          >
-            Meet A Drifter
-          </motion.div>
-        </div>
+        {/* Top text with fade-in animation. */}
+        <motion.div
+          className={`${climate_crisis.className} fixed top-6 left-4 text-white text-base sm:text-xl md:text-2xl lg:text-3xl`}
+          variants={topVariants}
+          initial="hidden"
+          animate={topControls}
+        >
+          Meet A Drifter
+        </motion.div>
+
+        {/* Center text that slides in and slides out. */}
+        <motion.div
+          className={`${climate_crisis.className} text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white`}
+          variants={centerVariants}
+          initial="hidden"
+          animate={centerControls}
+        >
+          Meet A Drifter
+        </motion.div>
+
+        {/* Animated lines with fade-in effect. */}
         <div className={`${tiltWarp.className} leading-relaxed text-xl sm:text-3xl md:text-4xl md:leading-loose`}>
-          {/* Animate each line with fade-in and delay */}
-          <motion.div
-            variants={lineVariants}
-            initial="hidden"
-            animate={line1Controls}
-          >
+          <motion.div variants={lineVariants} initial="hidden" animate={line1Controls}>
             The website you join
           </motion.div>
-          <motion.div
-            variants={lineVariants}
-            initial="hidden"
-            animate={line2Controls}
-          >
+          <motion.div variants={lineVariants} initial="hidden" animate={line2Controls}>
             so that you can build for yourself
           </motion.div>
-          <motion.div
-            variants={lineVariants}
-            initial="hidden"
-            animate={line3Controls}
-          >
+          <motion.div variants={lineVariants} initial="hidden" animate={line3Controls}>
             the website you just joined.
           </motion.div>
         </div>
-        {/* Footer and button with fade-in animation */}
+
+        {/* Footer and button with fade-in animation. */}
         <motion.div
           className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
           variants={footerVariants}
@@ -212,6 +150,8 @@ export default function Home(): JSX.Element {
             Join/Login
           </Link>
         </motion.div>
+        
+        {/* Attribution link with fade-in animation. */}
         <motion.a
           href="https://www.matterandgas.com"
           className="text-white p-2 fixed bottom-2 right-3 text-xs"

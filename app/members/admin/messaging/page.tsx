@@ -123,7 +123,7 @@ export default function AdminMessagingPage(): JSX.Element {
   };
 
   return (
-    <main className="w-full flex justify-center">
+    <main className="w-full lg:w-3/4 xl:w-2/3 m-auto flex justify-center">
       <div className="w-full p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg">
         <h2 className="p-3 font-extralight text-2xl text-left">Manage Site Notification</h2>
         <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
@@ -131,10 +131,11 @@ export default function AdminMessagingPage(): JSX.Element {
           <div className="mb-4 w-full">
             <label className="block text-white text-xs text-left">Notification Message</label>
             <textarea
-              className="p-2 my-2 text-black w-full h-40 rounded border border-blue-600"
+              className="form-input"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter the site-wide notification message..."
+              rows={10}
             />
           </div>
           <div className="flex justify-between mt-4">

@@ -341,10 +341,24 @@ const schema = a.schema({
   ]),
 
   CodeAndDocs: a.model({
-    filepath: a.string().required(),
+    filepath: a.string().required(), // We will save setup and prereqs data as '/setup/step1' or 'prereqs/aws, etc.
     code: a.string().required(),
     docs: a.string().required(),
     slug: a.string().required(),
+    lesson_order: a.integer().required(),
+  }).authorization((allow) => [
+    allow.authenticated('userPools').to(['read']),
+    allow.group('admin').to(['create', 'update', 'delete', 'read']),
+  ]),
+
+  SetupAndPrereqs: a.model({
+    type: a.string().required(), // 'setup' or 'prereq'
+    title: a.string().required(),
+    moreInfoUrl: a.string(),
+    code: a.string(),
+    docs: a.string().required(),
+    slug: a.string().required(),
+    lesson_order: a.integer().required(),
   }).authorization((allow) => [
     allow.authenticated('userPools').to(['read']),
     allow.group('admin').to(['create', 'update', 'delete', 'read']),

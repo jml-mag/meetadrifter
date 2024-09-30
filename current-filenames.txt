@@ -1,0 +1,5 @@
+amplify/backend.ts
+amplify/auth/resource.ts
+amplify/functions/manage-users/resource.ts
+amplify/functions/manage-users/handler.ts
+amplify/data/resource.ts
