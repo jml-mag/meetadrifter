@@ -2,124 +2,78 @@
 
 /**
  * File Path: @/app/members/admin/code/page.tsx
- * 
+ *
  * Admin Code Page Component
  * -------------------------
- * This file defines the AdminCodePage component, which serves as the main interface for managing files and setup/prerequisite data in the admin area.
- * It allows administrators to create, update, and view both files and setup/prerequisite items through two dynamically rendered sections.
- * The layout adjusts for different screen sizes to ensure a responsive and user-friendly experience.
+ * This file defines the AdminCodePage component, which serves as the main interface for managing all lessons.
+ * It allows administrators to create, update, view, and order lesson items in a unified manner.
  */
 
 import React, { useState } from "react";
-import ListFiles from "@/components/ListFiles"; // Import ListFiles component for file management.
-import FileForm from "@/components/FileForm"; // Import FileForm component for file creation/updating.
-import SetupAndPrereqsForm from "@/components/SetupAndPrereqsForm"; // Import SetupAndPrereqsForm component for setup/prereqs creation/updating.
-import ListSetupAndPrereqs from "@/components/ListSetupAndPrereqs"; // Import ListSetupAndPrereqs component for setup/prereqs management.
+import AllLessonsList from "@/components/AllLessonsList"; // Import unified lesson list component.
+import LessonForm from "@/components/LessonForm"; // Import unified lesson form component.
+import LessonOrder from "@/components/LessonOrder"; // Import LessonOrder component for managing lesson order.
 
-/**
- * DisplayState Type
- * -----------------
- * Enum type to track whether to display a list view or a form view.
- */
 type DisplayState = "list" | "form";
 
 /**
  * AdminCodePage Component
  * -----------------------
- * Provides functionality for managing files and setup/prerequisite data.
- * Displays lists or forms based on user interactions, allowing creation, updating, and viewing of records.
- * 
+ * Provides functionality for managing lessons and lesson ordering.
+ * Displays a unified list of lessons, a form for CRUD operations, and the lesson ordering component based on user interactions.
+ *
  * @component
  * @returns {JSX.Element} The rendered AdminCodePage component.
  */
 export default function AdminCodePage(): JSX.Element {
-  // State for managing selected file ID and current view state for file management.
-  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [displayState, setDisplayState] = useState<DisplayState>("list");
 
-  // State for managing selected setup/prerequisite ID and current view state for setup/prereqs management.
-  const [selectedSetupAndPrereqId, setSelectedSetupAndPrereqId] = useState<string | null>(null);
-  const [setupAndPrereqsState, setSetupAndPrereqsState] = useState<DisplayState>("list");
-
   /**
-   * Show the file form for creating or updating.
-   * 
-   * @param {string | null} fileId - The ID of the file to edit, or "new" for creating a new file.
+   * Show the lesson form for creating or updating.
+   *
+   * @param {string | null} lessonId - The ID of the lesson to edit, or "new" for creating a new lesson.
    */
-  const showFileForm = (fileId: string | null): void => {
-    setSelectedFileId(fileId);
+  const showLessonForm = (lessonId: string | null): void => {
+    setSelectedLessonId(lessonId);
     setDisplayState("form");
   };
 
   /**
-   * Show the list of files.
+   * Show the list of all lessons.
    */
-  const showFileList = (): void => {
+  const showLessonList = (): void => {
     setDisplayState("list");
   };
 
-  /**
-   * Show the setup/prerequisite form for creating or updating.
-   * 
-   * @param {string | null} id - The ID of the setup/prerequisite to edit, or "new" for creating a new entry.
-   */
-  const showSetupAndPrereqsForm = (id: string | null): void => {
-    setSelectedSetupAndPrereqId(id);
-    setSetupAndPrereqsState("form");
-  };
-
-  /**
-   * Show the list of setup/prerequisites.
-   */
-  const showSetupAndPrereqsList = (): void => {
-    setSetupAndPrereqsState("list");
-  };
-
-  // Render the main layout for managing files and setup/prerequisites.
+  // Render the main layout for managing lessons and lesson ordering.
   return (
     <main className="w-full">
-      {/* Section for managing setup/prerequisites */}
+      {/* Section for managing all lessons */}
       <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full">
-        {setupAndPrereqsState === "list" ? (
+        {displayState === "list" ? (
           <div className="w-full">
-            <ListSetupAndPrereqs onSelectItem={showSetupAndPrereqsForm} />
+            <AllLessonsList onSelectItem={showLessonForm} />
             <button
               className="btn btn-primary mt-4"
-              onClick={() => showSetupAndPrereqsForm("new")}
+              onClick={() => showLessonForm("new")}
             >
-              Add New Setup/Prerequisite
+              Add New Lesson
             </button>
           </div>
         ) : (
           <div className="w-full">
-            <SetupAndPrereqsForm
-              selectedId={selectedSetupAndPrereqId}
-              resetSelection={showSetupAndPrereqsList}
+            <LessonForm
+              selectedLessonId={selectedLessonId}
+              resetSelection={showLessonList}
             />
           </div>
         )}
       </div>
 
-      {/* Section for managing files */}
-      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full">
-        {displayState === "list" ? (
-          <div className="w-full">
-            <ListFiles onSelectFile={showFileForm} />
-            <button
-              className="btn btn-primary mt-4"
-              onClick={() => showFileForm("new")}
-            >
-              Add New File
-            </button>
-          </div>
-        ) : (
-          <div className="w-full">
-            <FileForm
-              selectedFileId={selectedFileId}
-              resetSelection={showFileList}
-            />
-          </div>
-        )}
+      {/* Section for managing lesson order */}
+      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full mt-8">
+        <LessonOrder /> {/* Render the LessonOrder component */}
       </div>
     </main>
   );

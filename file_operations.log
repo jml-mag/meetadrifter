@@ -292,3 +292,43 @@
 2024-09-30 10:38:03,917 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/amplify
 2024-09-30 10:38:03,918 - INFO - Operation completed. All code written to current-code.txt
 2024-09-30 10:38:03,918 - INFO - All file paths written to 'current-filenames.txt'
+2024-10-01 10:06:49,262 - INFO - Appended content from amplify/backend.ts
+2024-10-01 10:06:49,263 - INFO - Appended content from amplify/auth/resource.ts
+2024-10-01 10:06:49,263 - INFO - Appended content from amplify/functions/manage-users/resource.ts
+2024-10-01 10:06:49,263 - INFO - Appended content from amplify/functions/manage-users/handler.ts
+2024-10-01 10:06:49,264 - INFO - Appended content from amplify/data/resource.ts
+2024-10-01 10:06:49,264 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/amplify
+2024-10-01 10:06:49,264 - INFO - Operation completed. All code written to current-code.txt
+2024-10-01 10:06:49,265 - INFO - All file paths written to 'current-filenames.txt'
+2024-10-01 16:17:14,109 - WARNING - Folder members does not exist.
+2024-10-01 16:17:14,110 - INFO - Operation completed. All code written to current-code.txt
+2024-10-01 16:17:14,110 - INFO - All file paths written to 'current-filenames.txt'
+2024-10-01 16:18:59,513 - INFO - Appended content from app/members/layout.tsx
+2024-10-01 16:18:59,513 - INFO - Appended content from app/members/page.tsx
+2024-10-01 16:18:59,513 - INFO - Appended content from app/members/admin/layout.tsx
+2024-10-01 16:18:59,513 - INFO - Appended content from app/members/admin/page.tsx
+2024-10-01 16:18:59,513 - INFO - Appended content from app/members/admin/code/page.tsx
+2024-10-01 16:18:59,514 - INFO - Appended content from app/members/admin/polls/page.tsx
+2024-10-01 16:18:59,514 - INFO - Appended content from app/members/admin/users/page.tsx
+2024-10-01 16:18:59,514 - INFO - Appended content from app/members/admin/messaging/page.tsx
+2024-10-01 16:18:59,515 - INFO - Appended content from app/members/code/layout.tsx
+2024-10-01 16:18:59,515 - INFO - Appended content from app/members/code/generateStaticParams.ts
+2024-10-01 16:18:59,515 - INFO - Appended content from app/members/code/page.tsx
+2024-10-01 16:18:59,515 - INFO - Appended content from app/members/code/[slug]/page.tsx
+2024-10-01 16:18:59,515 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/app/members
+2024-10-01 16:18:59,515 - INFO - Operation completed. All code written to current-code.txt
+2024-10-01 16:18:59,516 - INFO - All file paths written to 'current-filenames.txt'
+2024-10-01 16:20:18,164 - INFO - Appended content from app/members/code/layout.tsx
+2024-10-01 16:20:18,165 - INFO - Appended content from app/members/code/generateStaticParams.ts
+2024-10-01 16:20:18,165 - INFO - Appended content from app/members/code/page.tsx
+2024-10-01 16:20:18,165 - INFO - Appended content from app/members/code/[slug]/page.tsx
+2024-10-01 16:20:18,165 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/app/members/code
+2024-10-01 16:20:18,166 - INFO - Operation completed. All code written to current-code.txt
+2024-10-01 16:20:18,166 - INFO - All file paths written to 'current-filenames.txt'
+2024-10-01 20:51:38,063 - INFO - Appended content from app/members/code/layout.tsx
+2024-10-01 20:51:38,064 - INFO - Appended content from app/members/code/generateStaticParams.ts
+2024-10-01 20:51:38,065 - INFO - Appended content from app/members/code/page.tsx
+2024-10-01 20:51:38,067 - INFO - Appended content from app/members/code/[slug]/page.tsx
+2024-10-01 20:51:38,067 - INFO - Searched through /Users/jmlima/Desktop/working/meetadrifter/app/members/code
+2024-10-01 20:51:38,068 - INFO - Operation completed. All code written to current-code.txt
+2024-10-01 20:51:38,068 - INFO - All file paths written to 'current-filenames.txt'

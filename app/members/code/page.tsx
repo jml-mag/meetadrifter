@@ -1,50 +1,74 @@
-// @/members/code/page.tsx
-
 "use client";
 
+/**
+ * File Path: @/app/members/code/page.tsx
+ *
+ * Member Code Page Component
+ * --------------------------
+ * This component displays a centralized table of contents for all dynamically generated pages
+ * from the `LessonContent` model, with each lesson linked for easy navigation.
+ */
+
 import React, { useState, useEffect } from "react";
-// import necessary Amplify and context utilities
-// import { generateClient } from "aws-amplify/data";
-// import type { Schema } from "@/amplify/data/resource";
-// const client = generateClient<Schema>();
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import TableOfContents from "@/components/TableOfContents";
+
+// Generate the Amplify client
+const client = generateClient<Schema>();
+
+interface LessonContentData {
+  slug: string;
+  title: string;
+  orderIndex: number; // Ensure this is always a number
+}
 
 /**
  * MemberCodePage Component
  * ------------------------
- * Displays file summaries and content for members in a side-by-side layout for
- * larger screens, and a stacked layout for smaller screens.
+ * Fetches all lessons from `LessonContent` and displays a centralized table of contents.
+ * The lessons are sorted by `orderIndex` and each lesson is linked for navigation.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered component displaying the table of contents.
  */
 export default function MemberCodePage(): JSX.Element {
-  const [files, setFiles] = useState<Array<{ summary: string; content: string }>>([]);
+  const [lessons, setLessons] = useState<LessonContentData[]>([]);
 
+  // Fetch lessons from the `LessonContent` model on component mount
   useEffect(() => {
-    // Fetch files data from Amplify datastore
-    // const fetchFiles = async () => {
-    //   const filesData = await client.list('File');
-    //   setFiles(filesData.items);
-    // };
-    // fetchFiles();
-    setFiles([{ summary: "Sample Summary", content: "Sample Content" }]);
+    const fetchLessons = async () => {
+      try {
+        const { data: lessonsData } = await client.models.LessonContent.list({
+          filter: { isOrdered: { eq: true } },
+        });
+
+        // Normalize and sort lessons by `orderIndex`
+        const formattedLessons = (lessonsData || [])
+          .map((item) => ({
+            slug: item.slug,
+            title: item.title,
+            orderIndex: item.orderIndex ?? 0, // Ensure `orderIndex` is always a number
+          }))
+          .sort((a, b) => a.orderIndex - b.orderIndex); // Sort by `orderIndex`
+
+        setLessons(formattedLessons);
+      } catch (error) {
+        console.error("Error fetching lesson data:", error);
+      }
+    };
+
+    fetchLessons();
   }, []);
 
   return (
     <main className="w-full flex justify-center">
-      <div className="w-full p-6 mt-16">
-        {files.map((file, index) => (
-          <div key={index} className="flex flex-col md:flex-row md:space-x-4 mb-6">
-            {/* File Summary Section */}
-            <div className="w-full md:w-1/2 bg-white bg-opacity-50 p-4 rounded-lg overflow-auto">
-              <h2 className="text-xl font-bold mb-2">Summary</h2>
-              <p>{file.summary}</p>
-            </div>
-
-            {/* File Content Section */}
-            <div className="w-full md:w-1/2 bg-gray-100 bg-opacity-50 p-4 rounded-lg overflow-auto">
-              <h2 className="text-xl font-bold mb-2">Code</h2>
-              <pre className="whitespace-pre-wrap">{file.content}</pre>
-            </div>
-          </div>
-        ))}
+      <div className="w-full p-6 mt-16 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-center">
+          Centralized Table of Contents
+        </h1>
+        {/* Pass the `lessons` to `TableOfContents` for rendering */}
+        <TableOfContents sortedLessonOrder={lessons} />
       </div>
     </main>
   );

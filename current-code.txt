@@ -1,448 +1,353 @@
-File Path: amplify/backend.ts
-// amplify/backend.ts
+File Path: app/members/code/layout.tsx
+// app/members/code/layout.tsx
 
-/**
- * File Path: amplify/backend.ts
- * 
- * Backend Definition
- * ------------------
- * This file defines the backend configuration for the application using AWS Amplify.
- * It imports and integrates the authentication and data resources into the backend setup.
- */
+'use client';
 
-import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
-import { auth } from './auth/resource'; // Import the authentication resource configuration.
-import { data } from './data/resource'; // Import the data resource configuration.
-import { manageUsers } from './functions/manage-users/resource'; // Import the manageUsers function
+import React, { useEffect, useState } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import TableOfContents from "@/components/TableOfContents";
+import LessonNavigationLinks from "@/components/LessonNavigationLinks";
 
-/**
- * Backend Configuration
- * ---------------------
- * This function call sets up the backend by integrating the auth, data, and manageUsers configurations.
- */
-defineBackend({
-  auth,
-  data,
-  manageUsers,
-});
+// Generate the Amplify client
+const client = generateClient<Schema>();
 
----
-File Path: amplify/auth/resource.ts
-/**
- * File Path: amplify/auth/resource.ts
- * 
- * Authentication Resource Configuration
- * -------------------------------------
- * This file defines the authentication resource for the application using Gen 2 AWS Amplify.
- * It configures the login method via email and customizes the verification email content.
- */
+interface LessonContentData {
+  id: string;
+  title: string;
+  slug: string;
+  isOrdered: boolean;
+  orderIndex: number;
+  // Add `docs` and `code` as optional in case they are null
+  docs?: string | null;
+  code?: string | null;
+}
 
-import { defineAuth } from '@aws-amplify/backend'; // Import the defineAuth function from AWS Amplify.
-import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function
-
-/**
- * Auth Configuration
- * ------------------
- * Defines the authentication setup for the application.
- * Configures email-based login with a verification code and custom email content.
- * 
- * @constant
- * @type {ReturnType<typeof defineAuth>}
- */
-export const auth = defineAuth({
-  loginWith: {
-    email: {
-      verificationEmailStyle: "CODE", // Specifies the style of the verification email (e.g., code or link).
-      verificationEmailSubject: "Welcome to Meet A Drifter", // Subject line for the verification email.
-      verificationEmailBody: (createCode: () => string) =>
-        `Use this code to confirm your Meet A Drifter account: ${createCode()}`, // Custom body of the verification email.
-    },
-  },
-  userAttributes: {
-    familyName: {
-      required: true, // Makes the family name (lastName) attribute required.
-    },
-    givenName: {
-      required: true, // Makes the given name (firstName) attribute required.
-    },
-    preferredUsername: {
-      required: true, // Makes the preferred username attribute required.
-    },
-  },
-  /**
-   * User Groups Configuration
-   * -------------------------
-   * Defines user groups for authorization purposes.
-   */
-  groups: ['admin'], // Create new group
-
-  /**
-   * Access Permissions
-   * ------------------
-   * Grants the `manage-users` function the necessary permissions to interact with Cognito.
-   */
-  access: (allow) => [
-    allow.resource(manageUsers).to([
-      "listUsers",
-      "listGroupsForUser",
-      "addUserToGroup",          // Corrected action name
-      "removeUserFromGroup",     // Corrected action name
-    ]),
-  ],
-});
-
----
-File Path: amplify/functions/manage-users/resource.ts
-// amplify/functions/manage-users/resource.ts
-
-import { defineFunction } from "@aws-amplify/backend";
-
-/**
- * Amplify Function Resource: manage-users
- *
- * This function is responsible for user management tasks, including:
- * - Listing users
- * - Retrieving groups for each user
- * - Adding users to groups
- * - Removing users from groups
- *
- * The function leverages AWS Cognito Identity Provider APIs to interact with the user pool.
- */
-export const manageUsers = defineFunction({
-  /**
-   * The name of the function. This will be used in the generated AWS resources
-   * and should be unique within your Amplify project.
-   */
-  name: "manage-users",
-
-  /**
-   * Entry point for the function handler.
-   * By default, it looks for 'handler.ts' in the same directory.
-   * You can specify a different path if needed.
-   */
-  entry: "./handler.ts",
-
-  /**
-   * Optional configuration settings can be added here, such as environment variables,
-   * timeout settings, memory allocation, etc.
-   * Example:
-   * timeoutSeconds: 30,
-   * memoryMB: 512,
-   */
-});
-
----
-File Path: amplify/functions/manage-users/handler.ts
-import {
-  CognitoIdentityProviderClient,
-  ListUsersCommand,
-  AdminListGroupsForUserCommand,
-  AdminAddUserToGroupCommand,
-  AdminRemoveUserFromGroupCommand,
-  UserType,
-  GroupType,
-} from '@aws-sdk/client-cognito-identity-provider';
-import { env } from '$amplify/env/manage-users';
-import { AppSyncIdentityIAM, AppSyncIdentityCognito, AppSyncIdentityOIDC } from 'aws-lambda';
-
-/**
- * Interface for the manage-users function arguments.
- * Defines optional fields based on the type of operation.
- */
-interface ManageUsersArguments {
-  username?: string;
-  groupName?: string;
+interface LayoutProps {
+  children: React.ReactNode;
+  params: { slug: string };
 }
 
 /**
- * Interface for a user with their associated groups.
+ * Layout Component
+ * ----------------
+ * Fetches all lessons data and provides it to child components as props.
  */
-interface UserWithGroups {
-  user: UserType & { Username: string };
-  groups: GroupType[];
-}
+const Layout: React.FC<LayoutProps> = ({ children, params }) => {
+  const [sortedLessonOrder, setSortedLessonOrder] = useState<LessonContentData[]>([]);
 
-/**
- * Custom event type to match the actual event structure.
- */
-interface CustomAppSyncResolverEvent<T> {
-  fieldName: string;
-  arguments: T;
-  identity?: AppSyncIdentityIAM | AppSyncIdentityCognito | AppSyncIdentityOIDC;
-  request?: {
-    headers: Record<string, string>;
-    domainName: string | null;
-  };
-  source?: Record<string, unknown> | null;
-}
-
-/**
- * Handler for the manage-users function.
- *
- * This function handles user management tasks, including:
- * - Listing users and their groups
- * - Adding a user to a group
- * - Removing a user from a group
- *
- * The function distinguishes actions based on the `event.fieldName`.
- *
- * @param event - The event data from AppSync.
- * @returns The result of the requested action.
- */
-export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArguments>) => {
-  console.log('Received event:', JSON.stringify(event, null, 2));
-
-  const cognitoClient = new CognitoIdentityProviderClient({});
-
-  const fieldName = event.fieldName;
-
-  if (!fieldName) {
-    throw new Error('Cannot determine the field name from the event.');
-  }
-
-  try {
-    switch (fieldName) {
-      case 'listUsersAndGroups':
-        // List all users
-        const listUsersCommand = new ListUsersCommand({
-          UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
+  // Fetch lessons on mount and set them in state
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: lessonOrderData } = await client.models.LessonContent.list({
+          filter: { isOrdered: { eq: true } },
         });
-        const usersResponse = await cognitoClient.send(listUsersCommand);
-        const users: UserType[] = usersResponse.Users || [];
 
-        // Filter out users without a Username
-        const validUsers: (UserType & { Username: string })[] = users.filter(
-          (user): user is UserType & { Username: string } => !!user.Username
-        );
+        // Normalize and sort lessons
+        const sortedOrder = (lessonOrderData || [])
+          .map((lesson) => ({
+            ...lesson,
+            orderIndex: lesson.orderIndex ?? 0,
+            docs: lesson.docs || "", // Handle potential null values for `docs`
+            code: lesson.code || "", // Handle potential null values for `code`
+          }))
+          .sort((a, b) => a.orderIndex - b.orderIndex);
 
-        // Get groups for each user
-        const usersWithGroups: UserWithGroups[] = await Promise.all(
-          validUsers.map(async (user) => {
-            const listGroupsCommand = new AdminListGroupsForUserCommand({
-              UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
-              Username: user.Username,
-            });
-            const groupsResponse = await cognitoClient.send(listGroupsCommand);
-            const groups: GroupType[] = groupsResponse.Groups
-              ? groupsResponse.Groups.filter(
-                  (group): group is GroupType & { GroupName: string } => !!group.GroupName
-                )
-              : [];
-            return {
-              user,
-              groups,
-            };
-          })
-        );
+        setSortedLessonOrder(sortedOrder);
+      } catch (error) {
+        console.error('Error fetching lessons:', error);
+      }
+    };
 
-        // Return the users with groups directly
-        return usersWithGroups;
+    fetchData();
+  }, [params.slug]);
 
-      case 'addUserToGroup':
-        const { username: addUsername, groupName: addGroupName } = event.arguments;
-
-        if (!addUsername || !addGroupName) {
-          throw new Error("Missing 'username' or 'groupName' parameter");
-        }
-
-        const addCommand = new AdminAddUserToGroupCommand({
-          UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
-          Username: addUsername,
-          GroupName: addGroupName,
-        });
-        await cognitoClient.send(addCommand);
-
-        return `User ${addUsername} added to group ${addGroupName}`;
-
-      case 'removeUserFromGroup':
-        const { username: removeUsername, groupName: removeGroupName } = event.arguments;
-
-        if (!removeUsername || !removeGroupName) {
-          throw new Error("Missing 'username' or 'groupName' parameter");
-        }
-
-        const removeCommand = new AdminRemoveUserFromGroupCommand({
-          UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
-          Username: removeUsername,
-          GroupName: removeGroupName,
-        });
-        await cognitoClient.send(removeCommand);
-
-        return `User ${removeUsername} removed from group ${removeGroupName}`;
-
-      default:
-        throw new Error('Invalid action parameter');
-    }
-  } catch (error) {
-    console.error('Error in manage-users function:', error);
-    throw error; // Let Amplify handle the error appropriately
-  }
+  return (
+    <div className="relative min-h-screen">
+      {/* Table of Contents */}
+      <div className="fixed top-0 w-full z-20">
+        <TableOfContents sortedLessonOrder={sortedLessonOrder} />
+      </div>
+      {/* Main Content */}
+      <div className="mt-32 p-6 max-w-3xl mx-auto">
+        {/* Clone children and pass the sortedLessonOrder as prop */}
+        {React.isValidElement(children) &&
+          React.cloneElement(children, { lessons: sortedLessonOrder })}
+      </div>
+    </div>
+  );
 };
 
+export default Layout;
+
 ---
-File Path: amplify/data/resource.ts
+File Path: app/members/code/generateStaticParams.ts
 /**
- * File Path: amplify/data/resource.ts
+ * File Path: @/app/members/code/[slug]/generateStaticParams.ts
  * 
- * Data Resource Configuration
- * ---------------------------
- * This file defines the data model for the application using Gen 2 AWS Amplify.
- * It sets up the schema for the `Poll`, `Vote`, and `SiteNotification` models, 
- * including their fields, relationships, and authorization rules.
- * 
- * Additionally, it includes custom queries and mutations for user management tasks:
- * - Listing users and their groups
- * - Adding users to groups
- * - Removing users from groups
+ * Static Params Generation
+ * ------------------------
+ * Generates the parameters for the dynamic route pages based on lesson slugs.
+ * Fetches data from the `LessonContent` model.
  */
 
-import { type ClientSchema, a, defineData } from '@aws-amplify/backend'; // Import necessary types and functions from AWS Amplify.
-import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+
+// Generate the Amplify client
+const client = generateClient<Schema>();
 
 /**
- * Schema Definition
- * -----------------
- * Defines the data models and their respective fields and authorization rules.
+ * generateStaticParams Function
+ * -----------------------------
+ * Generates the parameters for the dynamic route pages based on lesson slugs.
  * 
- * - `Poll`: Represents a poll with a title, options, creation date, and status.
- * - `Vote`: Represents a vote with references to the poll and user, along with the selected option.
- * - `SiteNotification`: Represents a site-wide notification message that can be created, updated, and deleted by an admin.
- * 
- * Custom Queries and Mutations:
- * - `listUsersAndGroups`: Lists all users and their associated groups.
- * - `addUserToGroup`: Adds a user to a specified group.
- * - `removeUserFromGroup`: Removes a user from a specified group.
+ * @returns {Promise<Array<{ slug: string }>>} An array of slug objects for dynamic route generation.
  */
-const schema = a.schema({
-  // Existing models
-  Poll: a.model({
-    title: a.string().required(), // The title of the poll, a required string.
-    options: a.string().array().required(), // An array of possible options for the poll, required.
-    createdAt: a.datetime().required(), // The date and time the poll was created, required.
-    status: a.string().required(), // The status of the poll (e.g., 'active', 'inactive'), required.
-  }).authorization((allow) => [
-    allow.group('admin').to(['create', 'update', 'delete']), // Admins can create, update, and delete polls.
-    allow.authenticated('userPools').to(['read']), // Authenticated users can read polls.
-  ]),
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  // Fetch all lesson entries
+  const { data: lessons } = await client.models.LessonContent.list();
+
+  // Generate slugs for pages
+  return (lessons || []).map((item) => ({ slug: item.slug }));
+}
+
+---
+File Path: app/members/code/page.tsx
+"use client";
+
+/**
+ * File Path: @/app/members/code/page.tsx
+ *
+ * Member Code Page Component
+ * --------------------------
+ * This component displays a centralized table of contents for all dynamically generated pages
+ * from the `LessonContent` model, with each lesson linked for easy navigation.
+ */
+
+import React, { useState, useEffect } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import TableOfContents from "@/components/TableOfContents";
+
+// Generate the Amplify client
+const client = generateClient<Schema>();
+
+interface LessonContentData {
+  slug: string;
+  title: string;
+  orderIndex: number; // Ensure this is always a number
+}
+
+/**
+ * MemberCodePage Component
+ * ------------------------
+ * Fetches all lessons from `LessonContent` and displays a centralized table of contents.
+ * The lessons are sorted by `orderIndex` and each lesson is linked for navigation.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered component displaying the table of contents.
+ */
+export default function MemberCodePage(): JSX.Element {
+  const [lessons, setLessons] = useState<LessonContentData[]>([]);
+
+  // Fetch lessons from the `LessonContent` model on component mount
+  useEffect(() => {
+    const fetchLessons = async () => {
+      try {
+        const { data: lessonsData } = await client.models.LessonContent.list({
+          filter: { isOrdered: { eq: true } },
+        });
+
+        // Normalize and sort lessons by `orderIndex`
+        const formattedLessons = (lessonsData || [])
+          .map((item) => ({
+            slug: item.slug,
+            title: item.title,
+            orderIndex: item.orderIndex ?? 0, // Ensure `orderIndex` is always a number
+          }))
+          .sort((a, b) => a.orderIndex - b.orderIndex); // Sort by `orderIndex`
+
+        setLessons(formattedLessons);
+      } catch (error) {
+        console.error("Error fetching lesson data:", error);
+      }
+    };
+
+    fetchLessons();
+  }, []);
+
+  return (
+    <main className="w-full flex justify-center">
+      <div className="w-full p-6 mt-16 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-center">
+          Centralized Table of Contents
+        </h1>
+        {/* Pass the `lessons` to `TableOfContents` for rendering */}
+        <TableOfContents sortedLessonOrder={lessons} />
+      </div>
+    </main>
+  );
+}
+
+---
+File Path: app/members/code/[slug]/page.tsx
+"use client";
+
+/**
+ * File Path: @/app/members/code/[slug]/page.tsx
+ * 
+ * Lesson Page Component
+ * ---------------------
+ * This file defines the LessonPage component, which renders content and code for a lesson
+ * based on the slug provided in the dynamic route. It uses Prism.js for syntax highlighting
+ * and supports a copy functionality for code blocks.
+ */
+
+import React, { useEffect, useState } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import Prism from "prismjs";
+import Link from "next/link";
+import "prismjs/themes/prism-twilight.css";
+
+// Generate the Amplify client
+const client = generateClient<Schema>();
+
+interface PageProps {
+  params: { slug: string };
+}
+
+interface LessonContent {
+  id: string;
+  title: string;
+  slug: string;
+  code?: string;
+  docs: string;
+  isOrdered: boolean;
+  orderIndex?: number;
+}
+
+/**
+ * LessonPage Component
+ * --------------------
+ * Fetches lesson data based on the slug and renders it, including code and documentation.
+ * Uses Prism.js for code highlighting and provides a copy-to-clipboard button for code sections.
+ */
+export default function LessonPage({ params }: PageProps): JSX.Element {
+  const { slug } = params;
+
+  const [lesson, setLesson] = useState<LessonContent | null>(null);
+  const [sortedLessonOrder, setSortedLessonOrder] = useState<LessonContent[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch the lesson data based on the slug
+      const { data: lessons } = await client.models.LessonContent.list({
+        filter: { slug: { eq: slug } },
+      });
+    
+      // Fetch ordered lessons
+      const { data: lessonOrderData } = await client.models.LessonContent.list({
+        filter: { isOrdered: { eq: true } },
+      });
+    
+      // Normalize the lesson data to handle nullable fields
+      const normalizedLessons = (lessons || []).map((lesson) => ({
+        ...lesson,
+        code: lesson.code || undefined, // Convert `null` to `undefined` for the `code` field
+        moreInfoUrl: lesson.moreInfoUrl || undefined, // Normalize `moreInfoUrl` field
+        orderIndex: lesson.orderIndex ?? undefined, // Convert `null` to `undefined` for `orderIndex`
+      }));
+    
+      // Sort lessons by orderIndex
+      const sortedOrder = (lessonOrderData || []).map((lesson) => ({
+        ...lesson,
+        code: lesson.code || undefined, // Normalize `code` field
+        moreInfoUrl: lesson.moreInfoUrl || undefined, // Normalize `moreInfoUrl` field
+        orderIndex: lesson.orderIndex ?? undefined, // Convert `null` to `undefined` for `orderIndex`
+      })).sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+    
+      setLesson(normalizedLessons[0] || null);
+      setSortedLessonOrder(sortedOrder);
+    };
   
-  Vote: a.model({
-    pollId: a.id().required(), // The ID of the associated poll, required.
-    userId: a.string().required(), // The ID of the user who voted, required.
-    option: a.string().required(), // The selected option for the vote, required.
-  }).authorization((allow) => [
-    allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create and read votes.
-  ]),
+    fetchData();
+  }, [slug]);
+  
+  
 
-  SiteNotification: a.model({
-    message: a.string().required(), // The content of the notification message, required.
-  }).authorization((allow) => [
-    allow.authenticated('userPools').to(['read']),
-    allow.group('admin').to(['create', 'update', 'delete', 'read']), // Admins can create, update, delete, and read notifications.
-  ]),
+  useEffect(() => {
+    Prism.highlightAll();
+  }, [lesson]);
 
-  CodeAndDocs: a.model({
-    filepath: a.string().required(), // We will save setup and prereqs data as '/setup/step1' or 'prereqs/aws, etc.
-    code: a.string().required(),
-    docs: a.string().required(),
-    slug: a.string().required(),
-    lesson_order: a.integer().required(),
-  }).authorization((allow) => [
-    allow.authenticated('userPools').to(['read']),
-    allow.group('admin').to(['create', 'update', 'delete', 'read']),
-  ]),
+  if (!lesson) return <div>Lesson not found</div>;
 
-  SetupAndPrereqs: a.model({
-    type: a.string().required(), // 'setup' or 'prereq'
-    title: a.string().required(),
-    moreInfoUrl: a.string(),
-    code: a.string(),
-    docs: a.string().required(),
-    slug: a.string().required(),
-    lesson_order: a.integer().required(),
-  }).authorization((allow) => [
-    allow.authenticated('userPools').to(['read']),
-    allow.group('admin').to(['create', 'update', 'delete', 'read']),
-  ]),
+  const currentLessonIndex = sortedLessonOrder.findIndex((item) => item.slug === slug);
+  const nextLesson = sortedLessonOrder[currentLessonIndex + 1];
+  const prevLesson = sortedLessonOrder[currentLessonIndex - 1];
 
-  // Custom Queries and Mutations for User Management
-  /**
-   * Query: listUsersAndGroups
-   *
-   * Lists all users in the Cognito User Pool along with their associated groups.
-   * Only accessible by users in the "admin" group.
-   */
-  listUsersAndGroups: a
-    .query()
-    .authorization((allow) => [allow.group('admin')])
-    .handler(a.handler.function(manageUsers))
-    .returns(a.json()),
+  const handleCopy = () => {
+    if (lesson?.code) {
+      navigator.clipboard.writeText(lesson.code);
+      alert("Code copied to clipboard!");
+    }
+  };
 
-  /**
-   * Mutation: addUserToGroup
-   *
-   * Adds a specified user to a specified group.
-   * Only accessible by users in the "admin" group.
-   *
-   * @param username - The username of the user to add.
-   * @param groupName - The name of the group to add the user to.
-   */
-  addUserToGroup: a
-    .mutation()
-    .arguments({
-      username: a.string().required(),
-      groupName: a.string().required(),
-    })
-    .authorization((allow) => [allow.group('admin')])
-    .handler(a.handler.function(manageUsers))
-    .returns(a.string()),
+  return (
+    <main className="p-6 max-w-3xl mx-auto">
+      {/* Table of Contents */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Table of Contents</h2>
+        <ul className="space-y-2">
+          {sortedLessonOrder.map((item, index) => (
+            <li key={item.slug}>
+              <Link href={`/members/code/${item.slug}`}>
+                {index + 1}. {item.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {/* Title */}
+      <h1 className="text-3xl font-bold mb-6">{lesson.title}</h1>
+      
+      {/* Documentation Section */}
+      <div className="prose lg:prose-xl max-w-none">
+        <div dangerouslySetInnerHTML={{ __html: lesson.docs }} />
+      </div>
 
-  /**
-   * Mutation: removeUserFromGroup
-   *
-   * Removes a specified user from a specified group.
-   * Only accessible by users in the "admin" group.
-   *
-   * @param username - The username of the user to remove.
-   * @param groupName - The name of the group to remove the user from.
-   */
-  removeUserFromGroup: a
-    .mutation()
-    .arguments({
-      username: a.string().required(),
-      groupName: a.string().required(),
-    })
-    .authorization((allow) => [allow.group('admin')])
-    .handler(a.handler.function(manageUsers))
-    .returns(a.string()),
-});
+      {/* Code Section */}
+      {lesson.code && (
+        <div className="bg-gray-800 text-white p-4 rounded mt-6 relative">
+          <button
+            onClick={handleCopy}
+            className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded"
+          >
+            Copy
+          </button>
+          <pre className="overflow-x-auto">
+            <code className="language-javascript">{lesson.code}</code>
+          </pre>
+        </div>
+      )}
 
-/**
- * Schema Type Definition
- * ----------------------
- * Exports the schema type for use in other parts of the application.
- * 
- * @type {ClientSchema<typeof schema>}
- */
-export type Schema = ClientSchema<typeof schema>;
-
-/**
- * Data Configuration
- * ------------------
- * Defines the data configuration using the defined schema.
- * 
- * @constant
- * @type {ReturnType<typeof defineData>}
- */
-export const data = defineData({
-  schema,
-  /**
-   * Authorization Modes
-   * -------------------
-   * Defines the default authorization mode for the API.
-   */
-  authorizationModes: {
-    defaultAuthorizationMode: 'userPool'
-  },
-});
+      {/* Navigation */}
+      <div className="mt-8 flex justify-between">
+        {prevLesson && (
+          <Link href={`/members/code/${prevLesson.slug}`}>
+            Previous: {prevLesson.title}
+          </Link>
+        )}
+        {nextLesson && (
+          <Link href={`/members/code/${nextLesson.slug}`}>
+            Next: {nextLesson.title} &rarr;
+          </Link>
+        )}
+      </div>
+    </main>
+  );
+}
 
 ---

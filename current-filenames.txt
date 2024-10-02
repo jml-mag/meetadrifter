@@ -1,5 +1,4 @@
-amplify/backend.ts
-amplify/auth/resource.ts
-amplify/functions/manage-users/resource.ts
-amplify/functions/manage-users/handler.ts
-amplify/data/resource.ts
+app/members/code/layout.tsx
+app/members/code/generateStaticParams.ts
+app/members/code/page.tsx
+app/members/code/[slug]/page.tsx
