@@ -12,7 +12,9 @@ import type { Metadata } from "next"; // Import type definitions for Metadata fr
 import { ToastProvider } from "@/contexts/ToastContext"; // Import the ToastProvider to manage toast notifications throughout the app.
 import Toast from "@/components/Toast"; // Import the Toast component to display toast messages.
 import { inter } from "@/app/fonts"; // Import the 'inter' font configuration for consistent typography.
+import ConfigureAmplifyClientSide from '@/components/ConfigureAmplify';
 import "./globals.css"; // Import global CSS styles.
+
 
 /**
  * Metadata configuration for the application.
@@ -48,6 +50,7 @@ export default function RootLayout({
     <html lang="en">
       {/* Set the document language to English for accessibility and SEO. */}
       <body className={inter.className}>
+        <ConfigureAmplifyClientSide />
         {/* Apply the 'inter' font class to the body for consistent typography across the application. */}
         <ToastProvider>
           {/* Include the ToastProvider to manage toast notifications across the app. */}
