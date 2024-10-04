@@ -48,7 +48,7 @@ export default function AuthenticatedNavBar(): JSX.Element {
     : membersNavLinks;
 
   return (
-    <div className="fixed z-30 text-xs lg:text-sm text-center w-auto mx-auto top-16 px-2 m-1 rounded-lg flex justify-center space-x-1 sm:space-x-4 md:space-x-8 lg:space-x-16">
+    <div className="fixed z-40 text-xs lg:text-sm text-center w-auto mx-auto top-16 px-2 m-1 rounded-lg flex justify-center space-x-1 sm:space-x-4 md:space-x-8 lg:space-x-16">
       {navLinks.map((link) => {
         // Determine if the current link is active
         const isActive =
