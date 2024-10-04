@@ -48,20 +48,27 @@ export default function AuthenticatedNavBar(): JSX.Element {
     : membersNavLinks;
 
   return (
-    <div className="fixed z-40 text-xs lg:text-sm text-center w-auto mx-auto top-16 px-2 m-1  rounded-lg flex justify-center space-x-1 sm:space-x-4 md:space-x-8 lg:space-x-16">
-      {navLinks.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className={`p-2 sm:p-4 border-1 rounded ${
-            pathname === link.href
-              ? "text-white border white"
-              : "text-yellow-400 border-0"
-          } `}
-        >
-          {link.label}
-        </Link>
-      ))}
+    <div className="fixed z-40 text-xs lg:text-sm text-center w-auto mx-auto top-16 px-2 m-1 rounded-lg flex justify-center space-x-1 sm:space-x-4 md:space-x-8 lg:space-x-16">
+      {navLinks.map((link) => {
+        // Determine if the current link is active
+        const isActive =
+          pathname === link.href ||
+          (link.href === "/members/code" && pathname.startsWith("/members/code/"));
+
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`p-2 sm:p-4 border rounded ${
+              isActive
+                ? "text-white border-white" // Active styles
+                : "text-yellow-400 border-0" // Inactive styles
+            } transition-colors duration-200`}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
     </div>
   );
 }

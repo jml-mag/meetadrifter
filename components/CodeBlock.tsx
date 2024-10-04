@@ -1,22 +1,45 @@
-"use client";
+// File Path: components/CodeBlock.tsx
 
-import React, { useEffect } from "react";
-import Prism from "prismjs";
-import "prismjs/themes/prism-twilight.css";
+'use client';
+
+import React, { useEffect, useRef } from 'react';
+import hljs from 'highlight.js/lib/core';
+import typescript from 'highlight.js/lib/languages/typescript';
+import 'highlight.js/styles/github-dark.css'; // Use the same theme as in LessonPage
 
 interface CodeBlockProps {
   code: string;
   language: string;
 }
 
+/**
+ * CodeBlock Component
+ * --------------------
+ * Renders a block of code with syntax highlighting.
+ *
+ * @param {CodeBlockProps} props - The component props containing the code and its language.
+ * @returns {JSX.Element} The rendered code block with syntax highlighting.
+ */
 const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
+  const codeRef = useRef<HTMLElement>(null);
+
+  // Register languages once
   useEffect(() => {
-    Prism.highlightAll();
+    hljs.registerLanguage('typescript', typescript);
   }, []);
 
+  // Highlight the code after component mounts or updates
+  useEffect(() => {
+    if (codeRef.current) {
+      hljs.highlightElement(codeRef.current);
+    }
+  }, [code, language]);
+
   return (
-    <pre className="overflow-x-auto">
-      <code className={`language-${language}`}>{code}</code>
+    <pre className="overflow-x-auto bg-gray-800 rounded-md p-4">
+      <code ref={codeRef} className={`language-${language}`}>
+        {code}
+      </code>
     </pre>
   );
 };

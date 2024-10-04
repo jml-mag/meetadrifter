@@ -36,7 +36,8 @@ const client = generateClient<Schema>();
  * @returns {JSX.Element} The rendered Home component for member areas.
  */
 export default function Home(): JSX.Element {
-  const { user } = useAuth(); // Access user details from authentication context.
+  // Destructure user, profile, and loading from the authentication context
+  const { user, profile, loading, signOut, isAdmin } = useAuth(); // Access user details and profile from authentication context.
   const [notification, setNotification] = useState<string | null>(null); // State for site notification
 
   // Fetch the current site notification on component mount
@@ -45,7 +46,7 @@ export default function Home(): JSX.Element {
       try {
         const { data, errors } = await client.models.SiteNotification.list({});
         if (errors) {
-          console.error("Failed to fetch notification");
+          console.error("Failed to fetch notification", errors);
           return;
         }
         // Assume there's only one notification for simplicity
@@ -60,33 +61,56 @@ export default function Home(): JSX.Element {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center sm:m-2 py-8">
-      <div className="section-container w-full pb-4 sm:p-4">
-        {/* Flex adjustments for md screen size */}
-        <div className="flex flex-col items-center justify-center mt-12 text-lg bg-amber-400">
-          <div>User ID: {user?.username}</div>
-        </div>
+    <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2">
+      <div className="w-full max-w-5xl">
         {/* Display the site notification */}
         {notification && (
-          <div className="w-full bg-yellow-200 text-black text-center p-4 mb-4">
-            {notification}
+          <div className="section-container pb-4 sm:p-4">
+            <div className="heading">Notifications</div>
+            <div className="bg-black bg-opacity-70 p-4 rounded-lg flex flex-col sm:flex-row sm:justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+              {notification}
+            </div>
           </div>
         )}
-        <div className="flex flex-col sm:flex-row justify-between md:space-x-8">
-          {/* Display user-specific details */}
-  
+      </div>
+      <div className="w-full max-w-5xl">
+        <div className="flex flex-col sm:flex-row  md:space-x-8 ">
           {/* Render the Profile component */}
-          <div className="flex flex-col items-center justify-center bg-teal-300">
-            placeholder for Profile component
+          <div className="section-container sm:mr-1 md:mr-0 pb-4 sm:p-4 h-min">
+            <h2 className="heading">Profile</h2>
+            {loading ? (
+              <p className="text-center text-gray-700">Loading profile...</p>
+            ) : profile ? (
+              <div className="bg-black bg-opacity-70 p-4 rounded-lg">
+                <div className="">
+                  <p className="mb-2">
+                    <strong>Username:</strong> {profile.username}
+                  </p>
+                  <p className="mb-2">
+                    <strong>Name:</strong> {profile.firstName}{" "}
+                    {profile.lastName}
+                  </p>
+                  <p className="mb-2">
+                    <strong>Email:</strong> {profile.emailAddress}
+                  </p>
+                  <p className="mb-2">
+                    <strong>ID:</strong> {user?.username}
+                  </p>
+                  {isAdmin && (
+                    <p className="mt-2 text-red-700 font-bold">Administrator</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-center text-gray-700">
+                No profile information available.
+              </p>
+            )}
           </div>
-  
           {/* Render the Poll component */}
-          <div className="flex flex-col items-center justify-center bg-purple-300">
-            <Poll />
-          </div>
+          <Poll />
         </div>
       </div>
     </main>
   );
-  
 }

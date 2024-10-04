@@ -1,6 +1,6 @@
 /**
  * File Path: components/Poll.tsx
- * 
+ *
  * Poll Component
  * --------------
  * This file defines the Poll component, which is responsible for displaying the current active poll,
@@ -20,7 +20,7 @@ const client = generateClient<Schema>();
  * Poll Component
  * --------------
  * Renders the current active poll, allows voting, and displays real-time results.
- * 
+ *
  * @component
  * @returns {JSX.Element} The rendered Poll component.
  */
@@ -121,7 +121,7 @@ export default function Poll(): JSX.Element {
    * handleVote Function
    * -------------------
    * Handles the user's vote submission and updates the vote counts optimistically.
-   * 
+   *
    * @param {string} option - The option the user has selected to vote for.
    */
   const handleVote = async (option: string): Promise<void> => {
@@ -149,42 +149,44 @@ export default function Poll(): JSX.Element {
   };
 
   if (loading) return <div>Loading active poll...</div>;
-  if (error || !poll) return <div>{error || "There is no active poll currently"}</div>;
+  if (error || !poll)
+    return <div>{error || "There is no active poll currently"}</div>;
 
   return (
-    <div className="section-container shadow-black shadow-lg border-l border-r border-white md:w-2/3 lg:w-1/2 mx-auto p-6 md:rounded-lg bg-gradient-to-b from-blue-900 to-sky-950 via-blue-950">
-      <div className="heading mb-2">Current Poll Question</div>
-      <div className="text-2xl font-bold mb-4">{poll.title}</div>
-      {hasVoted ? (
-        <div className="max-w-md mx-auto">
-          <div className="text-lg mb-2 text-center">Current Results</div>
-          <ul className="space-y-2 w-full">
-            {Object.entries(voteCounts).map(([option, count]) => (
-              <li key={option} className="text-sm">
-                <div className="grid grid-cols-3 gap-4">
-                  <span className="col-span-2 text-left">{option}</span>
-                  <span className="text-left">
-                    {count} vote{`${count !== 1 ? "s" : ""}`}
-                  </span>
-                </div>
-              </li>
+    <div className="section-container sm:ml-1 md:ml-0 pb-4 sm:p-4 h-min">
+      <div className="heading">Current Poll</div>
+      <div className="bg-black bg-opacity-70 p-4 rounded-lg">
+        <div className="text-2xl font-bold mb-4">{poll.title}</div>
+        {hasVoted ? (
+          <div className="max-w-md mx-auto">
+            <div className="text-lg mb-2 text-center">Current Results</div>
+            <ul className="space-y-2 w-full">
+              {Object.entries(voteCounts).map(([option, count]) => (
+                <li key={option} className="text-sm">
+                  <div className="grid grid-cols-3 gap-4">
+                    <span className="col-span-2 text-left">{option}</span>
+                    <span className="text-left">
+                      {count} vote{`${count !== 1 ? "s" : ""}`}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {poll.options.map((option) => (
+              <button
+                key={option}
+                className="btn btn-primary block w-full"
+                onClick={() => handleVote(option as string)}
+              >
+                {option}
+              </button>
             ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {poll.options.map((option) => (
-            <button
-              key={option}
-              className="btn-primary block w-full"
-              onClick={() => handleVote(option as string)}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
-
 }

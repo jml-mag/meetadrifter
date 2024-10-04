@@ -97,7 +97,7 @@ class FileFinder:
 if __name__ == '__main__':
     initialize_logging()
     root_path = os.path.dirname(os.path.abspath(__file__))
-    folders_to_search = ['app/members/code',] # Edit folders as needed
+    folders_to_search = ['amplify','app','components','contexts','utils'] # Edit folders as needed
     output_filename = 'current-code.txt'
     extensions = {'.ts', '.tsx', '.js', '.jsx', '.css'}  # Edit extensions as needed
 

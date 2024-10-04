@@ -5,7 +5,7 @@
  * -----------
  * This file provides a React context for managing authentication throughout the application.
  * It uses AWS Amplify for authentication functionalities and allows components to access
- * authentication status, user information, and admin privileges. It also handles user sign-out.
+ * authentication status, user information, admin privileges, and user profile details. It also handles user sign-out.
  */
 
 "use client";
@@ -14,22 +14,42 @@ import React, { createContext, useContext, ReactNode, useState, useEffect } from
 import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types and functions for authentication from AWS Amplify.
 
 /**
+ * UserProfile Interface
+ * ---------------------
+ * Defines the shape of the user profile object containing essential user information.
+ * 
+ * @interface UserProfile
+ * @property {string} firstName - The user's first name.
+ * @property {string} lastName - The user's last name.
+ * @property {string} emailAddress - The user's email address.
+ * @property {string} username - The user's preferred username.
+ */
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  emailAddress: string;
+  username: string;
+}
+
+/**
  * AuthContextProps Interface
  * --------------------------
  * Defines the shape of the authentication context value, providing access to user info,
- * sign-out functionality, and admin status.
+ * sign-out functionality, admin status, loading state, and user profile.
  * 
  * @interface AuthContextProps
  * @property {AuthUser | null | undefined} user - The currently authenticated user, null if not authenticated.
  * @property {() => void} signOut - Function to handle user sign-out.
  * @property {boolean} isAdmin - Indicates if the authenticated user belongs to the "admin" group.
  * @property {boolean} loading - Indicates if the process of determining admin status is ongoing.
+ * @property {UserProfile | null} profile - The authenticated user's profile information.
  */
 export interface AuthContextProps {
   user: AuthUser | null | undefined;
   signOut: () => void;
   isAdmin: boolean;
   loading: boolean;
+  profile: UserProfile | null;
 }
 
 // Creating the AuthContext with an initial default value to avoid null checks and ensure type safety.
@@ -41,7 +61,7 @@ const AuthContext = createContext<AuthContextProps | null>(null);
  * Custom hook to provide easy access to the authentication context.
  * It throws an error if used outside of an `AuthProvider`, ensuring proper usage.
  * 
- * @returns {AuthContextProps} The authentication context properties, including user info, admin status, and sign-out function.
+ * @returns {AuthContextProps} The authentication context properties, including user info, admin status, sign-out function, and user profile.
  */
 export const useAuth = (): AuthContextProps => {
   const context = useContext(AuthContext);
@@ -72,7 +92,7 @@ interface AuthProviderProps {
  * AuthProvider Component
  * ----------------------
  * Wraps all child components that require access to authentication context.
- * Provides context values such as the authenticated user, sign-out function, and admin status.
+ * Provides context values such as the authenticated user, sign-out function, admin status, and user profile.
  * 
  * @component
  * @param {AuthProviderProps} props - The component props.
@@ -85,29 +105,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, sign
   // State to track if the process of determining admin status is still loading.
   const [loading, setLoading] = useState<boolean>(true);
 
+  // State to store the user's profile information.
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
   useEffect(() => {
     /**
      * checkAdminStatus Function
      * -------------------------
      * Checks if the authenticated user belongs to the "admin" group by fetching their session
-     * and examining the token payload. Sets `isAdmin` and `loading` states accordingly.
+     * and examining the token payload. Also extracts and sets the user's profile information.
+     * Sets `isAdmin`, `profile`, and `loading` states accordingly.
      */
     async function checkAdminStatus() {
       if (user) {
         try {
           const session = await fetchAuthSession();
-          // Fetch user attributes and session tokens to determine groups.
-          const attributes = await fetchAuthSession();
-          console.log("User attributes:", attributes);
-          const groups = session.tokens?.idToken?.payload["cognito:groups"];
-          setIsAdmin(Array.isArray(groups) && groups.includes("admin"));
+          // Extract the ID token payload from the session.
+          const idTokenPayload = session.tokens?.idToken?.payload;
+
+          if (idTokenPayload) {
+            // Extract groups to determine admin status with type checking.
+            const groupsRaw = idTokenPayload["cognito:groups"];
+            let groups: string[] | undefined;
+
+            if (Array.isArray(groupsRaw) && groupsRaw.every(item => typeof item === "string")) {
+              groups = groupsRaw;
+            } else {
+              groups = undefined;
+            }
+
+            setIsAdmin(Array.isArray(groups) && groups.includes("admin"));
+
+            // Extract user profile information with type checking.
+            const firstName =
+              typeof idTokenPayload.given_name === "string" ? idTokenPayload.given_name : "";
+            const lastName =
+              typeof idTokenPayload.family_name === "string" ? idTokenPayload.family_name : "";
+            const emailAddress =
+              typeof idTokenPayload.email === "string" ? idTokenPayload.email : "";
+            const username =
+              typeof idTokenPayload.preferred_username === "string"
+                ? idTokenPayload.preferred_username
+                : "";
+
+            const extractedProfile: UserProfile = {
+              firstName,
+              lastName,
+              emailAddress,
+              username,
+            };
+            setProfile(extractedProfile);
+          } else {
+            // If there's no ID token payload, set profile to null.
+            setProfile(null);
+          }
         } catch (error) {
           console.error("Failed to fetch user session:", error);
+          // In case of an error, reset admin status and profile.
+          setIsAdmin(false);
+          setProfile(null);
         } finally {
           setLoading(false); // Set loading to false when admin check is complete.
         }
       } else {
-        setLoading(false); // If no user is authenticated, no admin check is required.
+        // If no user is authenticated, reset admin status and profile.
+        setIsAdmin(false);
+        setProfile(null);
+        setLoading(false); // No admin check is required.
       }
     }
 
@@ -116,7 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, sign
 
   // Return the context provider wrapping all child components that need authentication context.
   return (
-    <AuthContext.Provider value={{ user, signOut, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, signOut, isAdmin, loading, profile }}>
       {children}
     </AuthContext.Provider>
   );
