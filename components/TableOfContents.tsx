@@ -67,7 +67,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       <button
         ref={buttonRef}
         onClick={toggleOpen}
-        className="fixed w-16 top-24 left-0 z-40 text-yellow-400 bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-yellow-400 text-xs rounded-tr-lg rounded-br-lg"
+        className="fixed w-16 top-24 left-0 z-30 text-yellow-400 bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-yellow-400 text-xs rounded-tr-lg rounded-br-lg"
         aria-label={isOpen ? "Close Table of Contents" : "Show Table of Contents"}
         aria-expanded={isOpen}
         aria-controls="toc-panel"
@@ -99,7 +99,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed top-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 z-40 shadow-lg overflow-y-auto"
+            className="fixed z-50 top-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 z-40 shadow-lg overflow-y-auto"
             ref={tocRef}
             aria-labelledby="toc-title"
           >
