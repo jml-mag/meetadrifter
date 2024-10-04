@@ -37,7 +37,7 @@ const client = generateClient<Schema>();
  */
 export default function Home(): JSX.Element {
   // Destructure user, profile, and loading from the authentication context
-  const { user, profile, loading, signOut, isAdmin } = useAuth(); // Access user details and profile from authentication context.
+  const { user, profile, loading, isAdmin } = useAuth(); // Access user details and profile from authentication context.
   const [notification, setNotification] = useState<string | null>(null); // State for site notification
 
   // Fetch the current site notification on component mount
