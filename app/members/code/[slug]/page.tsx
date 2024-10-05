@@ -74,7 +74,6 @@ export default async function LessonPage({
 
     if (orderErrors || !lessonOrderData) {
       console.error("Error fetching lesson order data:", orderErrors);
-      <SetLessonStage slug=''/>
       return <div className="text-red-500">Error loading lessons.</div>;
       
     }
@@ -107,7 +106,7 @@ export default async function LessonPage({
     return (
       <main className="text-sm">
         {/* Set Lesson Stage in Local Storage */}
-        <SetLessonStage slug={slug} />
+        <SetLessonStage slug={/*slug*/`welcome`} />
 
         {/* Container to constrain the layout */}
         <div className="container">
@@ -181,7 +180,6 @@ export default async function LessonPage({
     );
   } catch (error) {
     console.error("Unexpected error:", error);
-    <SetLessonStage slug=''/>
     return <div className="text-red-500">An unexpected error occurred.</div>;
   }
 }
