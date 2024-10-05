@@ -181,6 +181,7 @@ export default async function LessonPage({
     );
   } catch (error) {
     console.error("Unexpected error:", error);
+    <SetLessonStage slug=''/>
     return <div className="text-red-500">An unexpected error occurred.</div>;
   }
 }
