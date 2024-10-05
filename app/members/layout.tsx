@@ -187,7 +187,7 @@ function LayoutContent({
         />
       </div>
       <div
-        className={`${climate_crisis.className} fixed z-40 top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
+        className={`${climate_crisis.className} fixed z-40 top-3 left-4 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
       >
         Meet A Drifter
       </div>
@@ -200,10 +200,10 @@ function LayoutContent({
         {/* Menu Button */}
         {!menuOpen && (
           <button
-            className="fixed top-4 right-4 text-white px-4 rounded-lg"
+            className="fixed top-4 right-2 text-white px-4 rounded-lg"
             onClick={toggleMenu}
           >
-            <Bars3Icon className="size-6 text-white" />
+            <Bars3Icon className="size-7 text-white" />
           </button>
         )}
       </div>

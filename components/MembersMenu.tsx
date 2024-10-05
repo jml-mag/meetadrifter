@@ -105,10 +105,10 @@ export default function MembersMenu({
     >
       {/* Links Section */}
       <button
-        className="fixed top-4 right-4 text-white px-4 rounded-lg"
+        className="fixed top-5 right-2 text-white px-4 rounded-lg"
         onClick={toggleMenu}
       >
-        <XCircleIcon className="size-6 text-white" />
+        <XCircleIcon className="size-7 text-white" />
       </button>
       <div className="mb-6">
         <nav className="mt-2">

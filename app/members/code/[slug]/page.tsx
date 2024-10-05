@@ -103,7 +103,7 @@ export default async function LessonPage({
     const prevLesson = sortedLessonOrder[currentLessonIndex - 1];
 
     return (
-      <main className="p-6 text-sm">
+      <main className="text-sm">
         {/* Set Lesson Stage in Local Storage */}
         <SetLessonStage slug={slug} />
 
@@ -117,46 +117,51 @@ export default async function LessonPage({
                 <TableOfContents sortedLessonOrder={sortedLessonOrder} />
               </div>
             </aside>
-
             {/* Main Content and Navigation */}
             <div className="md:col-span-3">
-              {/* Navigation Section */}
-              <nav className="mb-8">
-                <div className="flex rounded-lg">
-                  <div className="section-container w-1/2 flex text-center">
-                    {prevLesson && (
-                      <Link
-                        href={`/members/code/${prevLesson.slug}`}
-                        className="text-green-700 hover:text-green-600 px-4"
-                      >
-                        <div className="size-12">
-                          <ArrowLeftCircleIcon />
-                        </div>
-                      </Link>
-                    )}
-                    {nextLesson && (
-                      <Link
-                        href={`/members/code/${nextLesson.slug}`}
-                        className="text-green-700 hover:text-green-600 px-4"
-                      >
-                        <div className="size-12">
-                          <ArrowRightCircleIcon />
-                        </div>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </nav>
+              {/* Lesson Navigation */}
+              <div className="fixed top-32 left-0 right-0 bg-gradient-to-br from-blue-950 to-stone-950 via-black px-1 py-0.5">
+  <div className="grid grid-cols-[auto,1fr,auto] items-center gap-0.5 rounded-lg">
+
+    {/* Previous Lesson Link */}
+    <div className="justify-self-start">
+      {prevLesson && (
+        <Link
+          href={`/members/code/${prevLesson.slug}`}
+          className="text-white hover:text-green-100 px-2"
+        >
+          <ArrowLeftCircleIcon className="w-8 h-8" />
+        </Link>
+      )}
+    </div>
+
+    {/* Lesson Title */}
+    <h1 className="font-bold text-xs text-center leading-none m-0 justify-self-center">
+      {lesson.title}
+    </h1>
+
+    {/* Next Lesson Link */}
+    <div className="justify-self-end">
+      {nextLesson && (
+        <Link
+          href={`/members/code/${nextLesson.slug}`}
+          className="text-white hover:text-green-100 px-2"
+        >
+          <ArrowRightCircleIcon className="w-8 h-8" />
+        </Link>
+      )}
+    </div>
+
+  </div>
+</div>
+
 
               {/* Documentation and Code Sections */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Documentation Section */}
                 <section className="lg:col-span-2">
-                  {/* Lesson Title */}
-                  <h1 className="font-bold text-2xl mb-6">{lesson.title}</h1>
-
                   {/* Documentation Content */}
-                  <div className="p-4 bg-black bg-opacity-70 rounded-lg">
+                  <div className="mt-20 p-4 bg-black bg-opacity-70 rounded-lg">
                     <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
                       {lesson.docs}
                     </ReactMarkdown>
