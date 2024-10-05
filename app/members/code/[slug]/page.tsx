@@ -74,7 +74,9 @@ export default async function LessonPage({
 
     if (orderErrors || !lessonOrderData) {
       console.error("Error fetching lesson order data:", orderErrors);
+      <SetLessonStage slug=''/>
       return <div className="text-red-500">Error loading lessons.</div>;
+      
     }
 
     // Normalize the lesson data
@@ -121,43 +123,40 @@ export default async function LessonPage({
             <div className="md:col-span-3">
               {/* Lesson Navigation */}
               <div className="fixed top-32 left-0 right-0 bg-gradient-to-br from-blue-950 to-stone-950 via-black px-1 py-0.5">
-  <div className="grid grid-cols-[auto,1fr,auto] items-center gap-0.5 rounded-lg">
+                <div className="grid grid-cols-[auto,1fr,auto] items-center gap-0.5 rounded-lg">
+                  {/* Previous Lesson Link */}
+                  <div className="justify-self-start">
+                    {prevLesson && (
+                      <Link
+                        href={`/members/code/${prevLesson.slug}`}
+                        className="text-white hover:text-green-100 px-2"
+                      >
+                        <ArrowLeftCircleIcon className="size-8" />
+                      </Link>
+                    )}
+                  </div>
 
-    {/* Previous Lesson Link */}
-    <div className="justify-self-start">
-      {prevLesson && (
-        <Link
-          href={`/members/code/${prevLesson.slug}`}
-          className="text-white hover:text-green-100 px-2"
-        >
-          <ArrowLeftCircleIcon className="w-8 h-8" />
-        </Link>
-      )}
-    </div>
+                  {/* Lesson Title */}
+                  <h1 className="font-bold text-xs text-center leading-none m-0 justify-self-center">
+                    {lesson.title}
+                  </h1>
 
-    {/* Lesson Title */}
-    <h1 className="font-bold text-xs text-center leading-none m-0 justify-self-center">
-      {lesson.title}
-    </h1>
-
-    {/* Next Lesson Link */}
-    <div className="justify-self-end">
-      {nextLesson && (
-        <Link
-          href={`/members/code/${nextLesson.slug}`}
-          className="text-white hover:text-green-100 px-2"
-        >
-          <ArrowRightCircleIcon className="w-8 h-8" />
-        </Link>
-      )}
-    </div>
-
-  </div>
-</div>
-
+                  {/* Next Lesson Link */}
+                  <div className="justify-self-end">
+                    {nextLesson && (
+                      <Link
+                        href={`/members/code/${nextLesson.slug}`}
+                        className="text-white hover:text-green-100 px-2"
+                      >
+                        <ArrowRightCircleIcon className="size-8" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Documentation and Code Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="m-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Documentation Section */}
                 <section className="lg:col-span-2">
                   {/* Documentation Content */}
