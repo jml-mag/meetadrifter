@@ -1,11 +1,11 @@
 // File Path: components/CodeBlock.tsx
 
-'use client';
+"use client";
 
-import React, { useEffect, useRef } from 'react';
-import hljs from 'highlight.js/lib/core';
-import typescript from 'highlight.js/lib/languages/typescript';
-import 'highlight.js/styles/github-dark.css'; // Use the same theme as in LessonPage
+import React, { useEffect, useRef } from "react";
+import hljs from "highlight.js/lib/core";
+import typescript from "highlight.js/lib/languages/typescript";
+import "highlight.js/styles/github-dark.css"; // Use the same theme as in LessonPage
 
 interface CodeBlockProps {
   code: string;
@@ -25,7 +25,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
 
   // Register languages once
   useEffect(() => {
-    hljs.registerLanguage('typescript', typescript);
+    hljs.registerLanguage("typescript", typescript);
   }, []);
 
   // Highlight the code after component mounts or updates
@@ -36,11 +36,16 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   }, [code, language]);
 
   return (
-    <pre className="overflow-x-auto bg-gray-800 rounded-md p-4">
-      <code ref={codeRef} className={`language-${language}`}>
-        {code}
-      </code>
-    </pre>
+    <div className="p-1 bg-black">
+      <button className="text-sm px-2 py-1 rounded-lg p-1 border border-white bg-slate-800">
+        Copy
+      </button>
+      <pre className="overflow-x-auto bg-gray-800">
+        <code ref={codeRef} className={`language-${language}`}>
+          {code}
+        </code>
+      </pre>
+    </div>
   );
 };
 

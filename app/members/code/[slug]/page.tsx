@@ -75,7 +75,6 @@ export default async function LessonPage({
     if (orderErrors || !lessonOrderData) {
       console.error("Error fetching lesson order data:", orderErrors);
       return <div className="text-red-500">Error loading lessons.</div>;
-      
     }
 
     // Normalize the lesson data
@@ -106,7 +105,7 @@ export default async function LessonPage({
     return (
       <main className="text-sm">
         {/* Set Lesson Stage in Local Storage */}
-        <SetLessonStage slug={/*slug*/`welcome`} />
+        <SetLessonStage slug={slug} />
 
         {/* Container to constrain the layout */}
         <div className="container">
@@ -121,14 +120,14 @@ export default async function LessonPage({
             {/* Main Content and Navigation */}
             <div className="md:col-span-3">
               {/* Lesson Navigation */}
-              <div className="fixed top-32 left-0 right-0 bg-gradient-to-br from-blue-950 to-stone-950 via-black px-1 py-0.5">
-                <div className="grid grid-cols-[auto,1fr,auto] items-center gap-0.5 rounded-lg">
+              <div className="fixed top-32 left-0 right-0 bg-black px-1">
+                <div className="grid grid-cols-[auto,1fr,auto] items-center gap-0.5 rounded-lg max-w-lg mx-auto">
                   {/* Previous Lesson Link */}
                   <div className="justify-self-start">
                     {prevLesson && (
                       <Link
                         href={`/members/code/${prevLesson.slug}`}
-                        className="text-white hover:text-green-100 px-2"
+                        className="text-white hover:text-green-100"
                       >
                         <ArrowLeftCircleIcon className="size-8" />
                       </Link>
@@ -145,7 +144,7 @@ export default async function LessonPage({
                     {nextLesson && (
                       <Link
                         href={`/members/code/${nextLesson.slug}`}
-                        className="text-white hover:text-green-100 px-2"
+                        className="text-white hover:text-green-100"
                       >
                         <ArrowRightCircleIcon className="size-8" />
                       </Link>
@@ -153,13 +152,12 @@ export default async function LessonPage({
                   </div>
                 </div>
               </div>
-
               {/* Documentation and Code Sections */}
-              <div className="m-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="m-1 flex flex-col lg:flex-row gap-8">
                 {/* Documentation Section */}
-                <section className="lg:col-span-2">
+                <section className="lg:w-2/5">
                   {/* Documentation Content */}
-                  <div className="mt-20 p-4 bg-black bg-opacity-70 rounded-lg">
+                  <div className="mt-24 text-sm p-2 bg-black bg-opacity-70 rounded-lg">
                     <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
                       {lesson.docs}
                     </ReactMarkdown>
@@ -168,7 +166,7 @@ export default async function LessonPage({
 
                 {/* Code Section */}
                 {lesson.code && (
-                  <section>
+                  <section className="mt-24 lg:w-3/5">
                     <CodeBlock code={lesson.code} language="typescript" />
                   </section>
                 )}
