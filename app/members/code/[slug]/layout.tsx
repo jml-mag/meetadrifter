@@ -79,7 +79,7 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
         <SetLessonStage slug={slug} />
         <div className="relative w-full min-h-screen bg-gray-900 text-white">
           {/* Fixed Lesson Navigation */}
-          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-80 px-4 py-1 z-20">
+          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20">
             <div className="max-w-xl mx-auto grid grid-cols-3 items-center gap-2 rounded-lg">
               {/* Previous Lesson Link */}
               <div className="justify-self-start">

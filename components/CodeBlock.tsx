@@ -1,5 +1,3 @@
-// File Path: components/CodeBlock.tsx
-
 "use client";
 
 import React, { useEffect, useRef } from "react";
@@ -37,9 +35,6 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
 
   return (
     <div className="p-1 bg-black">
-      <button className="text-sm px-2 py-1 rounded-lg p-1 border border-white bg-slate-800">
-        Copy
-      </button>
       <pre className="overflow-x-auto bg-gray-800">
         <code ref={codeRef} className={`language-${language}`}>
           {code}

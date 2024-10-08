@@ -2,7 +2,7 @@
 
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
+// import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css"; // Use your preferred Highlight.js theme
 import CodeBlock from "@/components/CodeBlock"; // Ensure this component is correctly implemented
 import { cookiesClient } from "@/utils/amplifyServerUtils";
@@ -61,23 +61,24 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
         <div className="p-1 flex flex-col lg:flex-row gap-2">
           {/* Documentation Section */}
           <section className="lg:w-2/5">
-            {/* Documentation Content */}
-            <div className="text-sm p-2 bg-black bg-opacity-100 rounded-lg">
-              <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+            {/* Fixed Documentation Content only for lg and higher */}
+            <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-black bg-opacity-50 rounded-lg overflow-y-auto">
+              <ReactMarkdown className="whitespace-pre-wrap">
                 {lesson.docs}
               </ReactMarkdown>
             </div>
           </section>
-
+    
           {/* Code Section */}
-          {lesson.code && (
-            <section className="lg:w-3/5 p-2 bg-black rounded-lg">
-              <CodeBlock code={lesson.code} language="typescript" />
-            </section>
-          )}
+          <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
+            {lesson.code && <CodeBlock code={lesson.code} language="typescript" />}
+          </section>
         </div>
       </main>
     );
+    
+    
+    
   } catch (error) {
     console.error("Unexpected error:", error);
     return <div className="text-red-500">An unexpected error occurred.</div>;

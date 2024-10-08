@@ -3,61 +3,52 @@
  *
  * RootLayout Component
  * --------------------
- * This file defines the RootLayout component, which serves as the top-level layout for the entire application.
- * It integrates global styles, the ToastProvider for managing notifications, and sets foundational metadata
- * for SEO optimization.
+ * This component provides the top-level layout for the application, integrating global styles,
+ * toast notifications, and Amplify configuration. It wraps around all child components, setting
+ * foundational elements such as document metadata and accessibility attributes.
  */
 
-import type { Metadata } from "next"; // Import type definitions for Metadata from Next.js.
-import { ToastProvider } from "@/contexts/ToastContext"; // Import the ToastProvider to manage toast notifications throughout the app.
-import Toast from "@/components/Toast"; // Import the Toast component to display toast messages.
-import { inter } from "@/app/fonts"; // Import the 'inter' font configuration for consistent typography.
+import type { Metadata } from "next";
+import { ToastProvider } from "@/contexts/ToastContext";
+import Toast from "@/components/Toast";
+import { inter } from "@/app/fonts";
 import ConfigureAmplifyClientSide from '@/components/ConfigureAmplify';
-import "./globals.css"; // Import global CSS styles.
-
+import "./globals.css";
 
 /**
- * Metadata configuration for the application.
- * This object provides SEO-related information such as the page title and description.
- *
- * @constant
- * @type {Metadata}
+ * Metadata configuration for SEO, defining the title and description of the application.
  */
 export const metadata: Metadata = {
-  title: "Meet A Drifter", // Application title used in the browser tab and search engine results.
-  description:
-    "A website that exists solely as the base of a tutorial of sorts, for now.", // Description of the application for SEO.
+  title: "Meet A Drifter", 
+  description: "A website that exists solely as the base of a tutorial of sorts, for now.",
 };
 
 /**
  * RootLayout Component
- * --------------------
- * This component acts as the root layout wrapper around all other components in the application.
- * It sets the HTML document language, applies global font styles, and integrates the ToastProvider
- * for handling notifications throughout the app.
- *
- * @component
- * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
- * @param {React.ReactNode} props.children - The child components to be wrapped within the RootLayout.
- * @returns {JSX.Element} The rendered layout component.
+ * 
+ * This component serves as the root layout of the application. It wraps the entire app with global styles,
+ * configures Amplify on the client side, and integrates toast notifications. It ensures accessibility
+ * and SEO enhancements by setting the document's language and metadata.
+ * 
+ * @param {Readonly<{ children: React.ReactNode }>} props - The component's properties.
+ * @param {React.ReactNode} props.children - The child components to be rendered within the layout.
+ * 
+ * @returns {JSX.Element} The root layout component wrapping the provided children.
  */
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode; // Ensure that children are valid React nodes.
+  children: React.ReactNode;
 }>): JSX.Element {
   return (
     <html lang="en">
-      {/* Set the document language to English for accessibility and SEO. */}
       <body className={inter.className}>
         <ConfigureAmplifyClientSide />
-        {/* Apply the 'inter' font class to the body for consistent typography across the application. */}
         <ToastProvider>
-          {/* Include the ToastProvider to manage toast notifications across the app. */}
           <Toast />
-          {/* Render the Toast component to display notifications at the top level. */}
-          {children}
-          {/* Render child components passed to the RootLayout. */}
+          <main>
+            {children}
+          </main>
         </ToastProvider>
       </body>
     </html>
