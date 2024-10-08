@@ -67,7 +67,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       <button
         ref={buttonRef}
         onClick={toggleOpen}
-        className="fixed w-16 top-16 md:top-20 left-0 z-0 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
+        className="fixed w-16 md:w-28 top-16 md:top-16 left-0 z-0 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
         aria-label={isOpen ? "Close Table of Contents" : "Show Table of Contents"}
         aria-expanded={isOpen}
         aria-controls="toc-panel"
