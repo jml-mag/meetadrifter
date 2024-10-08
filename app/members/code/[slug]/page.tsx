@@ -1,32 +1,12 @@
 // File Path: app/members/code/[slug]/page.tsx
 
 import React from "react";
-import Link from "next/link";
-import { cookiesClient } from "@/utils/amplifyServerUtils";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css"; // Use your preferred Highlight.js theme
 import CodeBlock from "@/components/CodeBlock"; // Ensure this component is correctly implemented
-import SetLessonStage from "@/components/SetLessonStage"; // Import the SetLessonStage client component
-import TableOfContents from "@/components/TableOfContents";
-import {
-  ArrowLeftCircleIcon,
-  ArrowRightCircleIcon,
-} from "@heroicons/react/24/solid";
-
-/**
- * Interface representing the structure of a lesson.
- */
-interface LessonContent {
-  id: string;
-  title: string;
-  slug: string;
-  code: string | null;
-  docs: string;
-  isOrdered: boolean;
-  orderIndex: number | null;
-  moreInfoUrl: string | null;
-}
+import { cookiesClient } from "@/utils/amplifyServerUtils";
+import { LessonContent } from "@/types/LessonContent"; // Ensure this type is correctly defined
 
 /**
  * Interface for the page properties, containing route parameters.
@@ -41,17 +21,13 @@ interface PageProps {
  * LessonPage Component
  * --------------------
  * Renders a lesson page based on the provided slug. It fetches the lesson content,
- * displays the documentation as formatted Markdown, renders code snippets with
- * TypeScript syntax highlighting, and includes navigation links to adjacent lessons.
- *
- * Additionally, it updates the `lessonStage` in localStorage to reflect the current lesson.
+ * displays the documentation as formatted Markdown, and renders code snippets with
+ * TypeScript syntax highlighting.
  *
  * @param {PageProps} props - The component props containing the route parameter `slug`.
  * @returns {Promise<JSX.Element>} The rendered lesson page component.
  */
-export default async function LessonPage({
-  params,
-}: PageProps): Promise<JSX.Element> {
+const LessonPage: React.FC<PageProps> = async ({ params }) => {
   const { slug } = params;
 
   try {
@@ -64,17 +40,6 @@ export default async function LessonPage({
     if (errors || !lessons || lessons.length === 0) {
       console.error("Error fetching lessons:", errors);
       return <div className="text-red-500">Error loading lesson.</div>;
-    }
-
-    // Fetch ordered lessons for navigation and table of contents
-    const { data: lessonOrderData, errors: orderErrors } =
-      await cookiesClient.models.LessonContent.list({
-        filter: { isOrdered: { eq: true } },
-      });
-
-    if (orderErrors || !lessonOrderData) {
-      console.error("Error fetching lesson order data:", orderErrors);
-      return <div className="text-red-500">Error loading lessons.</div>;
     }
 
     // Normalize the lesson data
@@ -90,89 +55,26 @@ export default async function LessonPage({
       moreInfoUrl: lessonData.moreInfoUrl, // string | null
     };
 
-    // Sort lessons by `orderIndex` to maintain the intended order
-    const sortedLessonOrder = lessonOrderData.sort(
-      (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-    );
-
-    // Determine the current lesson's position to set up navigation
-    const currentLessonIndex = sortedLessonOrder.findIndex(
-      (item) => item.slug === slug
-    );
-    const nextLesson = sortedLessonOrder[currentLessonIndex + 1];
-    const prevLesson = sortedLessonOrder[currentLessonIndex - 1];
-
     return (
-      <main className="text-sm">
-        {/* Set Lesson Stage in Local Storage */}
-        <SetLessonStage slug={slug} />
-
-        {/* Container to constrain the layout */}
-        <div className="container">
-          {/* Grid container for TOC and main content */}
-          <div className="">
-            {/* Table of Contents */}
-            <aside className="">
-              <div className="rounded-lg">
-                <TableOfContents sortedLessonOrder={sortedLessonOrder} />
-              </div>
-            </aside>
-            {/* Main Content and Navigation */}
-            <div className="md:col-span-3">
-              {/* Lesson Navigation */}
-              <div className="fixed top-32 left-0 right-0 bg-black px-1">
-                <div className="grid grid-cols-[auto,1fr,auto] items-center gap-0.5 rounded-lg max-w-lg mx-auto">
-                  {/* Previous Lesson Link */}
-                  <div className="justify-self-start">
-                    {prevLesson && (
-                      <Link
-                        href={`/members/code/${prevLesson.slug}`}
-                        className="text-white hover:text-green-100"
-                      >
-                        <ArrowLeftCircleIcon className="size-8" />
-                      </Link>
-                    )}
-                  </div>
-
-                  {/* Lesson Title */}
-                  <h1 className="font-bold text-xs text-center leading-none m-0 justify-self-center">
-                    {lesson.title}
-                  </h1>
-
-                  {/* Next Lesson Link */}
-                  <div className="justify-self-end">
-                    {nextLesson && (
-                      <Link
-                        href={`/members/code/${nextLesson.slug}`}
-                        className="text-white hover:text-green-100"
-                      >
-                        <ArrowRightCircleIcon className="size-8" />
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Documentation and Code Sections */}
-              <div className="m-1 flex flex-col lg:flex-row gap-8">
-                {/* Documentation Section */}
-                <section className="lg:w-2/5">
-                  {/* Documentation Content */}
-                  <div className="mt-24 text-sm p-2 bg-black bg-opacity-70 rounded-lg">
-                    <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                      {lesson.docs}
-                    </ReactMarkdown>
-                  </div>
-                </section>
-
-                {/* Code Section */}
-                {lesson.code && (
-                  <section className="mt-24 lg:w-3/5">
-                    <CodeBlock code={lesson.code} language="typescript" />
-                  </section>
-                )}
-              </div>
+      <main className="text-sm text-left">
+        {/* Documentation and Code Sections */}
+        <div className="p-1 flex flex-col lg:flex-row gap-2">
+          {/* Documentation Section */}
+          <section className="lg:w-2/5">
+            {/* Documentation Content */}
+            <div className="text-sm p-2 bg-black bg-opacity-100 rounded-lg">
+              <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                {lesson.docs}
+              </ReactMarkdown>
             </div>
-          </div>
+          </section>
+
+          {/* Code Section */}
+          {lesson.code && (
+            <section className="lg:w-3/5 p-2 bg-black rounded-lg">
+              <CodeBlock code={lesson.code} language="typescript" />
+            </section>
+          )}
         </div>
       </main>
     );
@@ -180,4 +82,6 @@ export default async function LessonPage({
     console.error("Unexpected error:", error);
     return <div className="text-red-500">An unexpected error occurred.</div>;
   }
-}
+};
+
+export default LessonPage;

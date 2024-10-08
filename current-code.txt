@@ -944,7 +944,7 @@ function LayoutContent({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full text-center">
       <div
         className="w-full h-screen fixed top-0 left-0 -z-50"
         style={{ opacity: bgOpacity }}
@@ -956,49 +956,46 @@ function LayoutContent({
           style={{ objectFit: "cover" }}
         />
       </div>
-      <div
-        className={`${climate_crisis.className} fixed z-40 top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
-      >
-        Meet A Drifter
+      <div className="fixed top-0 left-0 right-0 z-20">
+        <div className={`${climate_crisis.className} fixed top-6 left-4 text-white lg:text-xl`}>
+          Meet A Drifter
+        </div>
+        <div className="mt-16 md:mt-5 md:-mr-32">
+          {/* Render the navigation bar */}
+          <AuthenticatedNavBar />
+        </div>
+        <div className="z-20">
+          {/* Menu Button */}
+          {!menuOpen && (
+            <button className="fixed top-0 right-6 text-white pt-6" onClick={toggleMenu}>
+              <Bars3Icon className="size-7 text-white" />
+            </button>
+          )}
+        </div>
+
+        
       </div>
-      <div className="flex justify-center items-center w-full mt-8">
-        {/* Render the navigation bar */}
-        <AuthenticatedNavBar />
+      <div className="z-40">
+        {/* Members Menu */}
+        <motion.div
+          initial={{ y: "-100%" }}
+          animate={{ y: menuOpen ? 0 : "-100%" }}
+          exit={{ y: "-100%" }}
+          transition={{ type: "spring", stiffness: 50 }}
+          className="fixed top-0 w-full z-40"
+          style={{ height: "100vh" }}
+        >
+          <MembersMenu
+            bgOpacity={bgOpacity}
+            handleOpacityChange={handleOpacityChange}
+            toggleMenu={toggleMenu}
+            isMenuOpen={menuOpen}
+          />
+        </motion.div>
       </div>
 
-      <div className="fixed top-0 w-full h-12 z-40 backdrop:blur-3xl">
-        {/* Menu Button */}
-        {!menuOpen && (
-          <button
-            className="fixed top-4 right-4 text-white px-4 rounded-lg"
-            onClick={toggleMenu}
-          >
-            <Bars3Icon className="size-6 text-white" />
-          </button>
-        )}
-      </div>
-
-      {/* Members Menu */}
-      <motion.div
-        initial={{ y: "-100%" }}
-        animate={{ y: menuOpen ? 0 : "-100%" }}
-        exit={{ y: "-100%" }}
-        transition={{ type: "spring", stiffness: 50 }}
-        className="fixed top-0 w-full z-40"
-        style={{ height: "100vh" }}
-      >
-        <MembersMenu
-          bgOpacity={bgOpacity}
-          handleOpacityChange={handleOpacityChange}
-          toggleMenu={toggleMenu}
-          isMenuOpen={menuOpen}
-        />
-      </motion.div>
-      <div className="fixed top-0 h-32 w-full backdrop-blur-lg z-30"></div>
-      <div className="mt-24">
-        {children}
-      </div>
-      
+      <div className="fixed top-0 h-32 md:h-20 w-full backdrop-blur-lg z-10"></div>
+      <div className="mt-24">{children}</div>
     </div>
   );
 }
@@ -1044,7 +1041,7 @@ const client = generateClient<Schema>();
  */
 export default function Home(): JSX.Element {
   // Destructure user, profile, and loading from the authentication context
-  const { user, profile, loading, signOut, isAdmin } = useAuth(); // Access user details and profile from authentication context.
+  const { user, profile, loading, isAdmin } = useAuth(); // Access user details and profile from authentication context.
   const [notification, setNotification] = useState<string | null>(null); // State for site notification
 
   // Fetch the current site notification on component mount
@@ -1775,38 +1772,25 @@ File Path: app/members/code/page.tsx
  *
  * Member Code Page Component
  * --------------------------
- * This component displays a centralized table of contents for all dynamically generated pages
- * from the `LessonContent` model, with each lesson linked for easy navigation.
+ * This component checks the user's lesson progress stored in `localStorage` and redirects them
+ * to the appropriate lesson page. If no progress is found, it initializes the progress and
+ * redirects to the welcome page.
  */
 
-import React, { useState, useEffect } from "react";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/amplify/data/resource";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation"; // Import useRouter for client-side navigation
-
-// Generate the Amplify client
-const client = generateClient<Schema>();
-
-interface LessonContentData {
-  slug: string;
-  title: string;
-  orderIndex: number; // Ensure this is always a number
-}
 
 /**
  * MemberCodePage Component
  * ------------------------
- * Fetches all lessons from `LessonContent` and displays a centralized table of contents.
- * The lessons are sorted by `orderIndex` and each lesson is linked for navigation.
- *
- * Additionally, it checks the `lessonStage` in localStorage to determine the user's progress
- * and redirects them to the appropriate lesson page.
+ * Handles user redirection based on the `lessonStage` in `localStorage`.
+ * If `lessonStage` is not set, initializes it to "welcome" and redirects.
+ * If `lessonStage` exists, redirects to the corresponding lesson page.
  *
  * @component
- * @returns {JSX.Element} The rendered component displaying the table of contents.
+ * @returns {JSX.Element} The rendered component displaying a loading message during redirection.
  */
 export default function MemberCodePage(): JSX.Element {
-  const [lessons, setLessons] = useState<LessonContentData[]>([]);
   const router = useRouter();
 
   /**
@@ -1829,75 +1813,164 @@ export default function MemberCodePage(): JSX.Element {
     }
   }, [router]);
 
-  /**
-   * useEffect Hook for Fetching Lessons
-   * ------------------------------------
-   * This effect fetches all lessons from the `LessonContent` model, ensuring they are
-   * ordered based on `orderIndex`. The fetched lessons are then stored in the component's state.
-   */
-  useEffect(() => {
-    const fetchLessons = async () => {
-      try {
-        const { data: lessonsData } = await client.models.LessonContent.list({
-          filter: { isOrdered: { eq: true } },
-        });
-
-        // Normalize and sort lessons by `orderIndex`
-        const formattedLessons = (lessonsData || [])
-          .map((item) => ({
-            slug: item.slug,
-            title: item.title,
-            orderIndex: item.orderIndex ?? 0, // Ensure `orderIndex` is always a number
-          }))
-          .sort((a, b) => a.orderIndex - b.orderIndex); // Sort by `orderIndex`
-
-        setLessons(formattedLessons);
-      } catch (error) {
-        console.error("Error fetching lesson data:", error);
-      }
-    };
-
-    fetchLessons();
-  }, []);
-
   return (
     <main className="w-full flex justify-center">
       <div className="w-full p-6 mt-16 max-w-3xl mx-auto">
         <span>Checking lesson progress...</span>
-        {/* Uncomment the below line to display the Table of Contents when not redirecting */}
-        {/* <TableOfContents sortedLessonOrder={lessons} /> */}
       </div>
     </main>
   );
 }
 
 ---
-File Path: app/members/code/[slug]/page.tsx
-// File Path: app/members/code/[slug]/page.tsx
+File Path: app/members/code/[slug]/layout.tsx
+// File Path: app/members/code/[slug]/layout.tsx
 
 import React from "react";
 import Link from "next/link";
 import { cookiesClient } from "@/utils/amplifyServerUtils";
+import {
+  ArrowLeftCircleIcon,
+  ArrowRightCircleIcon,
+} from "@heroicons/react/24/solid";
+import TableOfContents from "@/components/TableOfContents";
+import SetLessonStage from "@/components/SetLessonStage";
+import { LessonContent } from "@/types/LessonContent"; // Ensure this type is correctly defined
+
+/**
+ * Interface for the layout properties, containing route parameters and children.
+ */
+interface LayoutProps {
+  children: React.ReactNode;
+  params: {
+    slug: string;
+  };
+}
+
+/**
+ * Layout Component
+ * ----------------
+ * This server component fetches the ordered list of lessons, determines the current lesson's
+ * position, and renders the Table of Contents and Lesson Navigation alongside the page content.
+ *
+ * @param {LayoutProps} props - The component props containing route parameters and children.
+ * @returns {JSX.Element} The rendered Layout component.
+ */
+const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
+  const { slug } = params;
+
+  try {
+    // Fetch all ordered lessons without using the unsupported 'sort' property
+    const { data: lessonOrderData, errors: orderErrors } =
+      await cookiesClient.models.LessonContent.list({
+        filter: { isOrdered: { eq: true } },
+      });
+
+    if (orderErrors || !lessonOrderData) {
+      console.error("Error fetching lesson order data:", orderErrors);
+      return <div className="text-red-500">Error loading lessons.</div>;
+    }
+
+    // Normalize and manually sort the lesson data by 'orderIndex'
+    const sortedLessonOrder: LessonContent[] = lessonOrderData
+      .map((lessonData) => ({
+        id: lessonData.id,
+        title: lessonData.title,
+        slug: lessonData.slug,
+        code: lessonData.code,
+        docs: lessonData.docs,
+        isOrdered: lessonData.isOrdered,
+        orderIndex: lessonData.orderIndex,
+        moreInfoUrl: lessonData.moreInfoUrl,
+      }))
+      .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+
+    // Determine the current lesson's position
+    const currentLessonIndex = sortedLessonOrder.findIndex(
+      (lesson) => lesson.slug === slug
+    );
+
+    if (currentLessonIndex === -1) {
+      console.error(`Lesson with slug "${slug}" not found.`);
+      return <div className="text-red-500">Lesson not found.</div>;
+    }
+
+    const currentLesson = sortedLessonOrder[currentLessonIndex];
+    const nextLesson = sortedLessonOrder[currentLessonIndex + 1] || null;
+    const prevLesson = sortedLessonOrder[currentLessonIndex - 1] || null;
+
+    return (
+      <>
+        {/* Set Lesson Stage in Local Storage */}
+        <SetLessonStage slug={slug} />
+        <div className="relative w-full min-h-screen bg-gray-900 text-white">
+          {/* Fixed Lesson Navigation */}
+          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-80 px-4 py-1 z-20">
+            <div className="max-w-xl mx-auto grid grid-cols-3 items-center gap-2 rounded-lg">
+              {/* Previous Lesson Link */}
+              <div className="justify-self-start">
+                {prevLesson && (
+                  <Link
+                    href={`/members/code/${prevLesson.slug}`}
+                    className="text-white hover:text-green-400 transition-colors duration-200"
+                    aria-label={`Go to previous lesson: ${prevLesson.title}`}
+                  >
+                    <ArrowLeftCircleIcon className="size-10" />
+                  </Link>
+                )}
+              </div>
+
+              {/* Current Lesson Title */}
+              <h1 className="font-bold text-center text-sm">
+                {currentLesson.title}
+              </h1>
+
+              {/* Next Lesson Link */}
+              <div className="justify-self-end">
+                {nextLesson && (
+                  <Link
+                    href={`/members/code/${nextLesson.slug}`}
+                    className="text-white hover:text-green-400 transition-colors duration-200"
+                    aria-label={`Go to next lesson: ${nextLesson.title}`}
+                  >
+                    <ArrowRightCircleIcon className="size-10" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Table of Contents */}
+          <aside className="fixed top-20 left-4 w-64 lg:block z-20">
+            <TableOfContents sortedLessonOrder={sortedLessonOrder} />
+          </aside>
+
+          {/* Main Content */}
+          <main className="ml-0 mt-44 sm:mt-40 md:mt-32">
+            <div className="bg-sky-950">{children}</div>
+          </main>
+        </div>
+      </>
+    );
+  } catch (error) {
+    console.error("Unexpected error in layout:", error);
+    return <div className="text-red-500">An unexpected error occurred.</div>;
+  }
+};
+
+export default Layout;
+
+---
+File Path: app/members/code/[slug]/page.tsx
+// File Path: app/members/code/[slug]/page.tsx
+
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css"; // Use your preferred Highlight.js theme
 import CodeBlock from "@/components/CodeBlock"; // Ensure this component is correctly implemented
-import SetLessonStage from "@/components/SetLessonStage"; // Import the SetLessonStage client component
-import TableOfContents from "@/components/TableOfContents";
-
-/**
- * Interface representing the structure of a lesson.
- */
-interface LessonContent {
-  id: string;
-  title: string;
-  slug: string;
-  code: string | null;
-  docs: string;
-  isOrdered: boolean;
-  orderIndex: number | null;
-  moreInfoUrl: string | null;
-}
+import { cookiesClient } from "@/utils/amplifyServerUtils";
+import { LessonContent } from "@/types/LessonContent"; // Ensure this type is correctly defined
 
 /**
  * Interface for the page properties, containing route parameters.
@@ -1912,17 +1985,13 @@ interface PageProps {
  * LessonPage Component
  * --------------------
  * Renders a lesson page based on the provided slug. It fetches the lesson content,
- * displays the documentation as formatted Markdown, renders code snippets with
- * TypeScript syntax highlighting, and includes navigation links to adjacent lessons.
- *
- * Additionally, it updates the `lessonStage` in localStorage to reflect the current lesson.
+ * displays the documentation as formatted Markdown, and renders code snippets with
+ * TypeScript syntax highlighting.
  *
  * @param {PageProps} props - The component props containing the route parameter `slug`.
  * @returns {Promise<JSX.Element>} The rendered lesson page component.
  */
-export default async function LessonPage({
-  params,
-}: PageProps): Promise<JSX.Element> {
+const LessonPage: React.FC<PageProps> = async ({ params }) => {
   const { slug } = params;
 
   try {
@@ -1935,17 +2004,6 @@ export default async function LessonPage({
     if (errors || !lessons || lessons.length === 0) {
       console.error("Error fetching lessons:", errors);
       return <div className="text-red-500">Error loading lesson.</div>;
-    }
-
-    // Fetch ordered lessons for navigation and table of contents
-    const { data: lessonOrderData, errors: orderErrors } =
-      await cookiesClient.models.LessonContent.list({
-        filter: { isOrdered: { eq: true } },
-      });
-
-    if (orderErrors || !lessonOrderData) {
-      console.error("Error fetching lesson order data:", orderErrors);
-      return <div className="text-red-500">Error loading lessons.</div>;
     }
 
     // Normalize the lesson data
@@ -1961,84 +2019,26 @@ export default async function LessonPage({
       moreInfoUrl: lessonData.moreInfoUrl, // string | null
     };
 
-    // Sort lessons by `orderIndex` to maintain the intended order
-    const sortedLessonOrder = lessonOrderData.sort(
-      (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-    );
-
-    // Determine the current lesson's position to set up navigation
-    const currentLessonIndex = sortedLessonOrder.findIndex(
-      (item) => item.slug === slug
-    );
-    const nextLesson = sortedLessonOrder[currentLessonIndex + 1];
-    const prevLesson = sortedLessonOrder[currentLessonIndex - 1];
-
     return (
-      <main className="p-6 text-sm">
-        {/* Set Lesson Stage in Local Storage */}
-        <SetLessonStage slug={slug} />
-
-        {/* Container to constrain the layout */}
-        <div className="container mx-auto max-w-7xl">
-          {/* Grid container for TOC and main content */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Table of Contents */}
-            <aside className="md:col-span-1">
-              <div className="p-4 bg-gray-100 rounded-lg">
-                <TableOfContents sortedLessonOrder={sortedLessonOrder} />
-              </div>
-            </aside>
-
-            {/* Main Content and Navigation */}
-            <div className="md:col-span-3">
-              {/* Navigation Section */}
-              <nav className="mb-8">
-                <div className="p-4 bg-gray-100 rounded-lg">
-                  <div className="space-y-4">
-                    {prevLesson && (
-                      <Link
-                        href={`/members/code/${prevLesson.slug}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        &larr; Previous: {prevLesson.title}
-                      </Link>
-                    )}
-                    {nextLesson && (
-                      <Link
-                        href={`/members/code/${nextLesson.slug}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        Next: {nextLesson.title} &rarr;
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </nav>
-
-              {/* Documentation and Code Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Documentation Section */}
-                <section className="lg:col-span-2">
-                  {/* Lesson Title */}
-                  <h1 className="font-bold text-2xl mb-6">{lesson.title}</h1>
-
-                  {/* Documentation Content */}
-                  <div className="p-4 bg-black bg-opacity-70 rounded-lg">
-                    <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                      {lesson.docs}
-                    </ReactMarkdown>
-                  </div>
-                </section>
-
-                {/* Code Section */}
-                {lesson.code && (
-                  <section>
-                    <CodeBlock code={lesson.code} language="typescript" />
-                  </section>
-                )}
-              </div>
+      <main className="text-sm text-left">
+        {/* Documentation and Code Sections */}
+        <div className="p-1 flex flex-col lg:flex-row gap-2">
+          {/* Documentation Section */}
+          <section className="lg:w-2/5">
+            {/* Documentation Content */}
+            <div className="text-sm p-2 bg-black bg-opacity-100 rounded-lg">
+              <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                {lesson.docs}
+              </ReactMarkdown>
             </div>
-          </div>
+          </section>
+
+          {/* Code Section */}
+          {lesson.code && (
+            <section className="lg:w-3/5 p-2 bg-black rounded-lg">
+              <CodeBlock code={lesson.code} language="typescript" />
+            </section>
+          )}
         </div>
       </main>
     );
@@ -2046,7 +2046,9 @@ export default async function LessonPage({
     console.error("Unexpected error:", error);
     return <div className="text-red-500">An unexpected error occurred.</div>;
   }
-}
+};
+
+export default LessonPage;
 
 ---
 File Path: components/LessonNavigationLinks.tsx
@@ -2333,14 +2335,14 @@ export default function MembersMenu({
   return (
     <div
       ref={menuRef}
-      className="bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 pt-16 shadow-md"
+      className="z-50 text-left bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 pt-16 shadow-md"
     >
       {/* Links Section */}
       <button
-        className="fixed top-4 right-4 text-white px-4 rounded-lg"
+        className="fixed top-5 right-2 text-white px-4 rounded-lg"
         onClick={toggleMenu}
       >
-        <XCircleIcon className="size-6 text-white" />
+        <XCircleIcon className="size-7 text-white" />
       </button>
       <div className="mb-6">
         <nav className="mt-2">
@@ -3435,20 +3437,28 @@ export default function AuthenticatedNavBar(): JSX.Element {
     : membersNavLinks;
 
   return (
-    <div className="fixed z-40 text-xs lg:text-sm text-center w-auto mx-auto top-16 px-2 m-1  rounded-lg flex justify-center space-x-1 sm:space-x-4 md:space-x-8 lg:space-x-16">
-      {navLinks.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className={`p-2 sm:p-4 border-1 rounded ${
-            pathname === link.href
-              ? "text-white border white"
-              : "text-yellow-400 border-0"
-          } `}
-        >
-          {link.label}
-        </Link>
-      ))}
+    <div className="text-xs lg:text-sm xl:text-base lg:font-extralight lg:space-x-2 xl:space-x-2 mx-1 flex space-around items-center justify-center">
+      {navLinks.map((link) => {
+        // Determine if the current link is active
+        const isActive =
+          pathname === link.href ||
+          (link.href === "/members/code" &&
+            pathname.startsWith("/members/code/"));
+
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`p-2 border rounded ${
+              isActive
+                ? "text-white border-white" // Active styles
+                : "text-yellow-400 border-0" // Inactive styles
+            } transition-colors duration-200`}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -4176,12 +4186,12 @@ export default LessonForm;
 File Path: components/CodeBlock.tsx
 // File Path: components/CodeBlock.tsx
 
-'use client';
+"use client";
 
-import React, { useEffect, useRef } from 'react';
-import hljs from 'highlight.js/lib/core';
-import typescript from 'highlight.js/lib/languages/typescript';
-import 'highlight.js/styles/github-dark.css'; // Use the same theme as in LessonPage
+import React, { useEffect, useRef } from "react";
+import hljs from "highlight.js/lib/core";
+import typescript from "highlight.js/lib/languages/typescript";
+import "highlight.js/styles/github-dark.css"; // Use the same theme as in LessonPage
 
 interface CodeBlockProps {
   code: string;
@@ -4201,7 +4211,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
 
   // Register languages once
   useEffect(() => {
-    hljs.registerLanguage('typescript', typescript);
+    hljs.registerLanguage("typescript", typescript);
   }, []);
 
   // Highlight the code after component mounts or updates
@@ -4212,11 +4222,16 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   }, [code, language]);
 
   return (
-    <pre className="overflow-x-auto bg-gray-800 rounded-md p-4">
-      <code ref={codeRef} className={`language-${language}`}>
-        {code}
-      </code>
-    </pre>
+    <div className="p-1 bg-black">
+      <button className="text-sm px-2 py-1 rounded-lg p-1 border border-white bg-slate-800">
+        Copy
+      </button>
+      <pre className="overflow-x-auto bg-gray-800">
+        <code ref={codeRef} className={`language-${language}`}>
+          {code}
+        </code>
+      </pre>
+    </div>
   );
 };
 
@@ -4224,10 +4239,12 @@ export default CodeBlock;
 
 ---
 File Path: components/TableOfContents.tsx
-// components/TableOfContents.tsx
+"use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 
 interface Lesson {
   slug: string;
@@ -4241,22 +4258,127 @@ interface TableOfContentsProps {
 const TableOfContents: React.FC<TableOfContentsProps> = ({
   sortedLessonOrder,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const tocRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Toggle the open state
+  const toggleOpen = () => setIsOpen((prev) => !prev);
+
+  // Close TOC when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tocRef.current &&
+        !tocRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      // Prevent scrolling when TOC is open
+      document.body.style.overflow = "hidden";
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+      // Restore scrolling when TOC is closed
+      document.body.style.overflow = "auto";
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "auto";
+    };
+  }, [isOpen]);
+
+  // Close TOC when a link is clicked
+  const handleLinkClick = () => {
+    setIsOpen(false);
+    // Return focus to the toggle button after closing
+    buttonRef.current?.focus();
+  };
+
   return (
-    <div className="section-container shadow p-4">
-      <h2 className="heading">Table of Contents</h2>
-      <div className="bg-black bg-opacity-70 p-4 rounded-lg">
-        <ul className="space-y-2">
-          {sortedLessonOrder.map((lesson, index) => (
-            <li key={lesson.slug}>
-              <Link href={`/members/code/${lesson.slug}`}>
-              <div className="text-xs px-2 py-1">{index + 1}. {lesson.title}</div>
-                
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+    <>
+      {/* Toggle Button */}
+      <button
+        ref={buttonRef}
+        onClick={toggleOpen}
+        className="fixed w-16 top-16 md:top-20 left-0 z-0 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
+        aria-label={isOpen ? "Close Table of Contents" : "Show Table of Contents"}
+        aria-expanded={isOpen}
+        aria-controls="toc-panel"
+      >
+        {isOpen ? "" : "Table of Contents" }
+      </button>
+
+      {/* Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            key="overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black z-30"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Table of Contents Panel */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.aside
+            key="toc-panel"
+            id="toc-panel"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "tween", duration: 0.3 }}
+            className="fixed z-40 top-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 shadow-lg overflow-y-auto"
+            ref={tocRef}
+            aria-labelledby="toc-title"
+          >
+            {/* Header Inside TOC */}
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 id="toc-title" className="text-lg font-extralight">
+                Table of Contents
+              </h2>
+              {/* Close Button Inside TOC */}
+              <button
+                onClick={toggleOpen}
+                className="text-blue-600 hover:text-blue-800 focus:outline-none"
+                aria-label="Close Table of Contents"
+              >
+                <XCircleIcon className="size-8 text-white" />
+              </button>
+            </div>
+
+            {/* TOC Links */}
+            <nav className="p-4 text-left ">
+              <ul>
+                {sortedLessonOrder.map((lesson) => (
+                  <li key={lesson.slug} className="mb-3">
+                    <Link
+                      href={`/members/code/${lesson.slug}`}
+                      onClick={handleLinkClick}
+                      className="text-white text-sm hover:underline"
+                    >
+                      {lesson.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
@@ -4575,6 +4697,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, sign
   );
 };
 
+---
+File Path: types/LessonContent.ts
+// File Path: types/LessonContent.ts
+
+export interface LessonContent {
+    id: string;
+    title: string;
+    slug: string;
+    code: string | null;
+    docs: string;
+    isOrdered: boolean;
+    orderIndex: number | null;
+    moreInfoUrl: string | null;
+  }
+  
 ---
 File Path: utils/amplifyServerUtils.ts
 import { cookies } from 'next/headers';

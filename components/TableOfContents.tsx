@@ -67,7 +67,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       <button
         ref={buttonRef}
         onClick={toggleOpen}
-        className="fixed w-16 top-16 left-0 z-30 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
+        className="fixed w-16 top-16 md:top-20 left-0 z-0 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
         aria-label={isOpen ? "Close Table of Contents" : "Show Table of Contents"}
         aria-expanded={isOpen}
         aria-controls="toc-panel"
@@ -99,7 +99,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed z-50 top-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 z-40 shadow-lg overflow-y-auto"
+            className="fixed z-40 top-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 shadow-lg overflow-y-auto"
             ref={tocRef}
             aria-labelledby="toc-title"
           >
@@ -114,12 +114,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                 className="text-blue-600 hover:text-blue-800 focus:outline-none"
                 aria-label="Close Table of Contents"
               >
-                <XCircleIcon className="size-6 text-white" />
+                <XCircleIcon className="size-8 text-white" />
               </button>
             </div>
 
             {/* TOC Links */}
-            <nav className="p-4">
+            <nav className="p-4 text-left ">
               <ul>
                 {sortedLessonOrder.map((lesson) => (
                   <li key={lesson.slug} className="mb-3">

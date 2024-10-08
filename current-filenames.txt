@@ -17,6 +17,7 @@ app/members/admin/users/page.tsx
 app/members/admin/messaging/page.tsx
 app/members/code/generateStaticParams.ts
 app/members/code/page.tsx
+app/members/code/[slug]/layout.tsx
 app/members/code/[slug]/page.tsx
 components/LessonNavigationLinks.tsx
 components/AllLessonsList.tsx
@@ -37,4 +38,5 @@ components/CodeBlock.tsx
 components/TableOfContents.tsx
 contexts/ToastContext.tsx
 contexts/AuthContext.tsx
+types/LessonContent.ts
 utils/amplifyServerUtils.ts

@@ -48,14 +48,14 @@ export default function AdminCodePage(): JSX.Element {
 
   // Render the main layout for managing lessons and lesson ordering.
   return (
-    <main className="w-full">
+    <main className="w-full lg:flex">
       {/* Section for managing all lessons */}
-      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full">
+      <div className="section-container text-left flex flex-col md:flex-row md:space-x-6 w-full">
         {displayState === "list" ? (
           <div className="w-full">
             <AllLessonsList onSelectItem={showLessonForm} />
             <button
-              className="btn btn-primary mt-4"
+              className="btn btn-primary mt-4 lg:mt-0"
               onClick={() => showLessonForm("new")}
             >
               Add New Lesson
@@ -72,7 +72,7 @@ export default function AdminCodePage(): JSX.Element {
       </div>
 
       {/* Section for managing lesson order */}
-      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full mt-8">
+      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full mt-8 lg:mt-0">
         <LessonOrder /> {/* Render the LessonOrder component */}
       </div>
     </main>

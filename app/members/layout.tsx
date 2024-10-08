@@ -174,7 +174,7 @@ function LayoutContent({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full text-center">
       <div
         className="w-full h-screen fixed top-0 left-0 -z-50"
         style={{ opacity: bgOpacity }}
@@ -186,49 +186,46 @@ function LayoutContent({
           style={{ objectFit: "cover" }}
         />
       </div>
-      <div
-        className={`${climate_crisis.className} fixed z-40 top-4 left-4 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white`}
-      >
-        Meet A Drifter
+      <div className="fixed top-0 left-0 right-0 z-20">
+        <div className={`${climate_crisis.className} fixed top-6 left-4 text-white lg:text-xl`}>
+          Meet A Drifter
+        </div>
+        <div className="mt-16 md:mt-5 md:-mr-32">
+          {/* Render the navigation bar */}
+          <AuthenticatedNavBar />
+        </div>
+        <div className="z-20">
+          {/* Menu Button */}
+          {!menuOpen && (
+            <button className="fixed top-0 right-6 text-white pt-6" onClick={toggleMenu}>
+              <Bars3Icon className="size-7 text-white" />
+            </button>
+          )}
+        </div>
+
+        
       </div>
-      <div className="flex justify-center items-center w-full mt-8">
-        {/* Render the navigation bar */}
-        <AuthenticatedNavBar />
+      <div className="z-40">
+        {/* Members Menu */}
+        <motion.div
+          initial={{ y: "-100%" }}
+          animate={{ y: menuOpen ? 0 : "-100%" }}
+          exit={{ y: "-100%" }}
+          transition={{ type: "spring", stiffness: 50 }}
+          className="fixed top-0 w-full z-40"
+          style={{ height: "100vh" }}
+        >
+          <MembersMenu
+            bgOpacity={bgOpacity}
+            handleOpacityChange={handleOpacityChange}
+            toggleMenu={toggleMenu}
+            isMenuOpen={menuOpen}
+          />
+        </motion.div>
       </div>
 
-      <div className="fixed top-0 w-full h-12 z-40 backdrop:blur-3xl">
-        {/* Menu Button */}
-        {!menuOpen && (
-          <button
-            className="fixed top-4 right-2 text-white px-4 rounded-lg"
-            onClick={toggleMenu}
-          >
-            <Bars3Icon className="size-7 text-white" />
-          </button>
-        )}
-      </div>
-
-      {/* Members Menu */}
-      <motion.div
-        initial={{ y: "-100%" }}
-        animate={{ y: menuOpen ? 0 : "-100%" }}
-        exit={{ y: "-100%" }}
-        transition={{ type: "spring", stiffness: 50 }}
-        className="fixed top-0 w-full z-40"
-        style={{ height: "100vh" }}
-      >
-        <MembersMenu
-          bgOpacity={bgOpacity}
-          handleOpacityChange={handleOpacityChange}
-          toggleMenu={toggleMenu}
-          isMenuOpen={menuOpen}
-        />
-      </motion.div>
-      <div className="fixed top-0 h-32 w-full backdrop-blur-lg z-30"></div>
-      <div className="mt-24">
-        {children}
-      </div>
-      
+      <div className="fixed top-0 h-32 md:h-20 w-full backdrop-blur-lg z-10"></div>
+      <div className="mt-24">{children}</div>
     </div>
   );
 }

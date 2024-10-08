@@ -149,7 +149,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
   };
 
   return (
-    <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
+    <div className="bg-black bg-opacity-70 rounded-lg w-full">
       {/* Type Selection using Radio Buttons */}
       <div className="mb-4">
         <label className="block text-sm mb-2">Type</label>

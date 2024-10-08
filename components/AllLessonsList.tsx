@@ -96,7 +96,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
   };
 
   return (
-    <div className="bg-black bg-opacity-70 p-2 rounded-lg w-full mb-4">
+    <div className="bg-black bg-opacity-70 rounded-lg w-full mb-4">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
         <input
