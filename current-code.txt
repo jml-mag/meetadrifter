@@ -442,61 +442,52 @@ File Path: app/layout.tsx
  *
  * RootLayout Component
  * --------------------
- * This file defines the RootLayout component, which serves as the top-level layout for the entire application.
- * It integrates global styles, the ToastProvider for managing notifications, and sets foundational metadata
- * for SEO optimization.
+ * This component provides the top-level layout for the application, integrating global styles,
+ * toast notifications, and Amplify configuration. It wraps around all child components, setting
+ * foundational elements such as document metadata and accessibility attributes.
  */
 
-import type { Metadata } from "next"; // Import type definitions for Metadata from Next.js.
-import { ToastProvider } from "@/contexts/ToastContext"; // Import the ToastProvider to manage toast notifications throughout the app.
-import Toast from "@/components/Toast"; // Import the Toast component to display toast messages.
-import { inter } from "@/app/fonts"; // Import the 'inter' font configuration for consistent typography.
+import type { Metadata } from "next";
+import { ToastProvider } from "@/contexts/ToastContext";
+import Toast from "@/components/Toast";
+import { inter } from "@/app/fonts";
 import ConfigureAmplifyClientSide from '@/components/ConfigureAmplify';
-import "./globals.css"; // Import global CSS styles.
-
+import "./globals.css";
 
 /**
- * Metadata configuration for the application.
- * This object provides SEO-related information such as the page title and description.
- *
- * @constant
- * @type {Metadata}
+ * Metadata configuration for SEO, defining the title and description of the application.
  */
 export const metadata: Metadata = {
-  title: "Meet A Drifter", // Application title used in the browser tab and search engine results.
-  description:
-    "A website that exists solely as the base of a tutorial of sorts, for now.", // Description of the application for SEO.
+  title: "Meet A Drifter", 
+  description: "A website that exists solely as the base of a tutorial of sorts, for now.",
 };
 
 /**
  * RootLayout Component
- * --------------------
- * This component acts as the root layout wrapper around all other components in the application.
- * It sets the HTML document language, applies global font styles, and integrates the ToastProvider
- * for handling notifications throughout the app.
- *
- * @component
- * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
- * @param {React.ReactNode} props.children - The child components to be wrapped within the RootLayout.
- * @returns {JSX.Element} The rendered layout component.
+ * 
+ * This component serves as the root layout of the application. It wraps the entire app with global styles,
+ * configures Amplify on the client side, and integrates toast notifications. It ensures accessibility
+ * and SEO enhancements by setting the document's language and metadata.
+ * 
+ * @param {Readonly<{ children: React.ReactNode }>} props - The component's properties.
+ * @param {React.ReactNode} props.children - The child components to be rendered within the layout.
+ * 
+ * @returns {JSX.Element} The root layout component wrapping the provided children.
  */
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode; // Ensure that children are valid React nodes.
+  children: React.ReactNode;
 }>): JSX.Element {
   return (
     <html lang="en">
-      {/* Set the document language to English for accessibility and SEO. */}
       <body className={inter.className}>
         <ConfigureAmplifyClientSide />
-        {/* Apply the 'inter' font class to the body for consistent typography across the application. */}
         <ToastProvider>
-          {/* Include the ToastProvider to manage toast notifications across the app. */}
           <Toast />
-          {/* Render the Toast component to display notifications at the top level. */}
-          {children}
-          {/* Render child components passed to the RootLayout. */}
+          <main>
+            {children}
+          </main>
         </ToastProvider>
       </body>
     </html>
@@ -1274,14 +1265,14 @@ export default function AdminCodePage(): JSX.Element {
 
   // Render the main layout for managing lessons and lesson ordering.
   return (
-    <main className="w-full">
+    <main className="w-full lg:flex">
       {/* Section for managing all lessons */}
-      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full">
+      <div className="section-container text-left flex flex-col md:flex-row md:space-x-6 w-full">
         {displayState === "list" ? (
           <div className="w-full">
             <AllLessonsList onSelectItem={showLessonForm} />
             <button
-              className="btn btn-primary mt-4"
+              className="btn btn-primary mt-4 lg:mt-0"
               onClick={() => showLessonForm("new")}
             >
               Add New Lesson
@@ -1298,7 +1289,7 @@ export default function AdminCodePage(): JSX.Element {
       </div>
 
       {/* Section for managing lesson order */}
-      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full mt-8">
+      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full mt-8 lg:mt-0">
         <LessonOrder /> {/* Render the LessonOrder component */}
       </div>
     </main>
@@ -1905,7 +1896,7 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
         <SetLessonStage slug={slug} />
         <div className="relative w-full min-h-screen bg-gray-900 text-white">
           {/* Fixed Lesson Navigation */}
-          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-80 px-4 py-1 z-20">
+          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20">
             <div className="max-w-xl mx-auto grid grid-cols-3 items-center gap-2 rounded-lg">
               {/* Previous Lesson Link */}
               <div className="justify-self-start">
@@ -1966,7 +1957,7 @@ File Path: app/members/code/[slug]/page.tsx
 
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
+// import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css"; // Use your preferred Highlight.js theme
 import CodeBlock from "@/components/CodeBlock"; // Ensure this component is correctly implemented
 import { cookiesClient } from "@/utils/amplifyServerUtils";
@@ -2025,23 +2016,24 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
         <div className="p-1 flex flex-col lg:flex-row gap-2">
           {/* Documentation Section */}
           <section className="lg:w-2/5">
-            {/* Documentation Content */}
-            <div className="text-sm p-2 bg-black bg-opacity-100 rounded-lg">
-              <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+            {/* Fixed Documentation Content only for lg and higher */}
+            <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto">
+              <ReactMarkdown className="whitespace-pre-wrap">
                 {lesson.docs}
               </ReactMarkdown>
             </div>
           </section>
-
+    
           {/* Code Section */}
-          {lesson.code && (
-            <section className="lg:w-3/5 p-2 bg-black rounded-lg">
-              <CodeBlock code={lesson.code} language="typescript" />
-            </section>
-          )}
+          <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
+            {lesson.code && <CodeBlock code={lesson.code} language="typescript" />}
+          </section>
         </div>
       </main>
     );
+    
+    
+    
   } catch (error) {
     console.error("Unexpected error:", error);
     return <div className="text-red-500">An unexpected error occurred.</div>;
@@ -2187,7 +2179,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
   };
 
   return (
-    <div className="bg-black bg-opacity-70 p-2 rounded-lg w-full mb-4">
+    <div className="bg-black bg-opacity-70 rounded-lg w-full mb-4">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
         <input
@@ -4075,7 +4067,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
   };
 
   return (
-    <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
+    <div className="bg-black bg-opacity-70 rounded-lg w-full">
       {/* Type Selection using Radio Buttons */}
       <div className="mb-4">
         <label className="block text-sm mb-2">Type</label>
@@ -4184,8 +4176,6 @@ export default LessonForm;
 
 ---
 File Path: components/CodeBlock.tsx
-// File Path: components/CodeBlock.tsx
-
 "use client";
 
 import React, { useEffect, useRef } from "react";
@@ -4223,9 +4213,6 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
 
   return (
     <div className="p-1 bg-black">
-      <button className="text-sm px-2 py-1 rounded-lg p-1 border border-white bg-slate-800">
-        Copy
-      </button>
       <pre className="overflow-x-auto bg-gray-800">
         <code ref={codeRef} className={`language-${language}`}>
           {code}
@@ -4308,7 +4295,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       <button
         ref={buttonRef}
         onClick={toggleOpen}
-        className="fixed w-16 top-16 md:top-20 left-0 z-0 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
+        className="fixed w-16 md:w-28 top-16 md:top-16 left-0 z-0 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
         aria-label={isOpen ? "Close Table of Contents" : "Show Table of Contents"}
         aria-expanded={isOpen}
         aria-controls="toc-panel"

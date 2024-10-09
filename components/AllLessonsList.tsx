@@ -96,18 +96,18 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
   };
 
   return (
-    <div className="bg-black bg-opacity-70 rounded-lg w-full mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+    <div className="bg-black bg-opacity-70 rounded-lg w-full">
+      <div className="flex p-2 flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
         <input
           type="text"
           value={searchTerm}
           onChange={handleSearch}
           placeholder="Search lessons..."
-          className="form-input max-w-3xl mt-2 md:mt-0 md:ml-4 p-2 rounded"
+          className="form-input max-w-sm md:mt-0 md:ml-4 p-2 rounded"
         />
       </div>
-      <div className="h-48 overflow-scroll">
+      <div className="h-fit overflow-scroll">
         <ul className="text-sm mt-4 ml-6">
           {filteredLessons.map((lesson) => (
             <li
