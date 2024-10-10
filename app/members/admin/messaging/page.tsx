@@ -1,45 +1,49 @@
+"use client";
+
 /**
  * File Path: @/app/members/admin/messaging/page.tsx
- *
+ * 
  * Messaging Page Component
  * ------------------------
- * This file defines the Admin Messaging Page component, allowing administrators
- * to create, update, and delete a site-wide notification message.
+ * This component allows administrators to create, update, or delete a site-wide notification message.
+ * The page includes a textarea for managing the message content and integrates with toast notifications 
+ * to provide feedback to the user. The layout is responsive and adapts to various screen sizes.
  */
-
-"use client";
 
 import React, { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 import { useContext } from "react";
-import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Import the toast notifications context
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Toast notifications context
 
-// Define TypeScript interface for notification
+/**
+ * Interface representing the site notification object.
+ */
 interface SiteNotification {
   id: string;
   message: string;
 }
 
-// Generate the Amplify client with the schema
+// Generate an Amplify client instance with the defined schema
 const client = generateClient<Schema>();
 
 /**
  * AdminMessagingPage Component
- * ----------------------------
- * This component renders a textarea allowing admins to manage the site notification message.
- * It includes functionality for creating, updating, and deleting the notification.
- *
- * @component
- * @returns {JSX.Element} The rendered AdminMessagingPage component.
+ * 
+ * @remarks
+ * This component allows administrators to manage a site-wide notification. The notification can be created,
+ * updated, or deleted, and the component provides feedback via toast notifications. Error handling is included
+ * for all operations, and the current notification is fetched when the component is first rendered.
+ * 
+ * @returns {JSX.Element} The rendered AdminMessagingPage component for managing the site notification.
  */
 export default function AdminMessagingPage(): JSX.Element {
   const [notification, setNotification] = useState<SiteNotification | null>(null); // State to store current notification
-  const [message, setMessage] = useState<string>(""); // State to store textarea message
-  const [error, setError] = useState<string | null>(null); // Error handling state
+  const [message, setMessage] = useState<string>(""); // State to store the textarea message content
+  const [error, setError] = useState<string | null>(null); // State for handling errors
   const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast notifications from ToastContext
 
-  // Fetch the current site notification on component mount
+  // Fetch the current site notification when the component is mounted
   useEffect(() => {
     const fetchNotification = async () => {
       try {
@@ -52,7 +56,7 @@ export default function AdminMessagingPage(): JSX.Element {
           });
           return;
         }
-        // Assume there's only one notification for simplicity
+        // Assume there is only one notification for simplicity
         const currentNotification = data[0] as SiteNotification | undefined;
         setNotification(currentNotification || null);
         setMessage(currentNotification?.message || "");
@@ -69,18 +73,21 @@ export default function AdminMessagingPage(): JSX.Element {
     fetchNotification();
   }, [addToast]);
 
-  // Handle save/update of the notification
-  const handleSave = async () => {
+  /**
+   * Handles saving or updating the notification.
+   * If a notification exists, it updates it; otherwise, it creates a new one.
+   */
+  const handleSave = async (): Promise<void> => {
     try {
       if (notification) {
-        // Update existing notification
+        // Update the existing notification
         const { errors } = await client.models.SiteNotification.update({
           id: notification.id,
           message,
         });
         if (errors) throw new Error("Failed to update notification");
       } else {
-        // Create new notification
+        // Create a new notification
         const { errors } = await client.models.SiteNotification.create({
           message,
         });
@@ -100,8 +107,10 @@ export default function AdminMessagingPage(): JSX.Element {
     }
   };
 
-  // Handle delete of the notification
-  const handleDelete = async () => {
+  /**
+   * Handles deleting the notification if one exists.
+   */
+  const handleDelete = async (): Promise<void> => {
     try {
       if (!notification) return;
       const { errors } = await client.models.SiteNotification.delete({ id: notification.id });

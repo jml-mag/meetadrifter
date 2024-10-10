@@ -8,7 +8,9 @@ import { cookiesClient } from "@/utils/amplifyServerUtils";
 import { LessonContent, Link } from "@/types/LessonContent"; // Ensure this type is correctly defined
 
 /**
- * Interface for the page properties, containing route parameters.
+ * PageProps Interface
+ * -------------------
+ * Defines the structure of the route parameters passed to the page component.
  */
 interface PageProps {
   params: {
@@ -19,10 +21,10 @@ interface PageProps {
 /**
  * LessonPage Component
  * --------------------
- * Renders a lesson page based on the provided slug. It fetches the lesson content,
- * displays the documentation as formatted Markdown, renders code snippets with
- * TypeScript syntax highlighting, and displays any relevant lesson links.
- *
+ * Renders a lesson page based on the provided slug. It fetches the lesson content from the backend,
+ * displays the documentation as formatted Markdown, renders code snippets with TypeScript syntax highlighting,
+ * and displays any relevant lesson links.
+ * 
  * @param {PageProps} props - The component props containing the route parameter `slug`.
  * @returns {Promise<JSX.Element>} The rendered lesson page component.
  */
@@ -35,36 +37,35 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
       filter: { slug: { eq: slug } },
     });
 
+    // Handle errors or missing lessons
     if (errors || !lessons || lessons.length === 0) {
       console.error("Error fetching lessons:", errors);
       return <div className="text-red-500">Error loading lesson.</div>;
     }
 
-    // Normalize the lesson data
+    // Normalize the lesson data for rendering
     const lessonData = lessons[0];
     const lesson: LessonContent = {
       id: lessonData.id,
       title: lessonData.title,
       slug: lessonData.slug,
-      code: lessonData.code || null, // Ensure that code is either a string or null
+      code: lessonData.code || null, // Ensure code is either a string or null
       docs: lessonData.docs,
       isOrdered: lessonData.isOrdered,
       orderIndex: lessonData.orderIndex || null,
       links: (lessonData.links || [])
-        .filter((link): link is Link => link !== null) // Filter out any null values
+        .filter((link): link is Link => link !== null) // Filter out null values
         .map((link) => ({
           text: link.text || "", // Default to an empty string if text is null
-          url: link.url || "", // Default to an empty string if url is null
+          url: link.url || "", // Default to an empty string if URL is null
         })),
     };
 
     return (
       <main className="text-sm text-left">
-        {/* Documentation and Code Sections */}
         <div className="p-1 flex flex-col lg:flex-row gap-2">
           {/* Documentation Section */}
           <section className="lg:w-2/5">
-            {/* Fixed Documentation Content only for lg and higher */}
             <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto">
               <ReactMarkdown className="whitespace-pre-wrap">
                 {lesson.docs}

@@ -1,30 +1,71 @@
 "use client";
 
+/**
+ * File Path: @/components/TableOfContents.tsx
+ *
+ * TableOfContents Component
+ * -------------------------
+ * This component provides a slide-in table of contents (TOC) for navigating through a sorted list of lessons.
+ * Users can toggle the visibility of the TOC, and it closes when a user clicks outside or selects a lesson link.
+ * The component ensures accessibility, prevents body scrolling when open, and handles focus management.
+ */
+
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 
+/**
+ * Interface representing a lesson object.
+ */
 interface Lesson {
+  /**
+   * The slug (URL-friendly identifier) for the lesson.
+   */
   slug: string;
+
+  /**
+   * The title of the lesson.
+   */
   title: string;
 }
 
+/**
+ * Props interface for the TableOfContents component.
+ */
 interface TableOfContentsProps {
+  /**
+   * Array of lessons sorted in the desired order.
+   */
   sortedLessonOrder: Lesson[];
 }
 
-const TableOfContents: React.FC<TableOfContentsProps> = ({
-  sortedLessonOrder,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const tocRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+/**
+ * TableOfContents Component
+ * -------------------------
+ * This component renders a slide-in table of contents (TOC) panel that displays a list of lessons.
+ * The user can toggle the TOC panel open or closed, and it automatically closes when the user
+ * clicks outside of it or selects a lesson link. The TOC panel provides keyboard and screen reader
+ * accessibility features and prevents scrolling while the TOC is open.
+ *
+ * @param {TableOfContentsProps} props - The component props containing a sorted list of lessons.
+ * @returns {JSX.Element} The rendered table of contents with a toggle button and interactive lesson links.
+ */
+const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) => {
+  const [isOpen, setIsOpen] = useState(false); // State to track the open/closed state of the TOC.
+  const tocRef = useRef<HTMLDivElement>(null); // Reference to the TOC panel.
+  const buttonRef = useRef<HTMLButtonElement>(null); // Reference to the toggle button.
 
-  // Toggle the open state
+  /**
+   * Toggles the TOC panel open or closed.
+   */
   const toggleOpen = () => setIsOpen((prev) => !prev);
 
-  // Close TOC when clicking outside
+  /**
+   * Closes the TOC if a click occurs outside the panel.
+   * 
+   * @param {MouseEvent} event - The click event.
+   */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -47,18 +88,18 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       document.body.style.overflow = "auto";
     }
 
-    // Cleanup
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.body.style.overflow = "auto";
     };
   }, [isOpen]);
 
-  // Close TOC when a link is clicked
+  /**
+   * Handles closing the TOC when a link is clicked and returns focus to the toggle button.
+   */
   const handleLinkClick = () => {
     setIsOpen(false);
-    // Return focus to the toggle button after closing
-    buttonRef.current?.focus();
+    buttonRef.current?.focus(); // Return focus to the toggle button after closing the TOC.
   };
 
   return (
@@ -72,7 +113,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         aria-expanded={isOpen}
         aria-controls="toc-panel"
       >
-        {isOpen ? "" : "Table of Contents" }
+        {isOpen ? "" : "Table of Contents"}
       </button>
 
       {/* Overlay */}
@@ -104,7 +145,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
             aria-labelledby="toc-title"
           >
             {/* Header Inside TOC */}
-            <div className="flex justify-between items-center p-4 border-b">
+            <header className="flex justify-between items-center p-4 border-b">
               <h2 id="toc-title" className="text-lg font-extralight">
                 Table of Contents
               </h2>
@@ -116,10 +157,10 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
               >
                 <XCircleIcon className="size-8 text-white" />
               </button>
-            </div>
+            </header>
 
             {/* TOC Links */}
-            <nav className="p-4 text-left ">
+            <nav className="p-4 text-left">
               <ul>
                 {sortedLessonOrder.map((lesson) => (
                   <li key={lesson.slug} className="mb-3">

@@ -1,15 +1,3 @@
-/**
- * File Path: @/components/Background.tsx
- * 
- * Background Component
- * --------------------
- * This file defines the `Background` component, which serves as a wrapper around the animated background
- * of the application. It handles the transition effects for the background when navigating between routes.
- * 
- * The component uses Framer Motion for smooth transitions and animations, ensuring a fluid background
- * experience throughout the application.
- */
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -18,28 +6,27 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 /**
  * Background Component
  * --------------------
- * Wraps the `AnimatedBackground` component and provides animation variants for transitioning between routes.
- * Controls the opacity and transition of the background as routes change within the application.
- * 
+ * This component serves as a wrapper for the application's animated background,
+ * handling the transition effects between route changes using Framer Motion.
+ * It controls the background's opacity and ensures a smooth animation experience
+ * as users navigate through different routes in the application.
+ *
  * @component
- * @returns {JSX.Element} The rendered `Background` component with animation effects.
+ * @returns {JSX.Element} The animated background with route transition effects.
  */
 export function Background(): JSX.Element {
   /**
-   * backgroundVariants
-   * ------------------
-   * Defines animation states for the background's opacity during route transitions.
-   * - `enter`: Sets initial opacity when the component mounts or the route changes.
-   * - `active`: Gradually increases the opacity to full visibility over 25 seconds.
-   * - `exit`: Reduces the opacity back down when the component unmounts or the route changes.
+   * Animation variants for controlling the background opacity during route transitions.
+   * - `enter`: Initial state with reduced opacity when the component first renders.
+   * - `active`: Gradual transition to full opacity over 25 seconds, providing a smooth fade-in effect.
+   * - `exit`: Reverse transition to reduced opacity when the route changes or the component unmounts.
    */
   const backgroundVariants = {
-    enter: { opacity: 0.5 }, // Initial opacity when component mounts.
-    active: { opacity: 1, transition: { duration: 25, ease: "easeInOut" } }, // Transition to full opacity.
-    exit: { opacity: 0.5, transition: { duration: 25, ease: "easeInOut" } }, // Transition to reduced opacity on unmount.
+    enter: { opacity: 0.5 },
+    active: { opacity: 1, transition: { duration: 25, ease: "easeInOut" } },
+    exit: { opacity: 0.5, transition: { duration: 25, ease: "easeInOut" } },
   };
 
-  // Render the animated background with route-based transitions.
   return (
     <motion.div
       initial="enter"
@@ -48,7 +35,7 @@ export function Background(): JSX.Element {
       variants={backgroundVariants}
       className="fixed inset-0 -z-50 overflow-hidden h-screen w-screen"
     >
-      {/* Render the animated background grid */}
+      {/* Render the background animation */}
       <AnimatedBackground />
     </motion.div>
   );

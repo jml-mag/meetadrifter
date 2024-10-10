@@ -1,31 +1,30 @@
+"use client";
+
 /**
  * File Path: components/MembersMenu.tsx
  *
- * Members Menu Component
- * ----------------------
- * This file defines the MembersMenu component, which is responsible for rendering the navigation
- * menu within the member areas of the application. It includes links, background opacity control,
- * and account management features such as sign-out.
+ * MembersMenu Component
+ * ---------------------
+ * This component renders a navigation menu for authenticated members.
+ * It provides links to various sections based on user status, includes a slider for controlling the background opacity,
+ * and offers account management options such as signing out.
+ * The menu can be toggled open or closed and will automatically close when a user clicks outside the menu area.
  */
 
-"use client";
-
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
-import { useRouter } from "next/navigation"; // Import useRouter for programmatic navigation.
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 
 /**
- * MembersMenuProps Interface
- * --------------------------
- * Defines the structure of the props passed to the MembersMenu component.
+ * Interface for the MembersMenu component's props.
  *
  * @interface MembersMenuProps
  * @property {number} bgOpacity - The current opacity level of the background image.
- * @property {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
- * @property {() => void} toggleMenu - Function to toggle the menu open/close state.
- * @property {boolean} isMenuOpen - State indicating whether the menu is open or closed.
+ * @property {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Callback to handle changes in the background opacity.
+ * @property {() => void} toggleMenu - Function to toggle the menu's open/close state.
+ * @property {boolean} isMenuOpen - Boolean indicating whether the menu is currently open or closed.
  */
 interface MembersMenuProps {
   bgOpacity: number;
@@ -37,13 +36,12 @@ interface MembersMenuProps {
 /**
  * MembersMenu Component
  * ---------------------
- * This component renders the navigation menu for member areas, including links, background opacity control,
- * and account management options like sign-out. The menu can be toggled open and closed, and it closes automatically
- * when clicking outside of it.
+ * Renders the navigation menu for authenticated members.
+ * It displays links, controls background opacity, and offers account management options like signing out.
+ * The menu closes automatically when clicking outside of it.
  *
- * @component
- * @param {MembersMenuProps} props - The component props.
- * @returns {JSX.Element} The rendered MembersMenu component.
+ * @param {MembersMenuProps} props - The props for the component.
+ * @returns {JSX.Element} - The rendered MembersMenu component.
  */
 export default function MembersMenu({
   bgOpacity,
@@ -51,11 +49,11 @@ export default function MembersMenu({
   toggleMenu,
   isMenuOpen,
 }: MembersMenuProps): JSX.Element {
-  const { user, signOut, isAdmin } = useAuth(); // Access user details, signOut function, and admin status from authentication context.
-  const router = useRouter(); // Access useRouter to handle navigation.
-  const menuRef = useRef<HTMLDivElement>(null); // Create a ref for the menu to detect outside clicks.
+  const { user, signOut, isAdmin } = useAuth(); // Access user, signOut function, and admin status from the AuthContext.
+  const router = useRouter(); // Get Next.js router for programmatic navigation.
+  const menuRef = useRef<HTMLDivElement>(null); // Create a reference to the menu to detect clicks outside it.
 
-  // Define the list of links based on user authentication and admin status.
+  // Define the list of links based on user and admin status.
   const Links = [
     { href: "/", text: "Home" },
     ...(user ? [{ href: "/members/", text: "Members Home" }] : []),
@@ -63,31 +61,23 @@ export default function MembersMenu({
   ];
 
   /**
-   * handleSignout Function
-   * ----------------------
-   * Signs out the user and redirects to the homepage. Also closes the menu.
+   * Handles the user sign-out action, redirects to the home page, and closes the menu.
    */
   const handleSignout = (): void => {
     signOut();
-    router.push("/");
-    toggleMenu(); // Close the menu after signing out.
+    router.push("/"); // Navigate to home after signing out.
+    toggleMenu(); // Close the menu.
   };
 
   useEffect(() => {
     /**
-     * handleClickOutside Function
-     * ---------------------------
-     * Closes the menu if the user clicks outside of it and the menu is open.
+     * Handles clicks outside the menu. Closes the menu if a click occurs outside of the menu container.
      *
-     * @param {MouseEvent} event - The mouse event triggered by the user's click.
+     * @param {MouseEvent} event - The click event.
      */
     const handleClickOutside = (event: MouseEvent): void => {
-      if (
-        isMenuOpen &&
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node)
-      ) {
-        toggleMenu(); // Close the menu if the click was outside.
+      if (isMenuOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        toggleMenu(); // Close the menu if the click is outside.
       }
     };
 
@@ -103,21 +93,24 @@ export default function MembersMenu({
       ref={menuRef}
       className="z-50 text-left bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 pt-16 shadow-md"
     >
-      {/* Links Section */}
+      {/* Close Menu Button */}
       <button
         className="fixed top-5 right-2 text-white px-4 rounded-lg"
         onClick={toggleMenu}
+        aria-label="Close menu"
       >
         <XCircleIcon className="size-7 text-white" />
       </button>
+
+      {/* Navigation Links */}
       <div className="mb-6">
-        <nav className="mt-2">
+        <nav className="mt-2" aria-label="Members navigation">
           {Links.map((link) => (
             <div key={link.href} className="py-2">
               <Link
                 href={link.href}
                 className="text-white hover:text-blue-500 mb-2"
-                onClick={toggleMenu} // Close the menu when a link is clicked.
+                onClick={toggleMenu}
               >
                 {link.text}
               </Link>
@@ -126,9 +119,11 @@ export default function MembersMenu({
         </nav>
       </div>
 
-      {/* Background Section */}
+      {/* Background Opacity Control */}
       <div className="mb-6">
-        <span className="text-white text-xs">Background Opacity</span>
+        <label htmlFor="bg-opacity-slider" className="text-white text-xs">
+          Background Opacity
+        </label>
         <div className="mt-2 max-w-sm">
           <input
             id="bg-opacity-slider"
@@ -139,22 +134,21 @@ export default function MembersMenu({
             value={bgOpacity}
             onChange={handleOpacityChange}
             className="form-input w-full"
+            aria-label="Adjust background opacity"
           />
         </div>
       </div>
 
-      {/* Account Section */}
+      {/* Account Management */}
       <div>
-        <div className="mt-2">
-          <button
-            className="member-btn bg-red-600 hover:bg-red-500"
-            onClick={handleSignout}
-          >
-            Sign Out
-          </button>
-        </div>
+        <button
+          className="member-btn bg-red-600 hover:bg-red-500"
+          onClick={handleSignout}
+          aria-label="Sign out"
+        >
+          Sign Out
+        </button>
       </div>
     </div>
   );
-
 }

@@ -15,28 +15,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 
+/**
+ * Type definition for the Poll object from the Amplify data schema.
+ */
 type Poll = Schema["Poll"]["type"];
 
-// Generate a client instance for interacting with the data schema.
+// Generate a client instance for interacting with the Amplify data schema.
 const client = generateClient<Schema>();
 
 /**
  * AccordionProps Interface
  * ------------------------
- * Defines the props for the Accordion component.
+ * Defines the props for the Accordion component that displays individual poll details.
  */
 interface AccordionProps {
-  poll: Poll; // The poll object for this accordion section.
-  expanded: string | null; // The ID of the currently expanded poll (if any).
+  poll: Poll; // The poll object containing its details.
+  expanded: string | null; // ID of the currently expanded poll (if any).
   setExpanded: React.Dispatch<React.SetStateAction<string | null>>; // Function to set the expanded poll ID.
   handleActivatePoll: (pollId: string) => Promise<void>; // Function to handle poll activation.
   handleDeletePoll: (pollId: string) => Promise<void>; // Function to handle poll deletion.
 }
 
+/**
+ * Subscription Interface
+ * ----------------------
+ * Defines the structure for a subscription object with an unsubscribe method.
+ */
 interface Subscription {
   unsubscribe: () => void;
 }
-
 
 /**
  * Accordion Component
@@ -117,6 +124,8 @@ const Accordion: React.FC<AccordionProps> = ({
         className="cursor-pointer p-4 flex items-center justify-between"
         initial={false}
         onClick={() => setExpanded(isOpen ? null : poll.id)}
+        role="button"
+        aria-expanded={isOpen}
       >
         <div className="flex flex-col w-full">
           <div className="flex items-center justify-between">
@@ -125,11 +134,12 @@ const Accordion: React.FC<AccordionProps> = ({
                 isActive
                   ? "bg-blue-400 text-blue-50 border border-blue-200"
                   : "bg-blue-800 text-blue-700 border border-blue-600"
-              } bg-opacity-75 `}
+              } bg-opacity-75`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleActivatePoll(poll.id);
               }}
+              aria-label={`Activate poll ${poll.title}`}
             >
               Active
             </button>
@@ -137,7 +147,9 @@ const Accordion: React.FC<AccordionProps> = ({
               <div className="flex items-center justify-between">
                 <span>{poll.title}</span>
                 <div className="flex space-x-4">
-                  <span>{new Date(poll.createdAt).toLocaleDateString()}</span>
+                  <time dateTime={new Date(poll.createdAt).toISOString()}>
+                    {new Date(poll.createdAt).toLocaleDateString()}
+                  </time>
                 </div>
               </div>
               <div className="flex mt-2 space-x-2">
@@ -147,6 +159,7 @@ const Accordion: React.FC<AccordionProps> = ({
                     e.stopPropagation();
                     handleDeletePoll(poll.id);
                   }}
+                  aria-label={`Delete poll ${poll.title}`}
                 >
                   Delete
                 </button>
@@ -156,6 +169,7 @@ const Accordion: React.FC<AccordionProps> = ({
                     e.stopPropagation();
                     setExpanded(isOpen ? null : poll.id);
                   }}
+                  aria-label={isOpen ? `Collapse details of ${poll.title}` : `Expand details of ${poll.title}`}
                 >
                   {isOpen ? "Show Less" : "Show More"}
                 </button>
@@ -187,7 +201,9 @@ const Accordion: React.FC<AccordionProps> = ({
                 <div>{poll.status}</div>
 
                 <div className="font-bold text-center">Created</div>
-                <div>{new Date(poll.createdAt).toLocaleString()}</div>
+                <time dateTime={new Date(poll.createdAt).toISOString()}>
+                  {new Date(poll.createdAt).toLocaleString()}
+                </time>
               </div>
               <table className="w-full text-left table-auto">
                 <thead>
@@ -218,8 +234,8 @@ const Accordion: React.FC<AccordionProps> = ({
 /**
  * ListPolls Component
  * -------------------
- * Renders a list of polls with the ability to expand each poll for more details, 
- * activate polls, and delete polls. Also handles real-time updates via subscriptions.
+ * Displays a list of polls and allows the user to expand individual polls for more details, 
+ * activate polls, delete polls, and subscribe to real-time updates for votes.
  * 
  * @component
  * @returns {JSX.Element} The rendered ListPolls component.
@@ -298,7 +314,7 @@ export default function ListPolls(): JSX.Element {
               if (poll.id === activePoll.id) {
                 return {
                   ...poll,
-                  // voteCounts is not on the poll type, so handle it in the Accordion
+                  // voteCounts are handled within the Accordion component.
                 };
               }
               return poll;
@@ -401,8 +417,8 @@ export default function ListPolls(): JSX.Element {
   }
 
   return (
-    <div className="section-container p-2">
-      <div className="heading">Current Polls</div>
+    <section className="section-container p-2">
+      <h1 className="heading">Current Polls</h1>
       {polls.map((poll) => (
         <Accordion
           key={poll.id}
@@ -413,7 +429,6 @@ export default function ListPolls(): JSX.Element {
           handleDeletePoll={handleDeletePoll}
         />
       ))}
-    </div>
+    </section>
   );
-
 }

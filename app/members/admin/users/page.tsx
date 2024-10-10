@@ -1,14 +1,14 @@
+"use client";
+
 /**
  * File Path: @/app/members/admin/users/page.tsx
  *
  * Users Page Component
  * --------------------
- * This file defines the Admin User Page component, allowing administrators
- * to view all users, see their group memberships, and add or remove users from groups.
- * It is optimized for both mobile and desktop screens, ensuring a flexible, usable layout on smaller screens.
+ * This component provides an interface for administrators to view and manage users,
+ * including their group memberships. Administrators can add or remove users from groups,
+ * and the layout adapts for both mobile and desktop screens.
  */
-
-"use client";
 
 import React, { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
@@ -53,34 +53,29 @@ const client = generateClient<Schema>();
 /**
  * AdminUserPage Component
  * -----------------------
- * This component renders a page where administrators can view and manage users
- * and their associated groups, with the ability to add or remove users from groups.
- *
- * @component
- * @returns {JSX.Element} The rendered AdminUserPage component.
+ * Renders a page for administrators to view and manage users and their group memberships.
+ * Administrators can add or remove users from groups, and the component handles fetching and
+ * updating user data from the backend.
+ * 
+ * @returns {JSX.Element} The rendered AdminUserPage component for user management.
  */
 export default function AdminUserPage(): JSX.Element {
-  const [users, setUsers] = useState<UserWithGroups[]>([]); // State for storing the list of users with groups
+  const [users, setUsers] = useState<UserWithGroups[]>([]); // State for storing the list of users with their groups
   const [error, setError] = useState<string | null>(null); // State for handling errors
 
   /**
-   * fetchUsers
-   * ----------
-   * Asynchronously fetches users and their groups from the backend API
-   * and updates the component's state.
+   * Fetches the list of users and their groups from the backend and updates the state.
    */
-  const fetchUsers = async () => {
+  const fetchUsers = async (): Promise<void> => {
     try {
-      // Fetch the users and groups data
       const response = await client.queries.listUsersAndGroups({});
       let responseData = response.data;
 
-      // If the response data is a string, attempt to parse it as JSON
+      // Handle potential stringified response
       if (typeof responseData === "string") {
         responseData = JSON.parse(responseData);
       }
 
-      // Check if the response data is an array and update the state
       if (Array.isArray(responseData)) {
         setUsers(responseData as UserWithGroups[]);
       } else {
@@ -99,14 +94,12 @@ export default function AdminUserPage(): JSX.Element {
   }, []);
 
   /**
-   * handleAddUserToGroup
-   * --------------------
-   * Adds a user to a specified group and refetches the user list.
-   *
+   * Adds a user to the specified group and refreshes the user list.
+   * 
    * @param {string} username - The username of the user.
    * @param {string} groupName - The name of the group to add the user to.
    */
-  const handleAddUserToGroup = async (username: string, groupName: string) => {
+  const handleAddUserToGroup = async (username: string, groupName: string): Promise<void> => {
     try {
       await client.mutations.addUserToGroup({ username, groupName });
       await fetchUsers(); // Refresh the user list after adding
@@ -116,14 +109,12 @@ export default function AdminUserPage(): JSX.Element {
   };
 
   /**
-   * handleRemoveUserFromGroup
-   * -------------------------
-   * Removes a user from a specified group and refetches the user list.
-   *
+   * Removes a user from the specified group and refreshes the user list.
+   * 
    * @param {string} username - The username of the user.
    * @param {string} groupName - The name of the group to remove the user from.
    */
-  const handleRemoveUserFromGroup = async (username: string, groupName: string) => {
+  const handleRemoveUserFromGroup = async (username: string, groupName: string): Promise<void> => {
     try {
       await client.mutations.removeUserFromGroup({ username, groupName });
       await fetchUsers(); // Refresh the user list after removing
@@ -133,10 +124,8 @@ export default function AdminUserPage(): JSX.Element {
   };
 
   /**
-   * isUserAdmin
-   * -----------
    * Checks if a given user belongs to the "admin" group.
-   *
+   * 
    * @param {CognitoGroup[]} groups - The groups the user belongs to.
    * @returns {boolean} True if the user is in the "admin" group.
    */
@@ -192,7 +181,7 @@ export default function AdminUserPage(): JSX.Element {
                         }
                         className="btn btn-primary"
                       >
-                        Add to admin Group
+                        Add to Admin Group
                       </button>
                     )}
                     {isAdmin && (
@@ -202,7 +191,7 @@ export default function AdminUserPage(): JSX.Element {
                         }
                         className="btn btn-secondary"
                       >
-                        Remove from admin Group
+                        Remove from Admin Group
                       </button>
                     )}
                   </div>
@@ -214,5 +203,4 @@ export default function AdminUserPage(): JSX.Element {
       </div>
     </main>
   );
-
 }

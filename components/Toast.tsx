@@ -3,64 +3,64 @@
  *
  * Toast Component
  * ---------------
- * This file defines the Toast component, which is responsible for displaying toast notifications.
- * It leverages animations for showing and hiding toasts and listens to the ToastContext for any updates.
+ * This component is responsible for rendering toast notifications with animation effects.
+ * It listens to the ToastContext for any updates and uses Framer Motion for smooth 
+ * transitions when toasts appear or disappear. Toasts can be either success or error messages.
  */
 
 "use client";
 
 import React, { useContext } from "react";
-import { motion, AnimatePresence } from "framer-motion"; // Import motion components for animations.
-import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Import ToastContext to access toast logic and state.
+import { motion, AnimatePresence } from "framer-motion";
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 
 /**
  * Animation Variants
  * ------------------
- * Define the animation variants for the toast notifications.
- * These control how the toast will appear, behave, and disappear.
+ * Defines the animation states for toasts. Controls how the toasts will enter, 
+ * behave, and exit the screen with specific motion patterns.
  */
 const variants = {
-  hidden: { y: "-100%", opacity: 0 }, // Start from above and fade in.
-  visible: { y: 0, opacity: 1 }, // End at the original position fully visible.
-  exit: { y: "-100%", opacity: 0 }, // Exit by moving up and fading out.
+  hidden: { y: "-100%", opacity: 0 },  // Hidden state, starting from above with no opacity.
+  visible: { y: 0, opacity: 1 },       // Visible state, fully opaque and in position.
+  exit: { y: "-100%", opacity: 0 },    // Exit state, moving up and fading out.
 };
 
 /**
  * Toast Component
  * ---------------
- * This functional component renders toast notifications by mapping over the toasts array in the context.
- * It uses framer-motion for smooth animations when the toasts appear or disappear.
- *
- * @component
- * @returns {JSX.Element} The rendered Toast component.
+ * This functional component renders a list of toast notifications from the ToastContext.
+ * Each toast is animated using framer-motion and can be dismissed by clicking the close button.
+ * 
+ * @returns {JSX.Element} The rendered Toast component containing toast notifications.
  */
 const Toast: React.FC = (): JSX.Element => {
   // Access the toasts array and removeToast function from the ToastContext.
   const { toasts, removeToast } = useContext<ToastContextType>(ToastContext);
 
-  // Render the toast notifications with animations.
   return (
-    <div className="fixed top-0 w-full z-50">
+    <section className="fixed top-0 w-full z-50" aria-live="polite" aria-atomic="true">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
-            key={toast.id} // Use unique key for each toast for React list rendering.
+            key={toast.id}  // Use a unique key for each toast notification.
             initial="hidden"
             animate="visible"
             exit="exit"
-            variants={variants} // Apply the defined variants for animation.
-            transition={{ duration: 0.5 }} // Set the animation duration to 0.5 seconds.
+            variants={variants}  // Apply the animation variants.
+            transition={{ duration: 0.5 }}  // Set the animation duration.
             className={`text-lg p-3 max-w-md m-auto rounded-lg shadow bg-opacity-90 mt-1 ${
               toast.messageType === "success"
-                ? "shadow-green-900 bg-green-600 text-green-50" // Style for success messages using existing classes.
-                : "shadow-red-900 bg-red-600 text-red-50" // Style for error messages using existing classes.
+                ? "shadow-green-900 bg-green-600 text-green-50"  // Styling for success toasts.
+                : "shadow-red-900 bg-red-600 text-red-50"        // Styling for error toasts.
             }`}
           >
             <div className="p-3 grid grid-cols-[auto,1fr] gap-2 items-center font-extralight">
               <div className="flex-grow">{toast.message}</div>
               <button
-                onClick={() => toast.id && removeToast(toast.id)} // Remove toast when the close button is clicked.
+                onClick={() => toast.id && removeToast(toast.id)}  // Remove the toast when the close button is clicked.
                 className="justify-self-end"
+                aria-label="Close notification"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -81,7 +81,7 @@ const Toast: React.FC = (): JSX.Element => {
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
+    </section>
   );
 };
 

@@ -3,10 +3,12 @@
  *
  * Poll Component
  * --------------
- * This file defines the Poll component, which is responsible for displaying the current active poll,
- * allowing users to vote, and showing the current results. The component integrates with AWS Amplify
- * for data fetching and real-time updates.
+ * This component is responsible for rendering the current active poll, 
+ * allowing users to vote, and displaying real-time results.
+ * It integrates with AWS Amplify to fetch poll data and handle real-time updates.
  */
+
+"use client";
 
 import { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
@@ -19,7 +21,8 @@ const client = generateClient<Schema>();
 /**
  * Poll Component
  * --------------
- * Renders the current active poll, allows voting, and displays real-time results.
+ * Renders the current active poll, allows users to vote, and displays real-time results.
+ * The component fetches data from AWS Amplify and handles state updates when users vote.
  *
  * @component
  * @returns {JSX.Element} The rendered Poll component.
@@ -27,17 +30,19 @@ const client = generateClient<Schema>();
 export default function Poll(): JSX.Element {
   const { user } = useAuth(); // Access user details from authentication context.
   const [poll, setPoll] = useState<Schema["Poll"]["type"] | null>(null); // State to store the current poll.
-  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store the vote counts for each option.
-  //const [selectedOption, setSelectedOption] = useState<string | null>(null); // State to store the user's selected option.
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store vote counts for each option.
   const [hasVoted, setHasVoted] = useState<boolean>(false); // State to track if the user has already voted.
-  const [loading, setLoading] = useState<boolean>(true); // State to track if data is still loading.
-  const [error, setError] = useState<string | null>(null); // State to store any error messages.
+  const [loading, setLoading] = useState<boolean>(true); // State to track data loading status.
+  const [error, setError] = useState<string | null>(null); // State to store error messages.
 
   useEffect(() => {
     /**
-     * fetchPollData Function
-     * ----------------------
-     * Fetches the current active poll and its associated votes from the backend.
+     * fetchPollData
+     * -------------
+     * Fetches the active poll and its associated votes from the backend.
+     * If an active poll is found, it sets the poll state and vote counts.
+     * 
+     * Handles user vote detection and initializes vote counts for each poll option.
      */
     const fetchPollData = async (): Promise<void> => {
       try {
@@ -66,7 +71,6 @@ export default function Poll(): JSX.Element {
         );
         if (userVote) {
           setHasVoted(true);
-          //setSelectedOption(userVote.option);
         }
 
         // Initialize and count votes
@@ -98,6 +102,8 @@ export default function Poll(): JSX.Element {
   useEffect(() => {
     /**
      * Subscribe to real-time poll updates once the user has voted.
+     * 
+     * Subscribes to new votes for the current poll, updating the vote counts in real-time.
      */
     if (poll && hasVoted) {
       const subscription = client.models.Vote.onCreate({
@@ -118,11 +124,11 @@ export default function Poll(): JSX.Element {
   }, [poll, hasVoted, voteCounts]);
 
   /**
-   * handleVote Function
-   * -------------------
+   * handleVote
+   * ----------
    * Handles the user's vote submission and updates the vote counts optimistically.
-   *
-   * @param {string} option - The option the user has selected to vote for.
+   * 
+   * @param {string} option - The option the user selects to vote for.
    */
   const handleVote = async (option: string): Promise<void> => {
     if (!hasVoted && option) {
@@ -133,7 +139,6 @@ export default function Poll(): JSX.Element {
           option,
         });
 
-        //setSelectedOption(option);
         setHasVoted(true);
 
         // Optimistically update vote counts
@@ -153,13 +158,13 @@ export default function Poll(): JSX.Element {
     return <div>{error || "There is no active poll currently"}</div>;
 
   return (
-    <div className="section-container sm:ml-1 md:ml-0 pb-4 sm:p-4 h-min">
-      <div className="heading">Current Poll</div>
-      <div className="bg-black bg-opacity-70 p-4 rounded-lg">
-        <div className="text-2xl font-bold mb-4">{poll.title}</div>
+    <section className="section-container sm:ml-1 md:ml-0 pb-4 sm:p-4 h-min">
+      <header className="heading">Current Poll</header>
+      <article className="bg-black bg-opacity-70 p-4 rounded-lg">
+        <h2 className="text-2xl font-bold mb-4">{poll.title}</h2>
         {hasVoted ? (
           <div className="max-w-md mx-auto">
-            <div className="text-lg mb-2 text-center">Current Results</div>
+            <h3 className="text-lg mb-2 text-center">Current Results</h3>
             <ul className="space-y-2 w-full">
               {Object.entries(voteCounts).map(([option, count]) => (
                 <li key={option} className="text-sm">
@@ -186,7 +191,7 @@ export default function Poll(): JSX.Element {
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </article>
+    </section>
   );
 }

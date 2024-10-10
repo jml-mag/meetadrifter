@@ -1,4 +1,11 @@
-// File Path: app/members/code/[slug]/layout.tsx
+/**
+ * File Path: app/members/code/[slug]/layout.tsx
+ * 
+ * Layout Component
+ * ----------------
+ * This component fetches the ordered list of lessons, determines the current lesson's
+ * position, and renders the Table of Contents and Lesson Navigation alongside the page content.
+ */
 
 import React from "react";
 import Link from "next/link";
@@ -9,10 +16,12 @@ import {
 } from "@heroicons/react/24/solid";
 import TableOfContents from "@/components/TableOfContents";
 import SetLessonStage from "@/components/SetLessonStage";
-import { LessonContent } from "@/types/LessonContent"; // Ensure this type is correctly defined
+import { LessonContent } from "@/types/LessonContent";
 
 /**
- * Interface for the layout properties, containing route parameters and children.
+ * LayoutProps Interface
+ * ---------------------
+ * Defines the properties for the Layout component, including the route parameters and children.
  */
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,17 +33,16 @@ interface LayoutProps {
 /**
  * Layout Component
  * ----------------
- * This server component fetches the ordered list of lessons, determines the current lesson's
- * position, and renders the Table of Contents and Lesson Navigation alongside the page content.
- *
- * @param {LayoutProps} props - The component props containing route parameters and children.
- * @returns {JSX.Element} The rendered Layout component.
+ * This component serves as the layout for the lesson pages. It fetches the ordered list of lessons,
+ * determines the current lesson's position, and renders the Table of Contents and navigation links.
+ * 
+ * @param {LayoutProps} props - The component props containing the children elements and route parameters.
+ * @returns {JSX.Element} The rendered layout with lesson navigation, table of contents, and lesson content.
  */
 const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
   const { slug } = params;
 
   try {
-    // Fetch all ordered lessons without using the unsupported 'sort' property
     const { data: lessonOrderData, errors: orderErrors } =
       await cookiesClient.models.LessonContent.list({
         filter: { isOrdered: { eq: true } },
@@ -45,21 +53,24 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
       return <div className="text-red-500">Error loading lessons.</div>;
     }
 
-    // Normalize and manually sort the lesson data by 'orderIndex'
+    // Map and sort lessons by orderIndex
     const sortedLessonOrder: LessonContent[] = lessonOrderData
-      .map((lessonData) => ({
-        id: lessonData.id,
-        title: lessonData.title,
-        slug: lessonData.slug,
-        code: lessonData.code,
-        docs: lessonData.docs,
-        isOrdered: lessonData.isOrdered,
-        orderIndex: lessonData.orderIndex,
-        moreInfoUrl: lessonData.moreInfoUrl,
+      .map(({ id, title, slug, code, docs, isOrdered, orderIndex, links }) => ({
+        id,
+        title,
+        slug,
+        code,
+        docs,
+        isOrdered,
+        orderIndex,
+        links: (links || []).filter(
+          (link): link is { text: string; url: string } =>
+            link?.text !== null && link?.url !== null
+        ),
       }))
       .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
 
-    // Determine the current lesson's position
+    // Find the current lesson based on the slug
     const currentLessonIndex = sortedLessonOrder.findIndex(
       (lesson) => lesson.slug === slug
     );
@@ -73,25 +84,37 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
     const nextLesson = sortedLessonOrder[currentLessonIndex + 1] || null;
     const prevLesson = sortedLessonOrder[currentLessonIndex - 1] || null;
 
+    // Utility to generate navigation links
+    const renderNavLink = (
+      lesson: LessonContent | null,
+      direction: "prev" | "next"
+    ) => {
+      if (!lesson) return null;
+      const isPrev = direction === "prev";
+      const Icon = isPrev ? ArrowLeftCircleIcon : ArrowRightCircleIcon;
+      const label = isPrev
+        ? `Go to previous lesson: ${lesson.title}`
+        : `Go to next lesson: ${lesson.title}`;
+      return (
+        <Link
+          href={`/members/code/${lesson.slug}`}
+          className="text-white hover:text-green-400 transition-colors duration-200"
+          aria-label={label}
+        >
+          <Icon className="size-10" />
+        </Link>
+      );
+    };
+
     return (
       <>
-        {/* Set Lesson Stage in Local Storage */}
         <SetLessonStage slug={slug} />
         <div className="relative w-full min-h-screen bg-gray-900 text-white">
-          {/* Fixed Lesson Navigation */}
           <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20">
             <div className="max-w-xl mx-auto grid grid-cols-3 items-center gap-2 rounded-lg">
-              {/* Previous Lesson Link */}
+              {/* Previous Lesson */}
               <div className="justify-self-start">
-                {prevLesson && (
-                  <Link
-                    href={`/members/code/${prevLesson.slug}`}
-                    className="text-white hover:text-green-400 transition-colors duration-200"
-                    aria-label={`Go to previous lesson: ${prevLesson.title}`}
-                  >
-                    <ArrowLeftCircleIcon className="size-10" />
-                  </Link>
-                )}
+                {renderNavLink(prevLesson, "prev")}
               </div>
 
               {/* Current Lesson Title */}
@@ -99,17 +122,9 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
                 {currentLesson.title}
               </h1>
 
-              {/* Next Lesson Link */}
+              {/* Next Lesson */}
               <div className="justify-self-end">
-                {nextLesson && (
-                  <Link
-                    href={`/members/code/${nextLesson.slug}`}
-                    className="text-white hover:text-green-400 transition-colors duration-200"
-                    aria-label={`Go to next lesson: ${nextLesson.title}`}
-                  >
-                    <ArrowRightCircleIcon className="size-10" />
-                  </Link>
-                )}
+                {renderNavLink(nextLesson, "next")}
               </div>
             </div>
           </div>

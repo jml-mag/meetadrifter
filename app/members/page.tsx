@@ -1,46 +1,46 @@
 /**
  * File Path: app/members/page.tsx
- *
+ * 
  * Member Home Component
  * ---------------------
- * This file defines the Home component for member areas. It features personalized user information,
- * actions like sign-out, and demonstrates the integration of authentication context and toast notifications
- * to enhance user experience.
+ * This component defines the Home page for member-specific areas of the application. It displays 
+ * personalized user information, handles site notifications, and integrates authentication context 
+ * to provide user-specific actions such as signing out. Additionally, the Poll component is rendered 
+ * to allow users to interact with active polls.
  */
 
 "use client";
 
 import { useEffect, useState } from "react";
-import { generateClient } from "aws-amplify/data"; // Import Amplify Data Client.
-import type { Schema } from "@/amplify/data/resource"; // Import the data schema type.
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
-import Poll from "@/components/Poll"; // Import Poll component for rendering active polls.
+import { generateClient } from "aws-amplify/data"; // Import Amplify Data Client
+import type { Schema } from "@/amplify/data/resource"; // Import the data schema type
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context
+import Poll from "@/components/Poll"; // Import Poll component for rendering active polls
 
 /**
- * Interface for the Site Notification.
+ * Interface representing a Site Notification.
  */
 interface SiteNotification {
-  message: string;
+  message: string; // The message content of the notification
 }
 
-// Generate the Amplify client with the schema
+// Generate an Amplify client instance with the defined schema
 const client = generateClient<Schema>();
 
 /**
  * Home Component
  * --------------
- * This component serves as the landing page for members, displaying personalized information
- * and providing actions such as signing out. It also showcases the use of toast notifications.
- *
- * @component
+ * The Home component serves as the member's landing page, displaying profile information, site notifications,
+ * and other personalized content based on authentication context.
+ * 
  * @returns {JSX.Element} The rendered Home component for member areas.
  */
 export default function Home(): JSX.Element {
-  // Destructure user, profile, and loading from the authentication context
-  const { user, profile, loading, isAdmin } = useAuth(); // Access user details and profile from authentication context.
-  const [notification, setNotification] = useState<string | null>(null); // State for site notification
+  // Access user details, profile, and loading state from authentication context
+  const { user, profile, loading, isAdmin } = useAuth();
+  const [notification, setNotification] = useState<string | null>(null); // State to manage site notification
 
-  // Fetch the current site notification on component mount
+  // Fetch the current site notification when the component mounts
   useEffect(() => {
     const fetchNotification = async () => {
       try {
@@ -49,7 +49,7 @@ export default function Home(): JSX.Element {
           console.error("Failed to fetch notification", errors);
           return;
         }
-        // Assume there's only one notification for simplicity
+        // Assume there's only one active notification
         const currentNotification = data[0] as SiteNotification | undefined;
         setNotification(currentNotification?.message || null);
       } catch (err) {
@@ -63,7 +63,7 @@ export default function Home(): JSX.Element {
   return (
     <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2">
       <div className="w-full max-w-5xl">
-        {/* Display the site notification */}
+        {/* Display the site notification if available */}
         {notification && (
           <div className="section-container pb-4 sm:p-4">
             <div className="heading">Notifications</div>
@@ -74,8 +74,8 @@ export default function Home(): JSX.Element {
         )}
       </div>
       <div className="w-full max-w-5xl">
-        <div className="flex flex-col sm:flex-row  md:space-x-8 ">
-          {/* Render the Profile component */}
+        <div className="flex flex-col sm:flex-row md:space-x-8">
+          {/* Render Profile Section */}
           <div className="section-container sm:mr-1 md:mr-0 pb-4 sm:p-4 h-min">
             <h2 className="heading">Profile</h2>
             {loading ? (
@@ -87,8 +87,7 @@ export default function Home(): JSX.Element {
                     <strong>Username:</strong> {profile.username}
                   </p>
                   <p className="mb-2">
-                    <strong>Name:</strong> {profile.firstName}{" "}
-                    {profile.lastName}
+                    <strong>Name:</strong> {profile.firstName} {profile.lastName}
                   </p>
                   <p className="mb-2">
                     <strong>Email:</strong> {profile.emailAddress}
@@ -107,7 +106,7 @@ export default function Home(): JSX.Element {
               </p>
             )}
           </div>
-          {/* Render the Poll component */}
+          {/* Render Poll Component */}
           <Poll />
         </div>
       </div>

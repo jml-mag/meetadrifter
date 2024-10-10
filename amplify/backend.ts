@@ -1,56 +1,61 @@
-// amplify/backend.ts
+/**
+ * Backend Configuration
+ * ---------------------
+ * This module defines and configures the backend for the application using AWS Amplify.
+ * It integrates authentication, data resources, and user management functions into the backend.
+ */
+
+import { defineBackend } from '@aws-amplify/backend'; // Amplify backend configuration utility
+import { auth } from './auth/resource'; // Authentication configuration module
+import { data } from './data/resource'; // Data resource configuration module
+import { manageUsers } from './functions/manage-users/resource'; // User management function module
 
 /**
- * File Path: amplify/backend.ts
+ * Sets up the backend by integrating the authentication, data, and user management functions.
  * 
- * Backend Definition
- * ------------------
- * This file defines the backend configuration for the application using AWS Amplify.
- * It imports and integrates the authentication and data resources into the backend setup.
+ * @remarks
+ * This function call initializes the backend for the application with the necessary resources
+ * for authentication, data management, and user administration.
+ * 
+ * @returns {void} This function does not return a value.
  */
-import { Stack } from "aws-cdk-lib/core"
-import { EmailIdentity } from "aws-cdk-lib/aws-ses"
-import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
-import { auth } from './auth/resource'; // Import the authentication resource configuration.
-import { data } from './data/resource'; // Import the data resource configuration.
-import { manageUsers } from './functions/manage-users/resource'; // Import the manageUsers function
-
-/**
- * Backend Configuration
- * ---------------------
- * This function call sets up the backend by integrating the auth, data, and manageUsers configurations.
- 
 defineBackend({
-  auth,
-  data,
-  manageUsers,
+  auth, // Auth resource setup
+  data, // Data resource setup
+  manageUsers, // User management functionality
 });
-*/
 
 /**
- * Backend Configuration
- * ---------------------
- * This sets up the backend by integrating the auth, data, and manageUsers configurations as well as AWS SES for production email.
+ * (Optional) Backend Setup with AWS SES Email Configuration
+ * ---------------------------------------------------------
+ * This commented section includes optional setup to integrate AWS SES for production email 
+ * using an Email Identity. Uncomment and configure as needed.
  */
+/*
+import { Stack } from "aws-cdk-lib/core"; // AWS CDK core library
+import { EmailIdentity } from "aws-cdk-lib/aws-ses"; // AWS SES Email Identity utility
 
+// Define the backend configuration, including email identity for SES
 const backend = defineBackend({
   auth,
   data,
   manageUsers,
-})
+});
 
-const { cfnUserPool } = backend.auth.resources.cfnResources
-const authStack = Stack.of(cfnUserPool)
+// Configure the SES email identity for the user pool
+const { cfnUserPool } = backend.auth.resources.cfnResources;
+const authStack = Stack.of(cfnUserPool);
 
+// Retrieve the email identity from SES based on environment variables or fallback
 const email = EmailIdentity.fromEmailIdentityName(
   authStack,
   "EmailIdentity",
-  // your email configured for use in SES
-  //process.env.EMAIL || ''
-  "no-reply@meetadrifter.com"
-)
+  process.env.EMAIL || '' // Email address to be used for SES
+);
 
+// Set the email configuration for the Cognito user pool
 cfnUserPool.emailConfiguration = {
   emailSendingAccount: "DEVELOPER",
-  sourceArn: email.emailIdentityArn,
-}
+  sourceArn: email.emailIdentityArn, // ARN for the SES Email Identity
+};
+*/

@@ -4,20 +4,30 @@
  * File Path: app/page.tsx
  * 
  * Home Component
- * --------------------
- * Renders the main structure of the home page with animations for various elements.
- * Integrates animations for the center text, top text, lines, and footer.
- * Handles the sequence of animations on component mount.
+ * --------------
+ * This component renders the home page of the application, including animated text elements and a footer.
+ * It leverages Framer Motion for animations that are triggered when the component is mounted. The animations 
+ * include text sliding in, lines appearing sequentially, and the footer fading in.
  */
 
 import { useEffect, useState, MouseEvent } from "react";
 import { motion, useAnimation, AnimationControls, Variants } from "framer-motion";
-import { climate_crisis, tiltWarp } from "@/app/fonts";
+import { climate_crisis, tiltWarp } from "@/app/fonts"; // Import custom fonts
 import Link from "next/link";
 import { Background } from "@/components/Background";
 
+/**
+ * Home Component
+ * 
+ * @remarks
+ * This component sets up the main layout for the home page and integrates various animations
+ * using Framer Motion. It ensures that the animations play sequentially on component mount.
+ * The home page contains animated lines of text, a clickable footer, and a background component.
+ * 
+ * @returns {JSX.Element} The rendered home page with animations and interactive elements.
+ */
 export default function Home(): JSX.Element {
-  // Animation controls for various elements.
+  // Animation controls for different elements of the home page.
   const centerControls: AnimationControls = useAnimation();
   const topControls: AnimationControls = useAnimation();
   const line1Controls: AnimationControls = useAnimation();
@@ -25,34 +35,31 @@ export default function Home(): JSX.Element {
   const line3Controls: AnimationControls = useAnimation();
   const footerControls: AnimationControls = useAnimation();
 
-  // State to track if component has mounted and if animations are complete.
+  // State to track if the component has mounted and if animations have completed.
   const [mounted, setMounted] = useState<boolean>(false);
   const [animationsComplete, setAnimationsComplete] = useState<boolean>(false);
 
-  // Ensure component is mounted before triggering animations.
+  // Set the component as mounted after initial render.
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Sequence the animations upon mounting.
+  // Trigger the animation sequence once the component is mounted.
   useEffect(() => {
     if (!mounted) return;
 
     const sequenceAnimations = async () => {
-      // Wait before starting animations.
+      // Start the animations with delays between different elements.
       await new Promise((resolve) => setTimeout(resolve, 500));
       await centerControls.start("visible");
 
-      // Wait before sliding out center text.
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await centerControls.start("slideOut");
 
-      // Fade in top text after slide out begins.
       setTimeout(async () => {
         await topControls.start("visible");
       }, 500);
 
-      // Animate lines sequentially.
       await new Promise((resolve) => setTimeout(resolve, 1000));
       await line1Controls.start("visible");
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -60,22 +67,23 @@ export default function Home(): JSX.Element {
       await new Promise((resolve) => setTimeout(resolve, 500));
       await line3Controls.start("visible");
 
-      // Fade in footer elements.
       await footerControls.start("visible");
-
-      // Mark animations as complete.
       setAnimationsComplete(true);
     };
 
     sequenceAnimations();
   }, [mounted, centerControls, topControls, line1Controls, line2Controls, line3Controls, footerControls]);
 
-  // Handle click events only when animations are complete.
+  /**
+   * Handles clicks on links and prevents navigation until animations are complete.
+   * 
+   * @param e - The mouse event triggered by clicking a link.
+   */
   const handleClick = (e: MouseEvent<HTMLAnchorElement>): void => {
     if (!animationsComplete) e.preventDefault();
   };
 
-  // Variants for animations.
+  // Animation variants for the center text.
   const centerVariants: Variants = {
     hidden: { x: "-100vw", opacity: 1 },
     visible: {
@@ -86,16 +94,19 @@ export default function Home(): JSX.Element {
     slideOut: { x: "100vw", opacity: 1, transition: { duration: 0.3, ease: "easeIn" } },
   };
 
+  // Animation variants for the top text.
   const topVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 1, ease: "easeIn" } },
   };
 
+  // Animation variants for the footer.
   const footerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5, ease: "easeIn" } },
   };
 
+  // Animation variants for the animated lines of text.
   const lineVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5, ease: "easeIn" } },
@@ -106,7 +117,7 @@ export default function Home(): JSX.Element {
     <>
       <Background />
       <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden">
-        {/* Top text with fade-in animation. */}
+        {/* Top text with fade-in animation */}
         <motion.div
           className={`${climate_crisis.className} fixed top-6 left-4 text-white text-base sm:text-xl md:text-2xl lg:text-3xl`}
           variants={topVariants}
@@ -116,7 +127,7 @@ export default function Home(): JSX.Element {
           Meet A Drifter
         </motion.div>
 
-        {/* Center text that slides in and slides out. */}
+        {/* Center text with slide-in and slide-out animations */}
         <motion.div
           className={`${climate_crisis.className} text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white`}
           variants={centerVariants}
@@ -126,7 +137,7 @@ export default function Home(): JSX.Element {
           Meet A Drifter
         </motion.div>
 
-        {/* Animated lines with fade-in effect. */}
+        {/* Animated lines of text with fade-in effect */}
         <div className={`${tiltWarp.className} leading-relaxed text-xl sm:text-3xl md:text-4xl md:leading-loose`}>
           <motion.div variants={lineVariants} initial="hidden" animate={line1Controls}>
             The website you join
@@ -139,7 +150,7 @@ export default function Home(): JSX.Element {
           </motion.div>
         </div>
 
-        {/* Footer and button with fade-in animation. */}
+        {/* Footer with fade-in animation */}
         <motion.div
           className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
           variants={footerVariants}
@@ -150,8 +161,8 @@ export default function Home(): JSX.Element {
             Join/Login
           </Link>
         </motion.div>
-        
-        {/* Attribution link with fade-in animation. */}
+
+        {/* Attribution link with fade-in animation */}
         <motion.a
           href="https://www.matterandgas.com"
           className="text-white p-2 fixed bottom-2 right-3 text-xs"
@@ -159,7 +170,7 @@ export default function Home(): JSX.Element {
           initial="hidden"
           animate={footerControls}
         >
-          © {new Date().getFullYear()} matterandgas
+          © {new Date().getFullYear()} MeetADrifter
         </motion.a>
       </main>
     </>

@@ -1,44 +1,39 @@
-/**
- * File Path: components/CurrentPoll.tsx
- * 
- * Current Poll Component
- * ----------------------
- * This file defines the CurrentPoll component, which displays the currently active poll
- * along with the vote counts for each option.
- */
-
 "use client";
 
+/**
+ * File Path: components/CurrentPoll.tsx
+ *
+ * CurrentPoll Component
+ * ---------------------
+ * This component fetches and displays the currently active poll along with vote counts for each option.
+ * It handles real-time updates through subscriptions to ensure the vote count is always current.
+ */
+
 import React, { useState, useEffect } from "react";
-//import { motion, AnimatePresence } from "framer-motion";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 
 type Poll = Schema["Poll"]["type"];
-//type Vote = Schema["Vote"]["type"];
 
-// Generate a client instance for interacting with the data schema.
+// Generate a client instance for interacting with the data schema
 const client = generateClient<Schema>();
 
 /**
  * CurrentPoll Component
  * ---------------------
- * Renders the currently active poll along with vote counts for each option.
- * It handles real-time updates via subscriptions.
- * 
+ * Displays the currently active poll with vote counts for each option, with real-time updates.
+ *
  * @component
- * @returns {JSX.Element} The rendered CurrentPoll component.
+ * @returns {JSX.Element} The rendered component displaying the active poll and vote counts.
  */
 export default function CurrentPoll(): JSX.Element {
-  const [poll, setPoll] = useState<Poll | null>(null); // State to store the active poll.
-  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store the vote counts.
-  const [loading, setLoading] = useState<boolean>(true); // State to track loading status.
-  const [error, setError] = useState<string | null>(null); // State to store any error messages.
+  const [poll, setPoll] = useState<Poll | null>(null); // State for the active poll
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State for the vote counts per option
+  const [loading, setLoading] = useState<boolean>(true); // State for tracking loading status
+  const [error, setError] = useState<string | null>(null); // State for error messages
 
   useEffect(() => {
     /**
-     * fetchActivePoll Function
-     * ------------------------
      * Fetches the currently active poll from the backend.
      */
     const fetchActivePoll = async (): Promise<void> => {
@@ -66,9 +61,7 @@ export default function CurrentPoll(): JSX.Element {
 
   useEffect(() => {
     /**
-     * fetchVoteCounts Function
-     * ------------------------
-     * Fetches the vote counts for the current poll and sets up a subscription for real-time updates.
+     * Fetches the vote counts for the current poll and sets up a real-time subscription for updates.
      */
     const fetchVoteCounts = async (): Promise<void> => {
       if (!poll) return;
@@ -114,7 +107,7 @@ export default function CurrentPoll(): JSX.Element {
       });
     }
 
-    // Cleanup subscription on component unmount
+    // Cleanup the subscription on component unmount
     return () => {
       if (subscription) subscription.unsubscribe();
     };
@@ -129,11 +122,11 @@ export default function CurrentPoll(): JSX.Element {
   }
 
   return (
-    <div className="section-container pb-4 sm:p-4">
-      <div className="heading">Current Poll</div>
-      <div className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
+    <section className="section-container pb-4 sm:p-4">
+      <header className="heading">Current Poll</header>
+      <article className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
         <div className="p-4">
-          <div className="text-lg font-semibold pb-2">{poll.title}</div>
+          <h2 className="text-lg font-semibold pb-2">{poll.title}</h2>
           <table className="w-full text-left table-auto">
             <thead>
               <tr>
@@ -145,16 +138,13 @@ export default function CurrentPoll(): JSX.Element {
               {poll.options.map((option, index) => (
                 <tr key={index}>
                   <td className="p-2">{option}</td>
-                  <td className="p-2">
-                    {voteCounts[option as string] || 0}
-                  </td>
+                  <td className="p-2">{voteCounts[option as string] || 0}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </article>
+    </section>
   );
-
 }

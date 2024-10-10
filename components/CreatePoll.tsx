@@ -1,48 +1,42 @@
+"use client";
+
 /**
  * File Path: components/CreatePoll.tsx
- * 
- * Create Poll Component
- * ---------------------
- * This file defines the CreatePoll component, which allows users to create a new poll by specifying a title
- * and multiple options. The component integrates with AWS Amplify to store the poll data and provides feedback
- * through toast notifications.
+ *
+ * CreatePoll Component
+ * --------------------
+ * This component provides a form interface for creating a new poll. Users can specify a poll title
+ * and up to 10 options. The component integrates with AWS Amplify to store poll data and provides
+ * feedback through toast notifications for both successful and unsuccessful operations.
  */
-
-"use client";
 
 import React, { useState, useContext } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 
-// This type alias could be used for typing the Poll-related state or parameters if needed in the future.
-// For example: const [poll, setPoll] = useState<Poll | null>(null);
-// or: const handlePollUpdate = (updatedPoll: Poll) => { ... };
-// Currently, it's not being used, so it's commented out to avoid TypeScript warnings.
-// type Poll = Schema["Poll"]["type"];
-
-// Generate a client instance for interacting with the data schema.
+// Generate a client instance for interacting with Amplify data schema.
 const client = generateClient<Schema>();
 
 /**
  * CreatePoll Component
  * --------------------
- * Renders a form for creating a new poll. Allows users to add multiple options and submit the poll.
- * Provides feedback through toast notifications.
- * 
+ * Renders a form that allows users to create a new poll with a title and multiple options.
+ * Users can add up to 10 options, and the component provides real-time feedback using toast notifications.
+ *
  * @component
- * @returns {JSX.Element} The rendered CreatePoll component.
+ * @returns {JSX.Element} - The rendered CreatePoll component.
  */
 export default function CreatePoll(): JSX.Element {
   const [title, setTitle] = useState<string>(""); // State to store the poll title.
   const [options, setOptions] = useState<string[]>([""]); // State to store the poll options.
 
-  const { addToast } = useContext<ToastContextType>(ToastContext); // Access the addToast function from ToastContext.
+  const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast notifications from context.
 
   /**
    * addOption Function
    * ------------------
-   * Adds a new option input field if the limit of 10 options has not been reached.
+   * Adds a new option input field if there are fewer than 10 options.
    */
   const addOption = (): void => {
     if (options.length < 10) {
@@ -58,9 +52,9 @@ export default function CreatePoll(): JSX.Element {
   /**
    * handleOptionChange Function
    * ---------------------------
-   * Updates the value of a specific option based on user input.
-   * 
-   * @param {number} index - The index of the option being updated.
+   * Updates the value of a specific poll option based on user input.
+   *
+   * @param {number} index - The index of the option being modified.
    * @param {string} value - The new value for the option.
    */
   const handleOptionChange = (index: number, value: string): void => {
@@ -72,8 +66,8 @@ export default function CreatePoll(): JSX.Element {
   /**
    * handleOptionRemove Function
    * ---------------------------
-   * Removes a specific option from the list.
-   * 
+   * Removes a poll option based on the index provided.
+   *
    * @param {number} index - The index of the option to be removed.
    */
   const handleOptionRemove = (index: number): void => {
@@ -84,8 +78,8 @@ export default function CreatePoll(): JSX.Element {
   /**
    * handleSubmit Function
    * ---------------------
-   * Submits the new poll to the backend and provides feedback through toast notifications.
-   * Validates that all fields are filled before submission.
+   * Validates the poll form fields and submits the poll to the backend.
+   * Displays feedback via toast notifications on success or failure.
    */
   const handleSubmit = async (): Promise<void> => {
     if (!title || options.some((option) => !option)) {
@@ -101,7 +95,7 @@ export default function CreatePoll(): JSX.Element {
         title,
         options,
         createdAt: new Date().toISOString(),
-        status: "draft", // Default status is draft.
+        status: "draft", // The initial status of a newly created poll is "draft".
       });
 
       if (errors) {
@@ -116,7 +110,7 @@ export default function CreatePoll(): JSX.Element {
           message: "Poll created successfully.",
         });
         setTitle("");
-        setOptions([""]);
+        setOptions([""]); // Reset form fields after successful creation.
       }
     } catch (err) {
       addToast({
@@ -128,16 +122,23 @@ export default function CreatePoll(): JSX.Element {
   };
 
   return (
-    <div className="section-container p-2">
-      <h1 className="heading">Create a New Poll</h1>
+    <section className="section-container p-2">
+      <header>
+        <h1 className="heading">Create a New Poll</h1>
+      </header>
       <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
         <div className="mb-4 w-full">
-          <label className="block text-white text-xs text-left">Poll Title</label>
+          <label htmlFor="poll-title" className="block text-white text-xs text-left">
+            Poll Title
+          </label>
           <input
+            id="poll-title"
             className="form-input"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter poll title"
+            aria-label="Poll Title"
           />
         </div>
         <div className="mb-4 w-full">
@@ -149,11 +150,14 @@ export default function CreatePoll(): JSX.Element {
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
+                placeholder={`Option ${index + 1}`}
+                aria-label={`Poll Option ${index + 1}`}
               />
               <button
                 className="btn btn-secondary ml-2"
                 type="button"
                 onClick={() => handleOptionRemove(index)}
+                aria-label={`Remove Option ${index + 1}`}
               >
                 Delete
               </button>
@@ -166,6 +170,7 @@ export default function CreatePoll(): JSX.Element {
               className="btn bg-green-600 hover:bg-green-700 border border-green-500 text-white"
               type="button"
               onClick={addOption}
+              aria-label="Add Poll Option"
             >
               Add Option
             </button>
@@ -174,14 +179,12 @@ export default function CreatePoll(): JSX.Element {
             className="btn btn-primary"
             type="button"
             onClick={handleSubmit}
+            aria-label="Create Poll"
           >
             Create Poll
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
-
-
-
 }

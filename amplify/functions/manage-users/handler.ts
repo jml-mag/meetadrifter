@@ -1,3 +1,16 @@
+/**
+ * File: amplify/functions/manage-users/resource.ts
+ * 
+ * Description:
+ * -------------
+ * This file defines the `manage-users` function that handles user management tasks
+ * in the application, such as listing users and their groups, adding users to groups,
+ * and removing users from groups. It uses AWS Cognito to interact with the user pool
+ * and execute these actions.
+ * 
+ * The function is invoked through AppSync and operates based on the event's `fieldName`.
+ */
+
 import {
   CognitoIdentityProviderClient,
   ListUsersCommand,
@@ -11,8 +24,9 @@ import { env } from '$amplify/env/manage-users';
 import { AppSyncIdentityIAM, AppSyncIdentityCognito, AppSyncIdentityOIDC } from 'aws-lambda';
 
 /**
- * Interface for the manage-users function arguments.
- * Defines optional fields based on the type of operation.
+ * Interface for the arguments passed to the manage-users function.
+ * These arguments define the username and groupName, both of which are optional and vary 
+ * depending on the operation (e.g., adding/removing users from groups).
  */
 interface ManageUsersArguments {
   username?: string;
@@ -20,7 +34,9 @@ interface ManageUsersArguments {
 }
 
 /**
- * Interface for a user with their associated groups.
+ * Interface representing a user along with their associated groups.
+ * Extends the `UserType` from Cognito with a mandatory `Username` field and includes 
+ * an array of groups.
  */
 interface UserWithGroups {
   user: UserType & { Username: string };
@@ -28,7 +44,10 @@ interface UserWithGroups {
 }
 
 /**
- * Custom event type to match the actual event structure.
+ * Custom AppSync event structure.
+ * Defines the structure of the event passed to the function when triggered via AppSync.
+ * 
+ * @template T - The type of the arguments passed in the event.
  */
 interface CustomAppSyncResolverEvent<T> {
   fieldName: string;
@@ -42,23 +61,25 @@ interface CustomAppSyncResolverEvent<T> {
 }
 
 /**
- * Handler for the manage-users function.
- *
- * This function handles user management tasks, including:
- * - Listing users and their groups
- * - Adding a user to a group
- * - Removing a user from a group
- *
- * The function distinguishes actions based on the `event.fieldName`.
- *
- * @param event - The event data from AppSync.
- * @returns The result of the requested action.
+ * Handler function for managing users.
+ * 
+ * @remarks
+ * This function processes user management operations such as listing users and their associated
+ * groups, adding users to specific groups, and removing users from groups in AWS Cognito.
+ * The specific action is determined by the `fieldName` provided in the event.
+ * 
+ * @param event - The AppSync event, including the operation field and the necessary arguments.
+ * 
+ * @returns {Promise<UserWithGroups[] | string>} The result of the user management operation, 
+ * either a list of users with their groups or a success message.
+ * 
+ * @throws {Error} If the `fieldName` is missing or invalid, or if an error occurs during the operation.
  */
-export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArguments>) => {
+export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArguments>): Promise<UserWithGroups[] | string> => {
   console.log('Received event:', JSON.stringify(event, null, 2));
 
+  // Initialize the Cognito client
   const cognitoClient = new CognitoIdentityProviderClient({});
-
   const fieldName = event.fieldName;
 
   if (!fieldName) {
@@ -68,19 +89,19 @@ export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArgum
   try {
     switch (fieldName) {
       case 'listUsersAndGroups':
-        // List all users
+        // List all users in the user pool
         const listUsersCommand = new ListUsersCommand({
           UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
         });
         const usersResponse = await cognitoClient.send(listUsersCommand);
         const users: UserType[] = usersResponse.Users || [];
 
-        // Filter out users without a Username
+        // Filter users with valid usernames
         const validUsers: (UserType & { Username: string })[] = users.filter(
           (user): user is UserType & { Username: string } => !!user.Username
         );
 
-        // Get groups for each user
+        // Retrieve groups for each user
         const usersWithGroups: UserWithGroups[] = await Promise.all(
           validUsers.map(async (user) => {
             const listGroupsCommand = new AdminListGroupsForUserCommand({
@@ -100,7 +121,7 @@ export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArgum
           })
         );
 
-        // Return the users with groups directly
+        // Return users with their groups
         return usersWithGroups;
 
       case 'addUserToGroup':
@@ -140,6 +161,6 @@ export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArgum
     }
   } catch (error) {
     console.error('Error in manage-users function:', error);
-    throw error; // Let Amplify handle the error appropriately
+    throw error;
   }
 };

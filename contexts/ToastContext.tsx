@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * File Path: contexts/ToastContext.tsx
  * 
@@ -8,10 +10,8 @@
  * automatic timeout and removal of toasts.
  */
 
-'use client';
-
 import React, { createContext, useState, useCallback, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID to generate unique identifiers for each toast.
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Toast Interface
@@ -72,7 +72,8 @@ interface ToastProviderProps {
 /**
  * ToastProvider Component
  * -----------------------
- * Encapsulates all children components that need access to toast functionalities.
+ * Provides the ToastContext to all children components, allowing them to trigger
+ * and manage toast notifications.
  * 
  * @component
  * @param {ToastProviderProps} props - The component props.
@@ -84,10 +85,9 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   /**
    * removeToast Function
    * --------------------
-   * Removes a toast based on its ID. Uses useCallback to memoize the function.
+   * Removes a toast notification from the list based on its ID.
    * 
-   * @function
-   * @param {string} id - The ID of the toast to remove.
+   * @param {string} id - The ID of the toast to be removed.
    */
   const removeToast = useCallback((id: string) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
@@ -96,22 +96,20 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   /**
    * addToast Function
    * -----------------
-   * Adds a new toast to the state. It also sets a timer to automatically remove the toast.
+   * Adds a new toast to the array of toasts and schedules its automatic removal.
    * 
-   * @function
    * @param {Toast} toast - The toast object to add.
    */
   const addToast = useCallback((toast: Toast) => {
     const toastWithDefaultId = { ...toast, id: toast.id || uuidv4() }; // Assign a default ID if not provided.
-    setToasts((prevToasts) => [...prevToasts, toastWithDefaultId]); // Append the new toast to the existing array.
+    setToasts((prevToasts) => [...prevToasts, toastWithDefaultId]); // Append the new toast to the array.
 
-    const duration = toast.duration || 3000; // Use provided duration or default to 3000ms.
-    setTimeout(() => { // Set a timeout to remove the toast after the specified duration.
-      removeToast(toastWithDefaultId.id!);
+    const duration = toast.duration || 3000; // Default to 3000ms if no duration is provided.
+    setTimeout(() => {
+      removeToast(toastWithDefaultId.id!); // Remove toast after duration.
     }, duration);
   }, [removeToast]);
 
-  // Providing the context value to all child components.
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       {children}

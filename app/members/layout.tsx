@@ -1,11 +1,12 @@
 /**
  * File Path: app/members/layout.tsx
- *
+ * 
  * Member Layout Component
  * -----------------------
- * This file defines the Layout component specifically for member areas. It incorporates authentication,
- * dynamic styling elements like background image opacity control, and conditionally renders either the
- * members menu or admin menu based on the pathname.
+ * This component defines the layout specifically for member areas of the application. It incorporates
+ * AWS Amplify authentication, dynamic background opacity control, and conditionally renders
+ * member or admin menus based on the application's pathname. Additionally, it provides a configurable
+ * background and navigation bar with animations.
  */
 
 "use client";
@@ -19,15 +20,15 @@ import Image from "next/image";
 import bg from "@/public/nacho-champion.png";
 import "@aws-amplify/ui-react/styles.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import AuthenticatedNavBar from "@/components/AuthenticatedNavBar"; // Import AuthenticatedNavBar component.
+import AuthenticatedNavBar from "@/components/AuthenticatedNavBar"; // Import for authenticated navigation bar
 import MembersMenu from "@/components/MembersMenu";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import { climate_crisis } from "@/app/fonts";
 
-// Configure AWS Amplify
+// Configure AWS Amplify using the generated outputs
 Amplify.configure(outputs);
 
-// Custom form fields configuration
+// Custom sign-up form fields for Amplify's Authenticator
 const formFields = {
   signUp: {
     email: {
@@ -63,7 +64,7 @@ const formFields = {
   },
 };
 
-// Custom components for Authenticator
+// Custom header component for Amplify's Authenticator
 const components = {
   Header() {
     return (
@@ -83,35 +84,33 @@ const components = {
 
 /**
  * Layout Component
- * ----------------
- * This component serves as the layout wrapper for member-specific areas of the application.
- * It handles authentication, manages background opacity, and controls the visibility of the navigation menu.
- *
- * @component
- * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
- * @returns {JSX.Element} The rendered Layout component.
+ * 
+ * @remarks
+ * The root layout component for member-specific sections of the application. It handles background
+ * image opacity adjustments, menu toggle controls, and manages authenticated navigation for users.
+ * AWS Amplify is used to manage authentication flows.
+ * 
+ * @param {Readonly<{ children: React.ReactNode }>} props - The children components to be rendered within the layout.
+ * 
+ * @returns {JSX.Element} The layout component that wraps all member-specific pages.
  */
 export default function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>): JSX.Element {
-  const [bgOpacity, setBgOpacity] = useState<number>(0.65); // State to manage the background opacity level.
-  const [menuOpen, setMenuOpen] = useState<boolean>(false); // State to track menu open/close status.
+  const [bgOpacity, setBgOpacity] = useState<number>(0.65); // Background opacity state
+  const [menuOpen, setMenuOpen] = useState<boolean>(false); // Menu open/close state
 
   /**
-   * handleOpacityChange Function
-   * ----------------------------
    * Updates the background opacity state based on user input.
-   *
-   * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event.
+   * 
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event from the background opacity slider.
    */
   const handleOpacityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setBgOpacity(parseFloat(event.target.value));
   };
 
   /**
-   * toggleMenu Function
-   * -------------------
-   * Toggles the menu's open/close state.
+   * Toggles the state of the navigation menu between open and closed.
    */
   const toggleMenu = () => {
     setMenuOpen((prev) => !prev);
@@ -142,17 +141,18 @@ export default function Layout({
 
 /**
  * LayoutContent Component
- * -----------------------
- * This component handles the rendering of the main layout content, including background image,
- * menu control, and member-specific child components.
- *
- * @component
- * @param {number} bgOpacity - The current opacity level of the background image.
- * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
- * @param {boolean} menuOpen - State indicating whether the menu is open or closed.
+ * 
+ * @remarks
+ * This component renders the core layout content including the background image, animated menu,
+ * and child components. It provides controls for background opacity and the member's navigation menu.
+ * 
+ * @param {number} bgOpacity - The opacity level of the background image.
+ * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle background opacity adjustments.
+ * @param {boolean} menuOpen - The state indicating whether the menu is open or closed.
  * @param {() => void} toggleMenu - Function to toggle the menu open/close state.
- * @param {React.ReactNode} children - The child components to be rendered within the layout.
- * @returns {JSX.Element} The rendered LayoutContent component.
+ * @param {React.ReactNode} children - The content to be rendered within the layout.
+ * 
+ * @returns {JSX.Element} The rendered layout content component.
  */
 function LayoutContent({
   bgOpacity,
@@ -167,10 +167,10 @@ function LayoutContent({
   toggleMenu: () => void;
   children: React.ReactNode;
 }): JSX.Element {
-  const { loading } = useAuth(); // Access authentication context to determine if the user is an admin and if the status is still loading.
+  const { loading } = useAuth(); // Authentication context to determine if user status is loading
 
   if (loading) {
-    return <div>Loading...</div>; // Render a loading state while determining admin status.
+    return <div>Loading...</div>; // Display a loading message while authentication is being checked
   }
 
   return (
@@ -202,8 +202,6 @@ function LayoutContent({
             </button>
           )}
         </div>
-
-        
       </div>
       <div className="z-40">
         {/* Members Menu */}

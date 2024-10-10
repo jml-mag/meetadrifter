@@ -1,21 +1,27 @@
 /**
  * File Path: components/AuthenticatedNavBar.tsx
- *
+ * 
  * AuthenticatedNavBar Component
- * ----------------------------
- * Renders the navigation bar based on the user's role and the current URL path.
- * Displays either the Members Menu or the Admin Menu depending on the pathname.
+ * -----------------------------
+ * Renders a navigation bar based on the user's role and the current URL path.
+ * This component dynamically displays either the Members Menu or the Admin Menu 
+ * depending on the pathname.
+ * 
+ * The component ensures proper accessibility and SEO by using semantic HTML elements.
+ * The styling changes dynamically based on the active link.
  */
+
+"use client";
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 /**
- * Interface for navigation links.
+ * Interface representing the structure of a navigation link.
  */
 interface NavLink {
-  href: string;
-  label: string;
+  href: string;  // URL the link points to
+  label: string; // Display label for the link
 }
 
 // Define navigation links for both members and admin.
@@ -35,41 +41,46 @@ const adminNavLinks: NavLink[] = [
 /**
  * AuthenticatedNavBar Component
  * -----------------------------
- * Renders the appropriate navigation bar based on the pathname.
+ * Renders the appropriate navigation bar based on the URL path.
+ * It dynamically selects either the Members or Admin navigation menu depending 
+ * on the URL, and highlights the active link for visual feedback.
  *
- * @returns {JSX.Element} The rendered navigation bar.
+ * @returns {JSX.Element} - The rendered navigation bar component.
  */
 export default function AuthenticatedNavBar(): JSX.Element {
   const pathname = usePathname();
 
-  // Determine whether to display the members or admin nav based on the URL path.
+  // Determine the correct set of navigation links based on the URL path.
   const navLinks = pathname.startsWith("/members/admin")
     ? adminNavLinks
     : membersNavLinks;
 
   return (
-    <div className="text-xs lg:text-sm xl:text-base lg:font-extralight lg:space-x-2 xl:space-x-2 mx-1 flex space-around items-center justify-center">
+    <nav 
+      aria-label="Authenticated Navigation Bar" 
+      className="text-xs lg:text-sm xl:text-base lg:font-extralight lg:space-x-2 xl:space-x-2 mx-1 flex space-around items-center justify-center"
+    >
       {navLinks.map((link) => {
-        // Determine if the current link is active
+        // Check if the current link is active
         const isActive =
           pathname === link.href ||
-          (link.href === "/members/code" &&
-            pathname.startsWith("/members/code/"));
+          (link.href === "/members/code" && pathname.startsWith("/members/code/"));
 
         return (
           <Link
             key={link.href}
             href={link.href}
+            aria-current={isActive ? "page" : undefined} // Accessibility: Indicate current page
             className={`p-2 border rounded ${
               isActive
-                ? "text-white border-white" // Active styles
-                : "text-yellow-400 border-0" // Inactive styles
+                ? "text-white border-white" // Active link styles
+                : "text-yellow-400 border-0" // Inactive link styles
             } transition-colors duration-200`}
           >
             {link.label}
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }

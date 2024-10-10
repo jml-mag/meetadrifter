@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * File Path: contexts/AuthContext.tsx
  * 
@@ -8,15 +10,13 @@
  * authentication status, user information, admin privileges, and user profile details. It also handles user sign-out.
  */
 
-"use client";
-
 import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
-import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types and functions for authentication from AWS Amplify.
+import { AuthUser, fetchAuthSession } from "@aws-amplify/auth";
 
 /**
  * UserProfile Interface
  * ---------------------
- * Defines the shape of the user profile object containing essential user information.
+ * Defines the structure of the user profile object containing essential user information.
  * 
  * @interface UserProfile
  * @property {string} firstName - The user's first name.
@@ -59,7 +59,7 @@ const AuthContext = createContext<AuthContextProps | null>(null);
  * useAuth Hook
  * ------------
  * Custom hook to provide easy access to the authentication context.
- * It throws an error if used outside of an `AuthProvider`, ensuring proper usage.
+ * Throws an error if used outside of an `AuthProvider`, ensuring proper usage.
  * 
  * @returns {AuthContextProps} The authentication context properties, including user info, admin status, sign-out function, and user profile.
  */
@@ -91,7 +91,7 @@ interface AuthProviderProps {
 /**
  * AuthProvider Component
  * ----------------------
- * Wraps all child components that require access to authentication context.
+ * Wraps all child components that require access to the authentication context.
  * Provides context values such as the authenticated user, sign-out function, admin status, and user profile.
  * 
  * @component
@@ -99,86 +99,61 @@ interface AuthProviderProps {
  * @returns {JSX.Element} The rendered AuthProvider component, making authentication context accessible to all children.
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, signOut }) => {
-  // State to track if the authenticated user has admin privileges.
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-
-  // State to track if the process of determining admin status is still loading.
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // State to store the user's profile information.
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false); // State to track admin privileges.
+  const [loading, setLoading] = useState<boolean>(true); // State to track the loading status of admin checks.
+  const [profile, setProfile] = useState<UserProfile | null>(null); // State to store the user's profile information.
 
   useEffect(() => {
     /**
      * checkAdminStatus Function
      * -------------------------
      * Checks if the authenticated user belongs to the "admin" group by fetching their session
-     * and examining the token payload. Also extracts and sets the user's profile information.
-     * Sets `isAdmin`, `profile`, and `loading` states accordingly.
+     * and examining the token payload. Extracts and sets the user's profile information.
      */
     async function checkAdminStatus() {
       if (user) {
         try {
           const session = await fetchAuthSession();
-          // Extract the ID token payload from the session.
           const idTokenPayload = session.tokens?.idToken?.payload;
 
           if (idTokenPayload) {
-            // Extract groups to determine admin status with type checking.
             const groupsRaw = idTokenPayload["cognito:groups"];
             let groups: string[] | undefined;
 
             if (Array.isArray(groupsRaw) && groupsRaw.every(item => typeof item === "string")) {
               groups = groupsRaw;
-            } else {
-              groups = undefined;
             }
 
             setIsAdmin(Array.isArray(groups) && groups.includes("admin"));
 
-            // Extract user profile information with type checking.
-            const firstName =
-              typeof idTokenPayload.given_name === "string" ? idTokenPayload.given_name : "";
-            const lastName =
-              typeof idTokenPayload.family_name === "string" ? idTokenPayload.family_name : "";
-            const emailAddress =
-              typeof idTokenPayload.email === "string" ? idTokenPayload.email : "";
-            const username =
-              typeof idTokenPayload.preferred_username === "string"
-                ? idTokenPayload.preferred_username
-                : "";
-
             const extractedProfile: UserProfile = {
-              firstName,
-              lastName,
-              emailAddress,
-              username,
+              firstName: typeof idTokenPayload.given_name === "string" ? idTokenPayload.given_name : "",
+              lastName: typeof idTokenPayload.family_name === "string" ? idTokenPayload.family_name : "",
+              emailAddress: typeof idTokenPayload.email === "string" ? idTokenPayload.email : "",
+              username: typeof idTokenPayload.preferred_username === "string" ? idTokenPayload.preferred_username : ""
             };
+
             setProfile(extractedProfile);
           } else {
-            // If there's no ID token payload, set profile to null.
             setProfile(null);
           }
         } catch (error) {
           console.error("Failed to fetch user session:", error);
-          // In case of an error, reset admin status and profile.
           setIsAdmin(false);
           setProfile(null);
         } finally {
-          setLoading(false); // Set loading to false when admin check is complete.
+          setLoading(false);
         }
       } else {
-        // If no user is authenticated, reset admin status and profile.
         setIsAdmin(false);
         setProfile(null);
-        setLoading(false); // No admin check is required.
+        setLoading(false);
       }
     }
 
     checkAdminStatus();
   }, [user]);
 
-  // Return the context provider wrapping all child components that need authentication context.
   return (
     <AuthContext.Provider value={{ user, signOut, isAdmin, loading, profile }}>
       {children}

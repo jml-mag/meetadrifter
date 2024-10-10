@@ -2,44 +2,47 @@
 
 /**
  * File Path: @/app/members/admin/code/page.tsx
- *
+ * 
  * AdminCodePage Component
  * -----------------------
- * This component provides an interface for administrators to manage lessons.
- * Administrators can create, update, view, and reorder lesson items.
+ * This component provides an interface for administrators to manage lessons. Administrators can create new lessons,
+ * update existing ones, and reorder lesson items. The page integrates several components to handle these operations,
+ * including lesson listing, CRUD operations, and lesson ordering.
  */
 
 import React, { useState } from "react";
-import AllLessonsList from "@/components/AllLessonsList"; // Import unified lesson list component.
-import LessonForm from "@/components/LessonForm"; // Import lesson form component for CRUD operations.
-import LessonOrder from "@/components/LessonOrder"; // Import component to manage lesson ordering.
+import AllLessonsList from "@/components/AllLessonsList"; // Component for listing all lessons
+import LessonForm from "@/components/LessonForm"; // Component for creating or updating lessons
+import LessonOrder from "@/components/LessonOrder"; // Component for managing lesson order
 
 /**
- * DisplayState type
+ * DisplayState Type
  * -----------------
- * Defines the possible states for displaying the content, either the list of lessons or the lesson form.
+ * Defines the possible states for displaying content on the page: either the lesson list or the lesson form.
  */
 type DisplayState = "list" | "form";
 
 /**
  * AdminCodePage Component
- * -----------------------
- * Provides functionality for managing lessons and lesson ordering.
- * Displays a unified list of lessons, a form for CRUD operations, and the lesson ordering component based on user interactions.
- *
- * @component
- * @returns {JSX.Element} The rendered AdminCodePage component.
+ * 
+ * @remarks
+ * This component is designed for administrators to manage lessons within the application. It provides
+ * functionalities to display a list of all lessons, handle CRUD operations through a lesson form, and
+ * manage the order of lessons via a dedicated section. The display state alternates between the list view
+ * and the form view based on user interaction.
+ * 
+ * @returns {JSX.Element} The rendered AdminCodePage component for managing lessons and lesson order.
  */
 export default function AdminCodePage(): JSX.Element {
-  // State for tracking the currently selected lesson (for update) or "new" (for create).
+  // State to track the currently selected lesson ID for update or null for creating a new lesson.
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  
-  // State for determining which view is displayed (list of lessons or form for CRUD operations).
+
+  // State to determine whether to display the list of lessons or the lesson form for CRUD operations.
   const [displayState, setDisplayState] = useState<DisplayState>("list");
 
   /**
-   * Show the lesson form for creating or updating a lesson.
-   *
+   * Displays the lesson form for creating a new lesson or editing an existing lesson.
+   * 
    * @param {string | null} lessonId - The ID of the lesson to edit, or "new" for creating a new lesson.
    */
   const showLessonForm = (lessonId: string | null): void => {
@@ -48,20 +51,20 @@ export default function AdminCodePage(): JSX.Element {
   };
 
   /**
-   * Show the list of all lessons.
+   * Displays the list of all lessons.
    */
   const showLessonList = (): void => {
     setDisplayState("list");
   };
 
-  // Render the main layout for managing lessons and lesson ordering.
+  // Render the main layout with sections for managing lessons and lesson order.
   return (
-    <main className="section-container w-full lg:flex ">
-      {/* Section for managing all lessons */}
+    <main className="section-container w-full lg:flex">
+      {/* Section for managing the list of lessons or displaying the lesson form */}
       <div className="text-left flex flex-col md:flex-row md:space-x-6 md:mr-1 w-full">
         {displayState === "list" ? (
           <div className="w-full">
-            <AllLessonsList onSelectItem={showLessonForm} />
+            <AllLessonsList onSelectItem={showLessonForm} /> {/* Render the list of all lessons */}
             <button
               className="btn btn-primary mt-4 lg:mt-0"
               onClick={() => showLessonForm("new")}
@@ -72,16 +75,16 @@ export default function AdminCodePage(): JSX.Element {
         ) : (
           <div className="w-full">
             <LessonForm
-              selectedLessonId={selectedLessonId}
-              resetSelection={showLessonList}
+              selectedLessonId={selectedLessonId} // Pass the selected lesson ID for updating or null for creating a new lesson.
+              resetSelection={showLessonList} // Reset to the lesson list view after form submission or cancellation.
             />
           </div>
         )}
       </div>
 
-      {/* Section for managing lesson order */}
+      {/* Section for managing the order of lessons */}
       <div className="flex flex-col md:flex-row md:space-x-6 w-full md:mr-1 mt-8 lg:mt-0">
-        <LessonOrder /> {/* Render the LessonOrder component */}
+        <LessonOrder /> {/* Render the LessonOrder component for reordering lessons */}
       </div>
     </main>
   );

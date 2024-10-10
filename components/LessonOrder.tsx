@@ -1,15 +1,5 @@
 "use client";
 
-/**
- * File Path: @/components/LessonOrder.tsx
- * 
- * LessonOrder Component
- * ---------------------
- * This component allows an admin to manage the ordering of lessons.
- * It fetches all lessons from the `LessonContent` model that are unordered, then allows the user to drag and drop
- * to set the order. Changes are saved to the `LessonContent` model in the database.
- */
-
 import React, { useState, useEffect, useContext } from "react";
 import { Reorder } from "framer-motion";
 import { generateClient } from "aws-amplify/data";
@@ -19,6 +9,11 @@ import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 // Generate the Amplify client
 const client = generateClient<Schema>();
 
+/**
+ * LessonItem Interface
+ * --------------------
+ * Defines the structure of a lesson item, including its unique ID, title, slug, and ordering status.
+ */
 interface LessonItem {
   id: string;
   title: string;
@@ -26,19 +21,31 @@ interface LessonItem {
   isOrdered: boolean;
 }
 
-export default function LessonOrder() {
+/**
+ * LessonOrder Component
+ * ---------------------
+ * This component allows administrators to manage the order of lessons.
+ * It fetches lessons from the `LessonContent` model, displays unordered lessons,
+ * and allows users to reorder lessons using drag-and-drop functionality.
+ * Changes are saved back to the `LessonContent` model in the database.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered LessonOrder component.
+ */
+export default function LessonOrder(): JSX.Element {
   const [unorderedItems, setUnorderedItems] = useState<LessonItem[]>([]);
   const [orderedItems, setOrderedItems] = useState<LessonItem[]>([]);
   const { addToast } = useContext<ToastContextType>(ToastContext);
 
+  /**
+   * Fetch lesson items from the `LessonContent` model, separating ordered and unordered items.
+   */
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        // Fetch all items from the `LessonContent` model
         const { data: lessons } = await client.models.LessonContent.list();
   
         if (lessons) {
-          // Separate ordered and unordered items
           const unordered = lessons
             .filter(item => !item.isOrdered)
             .map(item => ({
@@ -58,7 +65,6 @@ export default function LessonOrder() {
               isOrdered: item.isOrdered,
             }));
   
-          // Update state with ordered and unordered items
           setUnorderedItems(unordered);
           setOrderedItems(ordered);
         }
@@ -70,22 +76,22 @@ export default function LessonOrder() {
   
     fetchItems();
   }, [addToast]);
-  
 
-  const handleSaveOrder = async () => {
+  /**
+   * Handle saving the updated lesson order to the backend.
+   */
+  const handleSaveOrder = async (): Promise<void> => {
     try {
-      // Ensure orderedItems are sorted before assigning orderIndex
       const sortedItems = [...orderedItems].sort((a, b) => {
         return orderedItems.indexOf(a) - orderedItems.indexOf(b);
       });
   
-      // Save each ordered item with its new order index
       const results = await Promise.all(
         sortedItems.map((item, index) =>
           client.models.LessonContent.update({
             id: item.id,
             isOrdered: true,
-            orderIndex: index, // Set the correct order index
+            orderIndex: index,
           })
         )
       );
@@ -97,15 +103,14 @@ export default function LessonOrder() {
       addToast({ messageType: "error", message: "Failed to save lesson order." });
     }
   };
-  
 
   return (
-    <div className="bg-black bg-opacity-70 p-2 rounded-lg w-full mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-8">
-        {/* Section 1: Unordered Items */}
+    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4">
+      <div className="flex flex-col md:flex-row md:justify-between gap-8">
+        {/* Unordered Lessons Section */}
         <div className="w-full md:w-1/2">
-          <h2 className="heading text-lg mb-2 md:mb-0">Unordered Lessons</h2>
-          <ul className="text-sm space-y-2 overflow-scroll max-h-[50vh]">
+          <h2 className="text-lg font-semibold mb-2">Unordered Lessons</h2>
+          <ul className="text-sm space-y-2 overflow-scroll max-h-[50vh]" role="list">
             {unorderedItems.map(item => (
               <li
                 key={item.id}
@@ -121,15 +126,16 @@ export default function LessonOrder() {
           </ul>
         </div>
 
-        {/* Section 2: Ordered Items */}
+        {/* Ordered Lessons Section */}
         <div className="w-full md:w-1/2">
-          <h2 className="heading text-lg mb-2 md:mb-0">Ordered Lessons</h2>
+          <h2 className="text-lg font-semibold mb-2">Ordered Lessons</h2>
           <Reorder.Group
             as="ul"
             axis="y"
             values={orderedItems}
             onReorder={setOrderedItems}
             className="text-sm space-y-2 overflow-scroll max-h-[50vh]"
+            role="list"
           >
             {orderedItems.map(item => (
               <Reorder.Item
@@ -151,6 +157,6 @@ export default function LessonOrder() {
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
