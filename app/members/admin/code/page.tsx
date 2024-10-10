@@ -66,7 +66,7 @@ export default function AdminCodePage(): JSX.Element {
           <div className="w-full">
             <AllLessonsList onSelectItem={showLessonForm} /> {/* Render the list of all lessons */}
             <button
-              className="btn btn-primary mt-4 lg:mt-0"
+              className="btn btn-primary mt-4 lg:mt-2"
               onClick={() => showLessonForm("new")}
             >
               Add New Lesson
