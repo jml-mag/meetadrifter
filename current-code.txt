@@ -9,7 +9,8 @@ File Path: amplify/backend.ts
  * This file defines the backend configuration for the application using AWS Amplify.
  * It imports and integrates the authentication and data resources into the backend setup.
  */
-
+import { Stack } from "aws-cdk-lib/core"
+import { EmailIdentity } from "aws-cdk-lib/aws-ses"
 import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
 import { auth } from './auth/resource'; // Import the authentication resource configuration.
 import { data } from './data/resource'; // Import the data resource configuration.
@@ -19,13 +20,41 @@ import { manageUsers } from './functions/manage-users/resource'; // Import the m
  * Backend Configuration
  * ---------------------
  * This function call sets up the backend by integrating the auth, data, and manageUsers configurations.
- */
+ 
 defineBackend({
   auth,
   data,
   manageUsers,
 });
+*/
 
+/**
+ * Backend Configuration
+ * ---------------------
+ * This sets up the backend by integrating the auth, data, and manageUsers configurations as well as AWS SES for production email.
+ */
+
+const backend = defineBackend({
+  auth,
+  data,
+  manageUsers,
+})
+
+const { cfnUserPool } = backend.auth.resources.cfnResources
+const authStack = Stack.of(cfnUserPool)
+
+const email = EmailIdentity.fromEmailIdentityName(
+  authStack,
+  "EmailIdentity",
+  // your email configured for use in SES
+  //process.env.EMAIL || ''
+  "no-reply@meetadrifter.com"
+)
+
+cfnUserPool.emailConfiguration = {
+  emailSendingAccount: "DEVELOPER",
+  sourceArn: email.emailIdentityArn,
+}
 ---
 File Path: amplify/auth/resource.ts
 /**
@@ -305,6 +334,10 @@ import { manageUsers } from '../functions/manage-users/resource'; // Import the 
  * Defines the data models and their respective fields and authorization rules.
  */
 const schema = a.schema({
+  Link: a.customType({
+    text: a.string(),
+    url: a.string(),
+  }),
   // Poll model
   Poll: a.model({
     title: a.string().required(),
@@ -339,7 +372,7 @@ const schema = a.schema({
     slug: a.string().required(), // Unique slug for dynamic routing.
     code: a.string(), // Optional field for code content (if applicable).
     docs: a.string().required(), // Documentation content, required for all content types.
-    moreInfoUrl: a.string(), // Optional field for any additional links (from `SetupAndPrereqs`).
+    links: a.ref('Link').array(),
     isOrdered: a.boolean().required().default(false), // Track if the item is part of an ordered lesson.
     orderIndex: a.integer(), // Position in the lesson order (if applicable).
   }).authorization((allow) => [
@@ -1220,17 +1253,22 @@ File Path: app/members/admin/code/page.tsx
 /**
  * File Path: @/app/members/admin/code/page.tsx
  *
- * Admin Code Page Component
- * -------------------------
- * This file defines the AdminCodePage component, which serves as the main interface for managing all lessons.
- * It allows administrators to create, update, view, and order lesson items in a unified manner.
+ * AdminCodePage Component
+ * -----------------------
+ * This component provides an interface for administrators to manage lessons.
+ * Administrators can create, update, view, and reorder lesson items.
  */
 
 import React, { useState } from "react";
 import AllLessonsList from "@/components/AllLessonsList"; // Import unified lesson list component.
-import LessonForm from "@/components/LessonForm"; // Import unified lesson form component.
-import LessonOrder from "@/components/LessonOrder"; // Import LessonOrder component for managing lesson order.
+import LessonForm from "@/components/LessonForm"; // Import lesson form component for CRUD operations.
+import LessonOrder from "@/components/LessonOrder"; // Import component to manage lesson ordering.
 
+/**
+ * DisplayState type
+ * -----------------
+ * Defines the possible states for displaying the content, either the list of lessons or the lesson form.
+ */
 type DisplayState = "list" | "form";
 
 /**
@@ -1243,11 +1281,14 @@ type DisplayState = "list" | "form";
  * @returns {JSX.Element} The rendered AdminCodePage component.
  */
 export default function AdminCodePage(): JSX.Element {
+  // State for tracking the currently selected lesson (for update) or "new" (for create).
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  
+  // State for determining which view is displayed (list of lessons or form for CRUD operations).
   const [displayState, setDisplayState] = useState<DisplayState>("list");
 
   /**
-   * Show the lesson form for creating or updating.
+   * Show the lesson form for creating or updating a lesson.
    *
    * @param {string | null} lessonId - The ID of the lesson to edit, or "new" for creating a new lesson.
    */
@@ -1265,9 +1306,9 @@ export default function AdminCodePage(): JSX.Element {
 
   // Render the main layout for managing lessons and lesson ordering.
   return (
-    <main className="w-full lg:flex">
+    <main className="section-container w-full lg:flex ">
       {/* Section for managing all lessons */}
-      <div className="section-container text-left flex flex-col md:flex-row md:space-x-6 w-full">
+      <div className="text-left flex flex-col md:flex-row md:space-x-6 md:mr-1 w-full">
         {displayState === "list" ? (
           <div className="w-full">
             <AllLessonsList onSelectItem={showLessonForm} />
@@ -1289,7 +1330,7 @@ export default function AdminCodePage(): JSX.Element {
       </div>
 
       {/* Section for managing lesson order */}
-      <div className="section-container flex flex-col md:flex-row md:space-x-6 w-full mt-8 lg:mt-0">
+      <div className="flex flex-col md:flex-row md:space-x-6 w-full md:mr-1 mt-8 lg:mt-0">
         <LessonOrder /> {/* Render the LessonOrder component */}
       </div>
     </main>
@@ -1957,11 +1998,10 @@ File Path: app/members/code/[slug]/page.tsx
 
 import React from "react";
 import ReactMarkdown from "react-markdown";
-// import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css"; // Use your preferred Highlight.js theme
 import CodeBlock from "@/components/CodeBlock"; // Ensure this component is correctly implemented
 import { cookiesClient } from "@/utils/amplifyServerUtils";
-import { LessonContent } from "@/types/LessonContent"; // Ensure this type is correctly defined
+import { LessonContent, Link } from "@/types/LessonContent"; // Ensure this type is correctly defined
 
 /**
  * Interface for the page properties, containing route parameters.
@@ -1976,8 +2016,8 @@ interface PageProps {
  * LessonPage Component
  * --------------------
  * Renders a lesson page based on the provided slug. It fetches the lesson content,
- * displays the documentation as formatted Markdown, and renders code snippets with
- * TypeScript syntax highlighting.
+ * displays the documentation as formatted Markdown, renders code snippets with
+ * TypeScript syntax highlighting, and displays any relevant lesson links.
  *
  * @param {PageProps} props - The component props containing the route parameter `slug`.
  * @returns {Promise<JSX.Element>} The rendered lesson page component.
@@ -1987,10 +2027,9 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
 
   try {
     // Fetch the lesson data based on the slug
-    const { data: lessons, errors } =
-      await cookiesClient.models.LessonContent.list({
-        filter: { slug: { eq: slug } },
-      });
+    const { data: lessons, errors } = await cookiesClient.models.LessonContent.list({
+      filter: { slug: { eq: slug } },
+    });
 
     if (errors || !lessons || lessons.length === 0) {
       console.error("Error fetching lessons:", errors);
@@ -2003,11 +2042,16 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
       id: lessonData.id,
       title: lessonData.title,
       slug: lessonData.slug,
-      code: lessonData.code, // string | null
+      code: lessonData.code || null, // Ensure that code is either a string or null
       docs: lessonData.docs,
       isOrdered: lessonData.isOrdered,
-      orderIndex: lessonData.orderIndex, // number | null
-      moreInfoUrl: lessonData.moreInfoUrl, // string | null
+      orderIndex: lessonData.orderIndex || null,
+      links: (lessonData.links || [])
+        .filter((link): link is Link => link !== null) // Filter out any null values
+        .map((link) => ({
+          text: link.text || "", // Default to an empty string if text is null
+          url: link.url || "", // Default to an empty string if url is null
+        })),
     };
 
     return (
@@ -2021,9 +2065,30 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
               <ReactMarkdown className="whitespace-pre-wrap">
                 {lesson.docs}
               </ReactMarkdown>
+
+              {/* Links Section */}
+              {lesson.links.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-white font-semibold mb-2">Related Links:</h3>
+                  <ul className="list-disc list-inside text-blue-400">
+                    {lesson.links.map((link, index) => (
+                      <li key={index}>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {link.text || link.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </section>
-    
+
           {/* Code Section */}
           <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
             {lesson.code && <CodeBlock code={lesson.code} language="typescript" />}
@@ -2031,9 +2096,6 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
         </div>
       </main>
     );
-    
-    
-    
   } catch (error) {
     console.error("Unexpected error:", error);
     return <div className="text-red-500">An unexpected error occurred.</div>;
@@ -2179,18 +2241,18 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
   };
 
   return (
-    <div className="bg-black bg-opacity-70 rounded-lg w-full mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+    <div className="bg-black bg-opacity-70 rounded-lg w-full">
+      <div className="flex p-2 flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
         <input
           type="text"
           value={searchTerm}
           onChange={handleSearch}
           placeholder="Search lessons..."
-          className="form-input max-w-3xl mt-2 md:mt-0 md:ml-4 p-2 rounded"
+          className="form-input max-w-sm md:mt-0 md:ml-4 p-2 rounded"
         />
       </div>
-      <div className="h-48 overflow-scroll">
+      <div className="h-fit overflow-scroll">
         <ul className="text-sm mt-4 ml-6">
           {filteredLessons.map((lesson) => (
             <li
@@ -3923,7 +3985,7 @@ File Path: components/LessonForm.tsx
  *
  * LessonForm Component
  * --------------------
- * Provides a form interface for creating or updating lesson entries with metadata like type, title, docs, code, and slug.
+ * Provides a form interface for creating or updating lesson entries with metadata like type, title, docs, code, slug, and multiple links.
  * This form dynamically loads lesson data for editing if a lesson ID is selected.
  * On successful operations, the component triggers toast notifications and provides a way to return to the lesson list view.
  */
@@ -3942,9 +4004,19 @@ interface LessonFormProps {
 }
 
 /**
+ * Link Interface
+ * --------------
+ * Defines the structure of a link object, which includes the link text and URL.
+ */
+interface Link {
+  text: string;
+  url: string;
+}
+
+/**
  * LessonForm Component
  * --------------------
- * Renders a form for creating a new lesson or updating an existing one, with fields for type, title, docs, and code.
+ * Renders a form for creating a new lesson or updating an existing one, with fields for type, title, docs, code, and multiple links.
  * It also provides options for saving, updating, and deleting lesson entries.
  */
 const LessonForm: React.FC<LessonFormProps> = ({
@@ -3956,6 +4028,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
   const [docs, setDocs] = useState<string>("");
   const [code, setCode] = useState<string | undefined>(undefined);
   const [slug, setSlug] = useState<string>("");
+  const [links, setLinks] = useState<Link[]>([{ text: "", url: "" }]); // Initialize with a default empty link
   const { addToast } = useContext<ToastContextType>(ToastContext);
 
   useEffect(() => {
@@ -3975,6 +4048,16 @@ const LessonForm: React.FC<LessonFormProps> = ({
           setDocs(data.docs);
           setCode(data.code || undefined);
           setSlug(data.slug);
+
+          // Clean up data.links to match the Link[] type
+          const cleanedLinks: Link[] = (data.links || [])
+            .filter((link): link is NonNullable<typeof link> => link != null)
+            .map((link) => ({
+              text: link.text ?? "",
+              url: link.url ?? "",
+            }));
+
+          setLinks(cleanedLinks.length > 0 ? cleanedLinks : [{ text: "", url: "" }]);
         }
       };
 
@@ -3986,6 +4069,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
       setDocs("");
       setCode(undefined);
       setSlug("");
+      setLinks([{ text: "", url: "" }]); // Reset links to default
     }
   }, [selectedLessonId, addToast]);
 
@@ -3994,11 +4078,11 @@ const LessonForm: React.FC<LessonFormProps> = ({
       const formattedSlug = `${title
         .trim()
         .toLowerCase()
-        .replace(/\//g, "-") // Replace all '/' characters with '-'
-        .replace(/[^a-z0-9\s-]/g, "") // Remove all non-alphanumeric characters except spaces and hyphens
-        .replace(/\s+/g, "-") // Replace spaces with hyphens
-        .replace(/-+/g, "-") // Replace multiple hyphens with a single hyphen
-        .replace(/^-|-$/g, "")}`; // Remove leading or trailing hyphens
+        .replace(/\//g, "-")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")}`;
 
       let result;
       setSlug(formattedSlug);
@@ -4011,6 +4095,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
           docs,
           code,
           slug: slug,
+          links, // Save links array
         });
       } else {
         // Create a new lesson
@@ -4020,6 +4105,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
           docs,
           code,
           slug: formattedSlug,
+          links, // Save links array
           isOrdered: false,
           orderIndex: null,
         });
@@ -4066,8 +4152,42 @@ const LessonForm: React.FC<LessonFormProps> = ({
     }
   };
 
+  /**
+   * Adds a new link field to the form.
+   */
+  const addLink = (): void => {
+    setLinks([...links, { text: "", url: "" }]);
+  };
+
+  /**
+   * Updates the link data in the form based on the index and field type (text or URL).
+   *
+   * @param {number} index - The index of the link to update.
+   * @param {string} field - The field being updated ("text" or "url").
+   * @param {string} value - The value to update the field with.
+   */
+  const handleLinkChange = (
+    index: number,
+    field: "text" | "url",
+    value: string
+  ): void => {
+    const updatedLinks = [...links];
+    updatedLinks[index] = { ...updatedLinks[index], [field]: value };
+    setLinks(updatedLinks);
+  };
+
+  /**
+   * Removes a link from the form based on its index.
+   *
+   * @param {number} index - The index of the link to remove.
+   */
+  const removeLink = (index: number): void => {
+    const updatedLinks = links.filter((_, i) => i !== index);
+    setLinks(updatedLinks.length > 0 ? updatedLinks : [{ text: "", url: "" }]);
+  };
+
   return (
-    <div className="bg-black bg-opacity-70 rounded-lg w-full">
+    <div className="bg-black bg-opacity-70 rounded-lg w-full p-2">
       {/* Type Selection using Radio Buttons */}
       <div className="mb-4">
         <label className="block text-sm mb-2">Type</label>
@@ -4139,6 +4259,43 @@ const LessonForm: React.FC<LessonFormProps> = ({
           placeholder="Enter code content"
           rows={8}
         />
+      </div>
+
+      {/* Links Section */}
+      <div className="mb-6">
+        <label className="block text-sm mb-2">Links</label>
+        {links.map((link, index) => (
+          <div key={index} className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={link.text}
+              onChange={(e) => handleLinkChange(index, "text", e.target.value)}
+              className="form-input w-1/2"
+              placeholder="Link Text"
+            />
+            <input
+              type="text"
+              value={link.url}
+              onChange={(e) => handleLinkChange(index, "url", e.target.value)}
+              className="form-input w-1/2"
+              placeholder="Link URL"
+            />
+            <button
+              className="btn btn-secondary ml-2 mb-3"
+              type="button"
+              onClick={() => removeLink(index)}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={addLink}
+        >
+          Add Link
+        </button>
       </div>
 
       {/* Form Buttons */}
@@ -4688,17 +4845,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, sign
 File Path: types/LessonContent.ts
 // File Path: types/LessonContent.ts
 
+/**
+ * Link Interface
+ * --------------
+ * Represents a link object with its display text and URL.
+ */
+export interface Link {
+  text: string; // The display text for the link
+  url: string;  // The URL for the link
+}
+
+/**
+ * LessonContent Interface
+ * -----------------------
+ * Represents the structure of a lesson, including metadata such as title, slug, code, docs,
+ * ordering information, and a list of related links.
+ */
 export interface LessonContent {
-    id: string;
-    title: string;
-    slug: string;
-    code: string | null;
-    docs: string;
-    isOrdered: boolean;
-    orderIndex: number | null;
-    moreInfoUrl: string | null;
-  }
-  
+  id: string;
+  title: string;
+  slug: string;
+  code: string | null;
+  docs: string;
+  isOrdered: boolean;
+  orderIndex: number | null;
+  links: Link[]; // An array of links related to the lesson
+}
+
 ---
 File Path: utils/amplifyServerUtils.ts
 import { cookies } from 'next/headers';

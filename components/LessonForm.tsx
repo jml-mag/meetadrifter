@@ -5,7 +5,7 @@
  *
  * LessonForm Component
  * --------------------
- * Provides a form interface for creating or updating lesson entries with metadata like type, title, docs, code, and slug.
+ * Provides a form interface for creating or updating lesson entries with metadata like type, title, docs, code, slug, and multiple links.
  * This form dynamically loads lesson data for editing if a lesson ID is selected.
  * On successful operations, the component triggers toast notifications and provides a way to return to the lesson list view.
  */
@@ -24,9 +24,19 @@ interface LessonFormProps {
 }
 
 /**
+ * Link Interface
+ * --------------
+ * Defines the structure of a link object, which includes the link text and URL.
+ */
+interface Link {
+  text: string;
+  url: string;
+}
+
+/**
  * LessonForm Component
  * --------------------
- * Renders a form for creating a new lesson or updating an existing one, with fields for type, title, docs, and code.
+ * Renders a form for creating a new lesson or updating an existing one, with fields for type, title, docs, code, and multiple links.
  * It also provides options for saving, updating, and deleting lesson entries.
  */
 const LessonForm: React.FC<LessonFormProps> = ({
@@ -38,6 +48,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
   const [docs, setDocs] = useState<string>("");
   const [code, setCode] = useState<string | undefined>(undefined);
   const [slug, setSlug] = useState<string>("");
+  const [links, setLinks] = useState<Link[]>([{ text: "", url: "" }]); // Initialize with a default empty link
   const { addToast } = useContext<ToastContextType>(ToastContext);
 
   useEffect(() => {
@@ -57,6 +68,16 @@ const LessonForm: React.FC<LessonFormProps> = ({
           setDocs(data.docs);
           setCode(data.code || undefined);
           setSlug(data.slug);
+
+          // Clean up data.links to match the Link[] type
+          const cleanedLinks: Link[] = (data.links || [])
+            .filter((link): link is NonNullable<typeof link> => link != null)
+            .map((link) => ({
+              text: link.text ?? "",
+              url: link.url ?? "",
+            }));
+
+          setLinks(cleanedLinks.length > 0 ? cleanedLinks : [{ text: "", url: "" }]);
         }
       };
 
@@ -68,6 +89,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
       setDocs("");
       setCode(undefined);
       setSlug("");
+      setLinks([{ text: "", url: "" }]); // Reset links to default
     }
   }, [selectedLessonId, addToast]);
 
@@ -76,11 +98,11 @@ const LessonForm: React.FC<LessonFormProps> = ({
       const formattedSlug = `${title
         .trim()
         .toLowerCase()
-        .replace(/\//g, "-") // Replace all '/' characters with '-'
-        .replace(/[^a-z0-9\s-]/g, "") // Remove all non-alphanumeric characters except spaces and hyphens
-        .replace(/\s+/g, "-") // Replace spaces with hyphens
-        .replace(/-+/g, "-") // Replace multiple hyphens with a single hyphen
-        .replace(/^-|-$/g, "")}`; // Remove leading or trailing hyphens
+        .replace(/\//g, "-")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")}`;
 
       let result;
       setSlug(formattedSlug);
@@ -93,6 +115,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
           docs,
           code,
           slug: slug,
+          links, // Save links array
         });
       } else {
         // Create a new lesson
@@ -102,6 +125,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
           docs,
           code,
           slug: formattedSlug,
+          links, // Save links array
           isOrdered: false,
           orderIndex: null,
         });
@@ -146,6 +170,40 @@ const LessonForm: React.FC<LessonFormProps> = ({
       });
       resetSelection();
     }
+  };
+
+  /**
+   * Adds a new link field to the form.
+   */
+  const addLink = (): void => {
+    setLinks([...links, { text: "", url: "" }]);
+  };
+
+  /**
+   * Updates the link data in the form based on the index and field type (text or URL).
+   *
+   * @param {number} index - The index of the link to update.
+   * @param {string} field - The field being updated ("text" or "url").
+   * @param {string} value - The value to update the field with.
+   */
+  const handleLinkChange = (
+    index: number,
+    field: "text" | "url",
+    value: string
+  ): void => {
+    const updatedLinks = [...links];
+    updatedLinks[index] = { ...updatedLinks[index], [field]: value };
+    setLinks(updatedLinks);
+  };
+
+  /**
+   * Removes a link from the form based on its index.
+   *
+   * @param {number} index - The index of the link to remove.
+   */
+  const removeLink = (index: number): void => {
+    const updatedLinks = links.filter((_, i) => i !== index);
+    setLinks(updatedLinks.length > 0 ? updatedLinks : [{ text: "", url: "" }]);
   };
 
   return (
@@ -221,6 +279,43 @@ const LessonForm: React.FC<LessonFormProps> = ({
           placeholder="Enter code content"
           rows={8}
         />
+      </div>
+
+      {/* Links Section */}
+      <div className="mb-6">
+        <label className="block text-sm mb-2">Links</label>
+        {links.map((link, index) => (
+          <div key={index} className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={link.text}
+              onChange={(e) => handleLinkChange(index, "text", e.target.value)}
+              className="form-input w-1/2"
+              placeholder="Link Text"
+            />
+            <input
+              type="text"
+              value={link.url}
+              onChange={(e) => handleLinkChange(index, "url", e.target.value)}
+              className="form-input w-1/2"
+              placeholder="Link URL"
+            />
+            <button
+              className="btn btn-secondary ml-2 mb-3"
+              type="button"
+              onClick={() => removeLink(index)}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={addLink}
+        >
+          Add Link
+        </button>
       </div>
 
       {/* Form Buttons */}

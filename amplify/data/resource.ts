@@ -22,6 +22,10 @@ import { manageUsers } from '../functions/manage-users/resource'; // Import the 
  * Defines the data models and their respective fields and authorization rules.
  */
 const schema = a.schema({
+  Link: a.customType({
+    text: a.string(),
+    url: a.string(),
+  }),
   // Poll model
   Poll: a.model({
     title: a.string().required(),
@@ -56,7 +60,7 @@ const schema = a.schema({
     slug: a.string().required(), // Unique slug for dynamic routing.
     code: a.string(), // Optional field for code content (if applicable).
     docs: a.string().required(), // Documentation content, required for all content types.
-    moreInfoUrl: a.string(), // Optional field for any additional links (from `SetupAndPrereqs`).
+    links: a.ref('Link').array(),
     isOrdered: a.boolean().required().default(false), // Track if the item is part of an ordered lesson.
     orderIndex: a.integer(), // Position in the lesson order (if applicable).
   }).authorization((allow) => [

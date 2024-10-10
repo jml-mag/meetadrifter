@@ -2,11 +2,10 @@
 
 import React from "react";
 import ReactMarkdown from "react-markdown";
-// import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css"; // Use your preferred Highlight.js theme
 import CodeBlock from "@/components/CodeBlock"; // Ensure this component is correctly implemented
 import { cookiesClient } from "@/utils/amplifyServerUtils";
-import { LessonContent } from "@/types/LessonContent"; // Ensure this type is correctly defined
+import { LessonContent, Link } from "@/types/LessonContent"; // Ensure this type is correctly defined
 
 /**
  * Interface for the page properties, containing route parameters.
@@ -21,8 +20,8 @@ interface PageProps {
  * LessonPage Component
  * --------------------
  * Renders a lesson page based on the provided slug. It fetches the lesson content,
- * displays the documentation as formatted Markdown, and renders code snippets with
- * TypeScript syntax highlighting.
+ * displays the documentation as formatted Markdown, renders code snippets with
+ * TypeScript syntax highlighting, and displays any relevant lesson links.
  *
  * @param {PageProps} props - The component props containing the route parameter `slug`.
  * @returns {Promise<JSX.Element>} The rendered lesson page component.
@@ -32,10 +31,9 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
 
   try {
     // Fetch the lesson data based on the slug
-    const { data: lessons, errors } =
-      await cookiesClient.models.LessonContent.list({
-        filter: { slug: { eq: slug } },
-      });
+    const { data: lessons, errors } = await cookiesClient.models.LessonContent.list({
+      filter: { slug: { eq: slug } },
+    });
 
     if (errors || !lessons || lessons.length === 0) {
       console.error("Error fetching lessons:", errors);
@@ -48,11 +46,16 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
       id: lessonData.id,
       title: lessonData.title,
       slug: lessonData.slug,
-      code: lessonData.code, // string | null
+      code: lessonData.code || null, // Ensure that code is either a string or null
       docs: lessonData.docs,
       isOrdered: lessonData.isOrdered,
-      orderIndex: lessonData.orderIndex, // number | null
-      moreInfoUrl: lessonData.moreInfoUrl, // string | null
+      orderIndex: lessonData.orderIndex || null,
+      links: (lessonData.links || [])
+        .filter((link): link is Link => link !== null) // Filter out any null values
+        .map((link) => ({
+          text: link.text || "", // Default to an empty string if text is null
+          url: link.url || "", // Default to an empty string if url is null
+        })),
     };
 
     return (
@@ -66,9 +69,30 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
               <ReactMarkdown className="whitespace-pre-wrap">
                 {lesson.docs}
               </ReactMarkdown>
+
+              {/* Links Section */}
+              {lesson.links.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-white font-semibold mb-2">Related Links:</h3>
+                  <ul className="list-disc list-inside text-blue-400">
+                    {lesson.links.map((link, index) => (
+                      <li key={index}>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {link.text || link.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </section>
-    
+
           {/* Code Section */}
           <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
             {lesson.code && <CodeBlock code={lesson.code} language="typescript" />}
@@ -76,9 +100,6 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
         </div>
       </main>
     );
-    
-    
-    
   } catch (error) {
     console.error("Unexpected error:", error);
     return <div className="text-red-500">An unexpected error occurred.</div>;
