@@ -66,7 +66,7 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
         <div className="p-1 flex flex-col lg:flex-row gap-2">
           {/* Documentation Section */}
           <section className="lg:w-2/5">
-            <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto">
+            <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto pb-8">
               <ReactMarkdown className="whitespace-pre-wrap">
                 {lesson.docs}
               </ReactMarkdown>
