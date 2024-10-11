@@ -14,6 +14,9 @@ import { LessonContent, Link } from "@/types/LessonContent"; // Ensure this type
  */
 interface PageProps {
   params: {
+    /**
+     * The slug of the lesson to be displayed.
+     */
     slug: string;
   };
 }
@@ -54,10 +57,15 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
       isOrdered: lessonData.isOrdered,
       orderIndex: lessonData.orderIndex || null,
       links: (lessonData.links || [])
-        .filter((link): link is Link => link !== null) // Filter out null values
+        .filter((link): link is Link => {
+          if (link === null) return false;
+          const text = link.text ? link.text.trim() : "";
+          const url = link.url ? link.url.trim() : "";
+          return text.length > 0 || url.length > 0;
+        }) // Filter out links where both text and URL are empty or whitespace
         .map((link) => ({
           text: link.text || "", // Default to an empty string if text is null
-          url: link.url || "", // Default to an empty string if URL is null
+          url: link.url || "",  // Default to an empty string if URL is null
         })),
     };
 
@@ -67,7 +75,7 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
           {/* Documentation Section */}
           <section className="lg:w-2/5">
             <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto pb-8">
-              <ReactMarkdown className="whitespace-pre-wrap">
+              <ReactMarkdown className="text-inherit whitespace-pre-wrap">
                 {lesson.docs}
               </ReactMarkdown>
 
@@ -95,9 +103,11 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
           </section>
 
           {/* Code Section */}
-         { (lesson.code && <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
-            {lesson.code && <CodeBlock code={lesson.code} language="typescript" />}
-          </section>)}
+          {lesson.code && (
+            <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
+              <CodeBlock code={lesson.code} language="typescript" />
+            </section>
+          )}
         </div>
       </main>
     );
