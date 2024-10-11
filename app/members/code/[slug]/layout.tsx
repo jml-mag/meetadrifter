@@ -5,11 +5,8 @@
  * ----------------
  * This component fetches the ordered list of lessons, determines the current lesson's
  * position, and renders the Table of Contents and Lesson Navigation alongside the page content.
- * 
- * Update:
- * -------
- * - The title between the two navigation arrows is now properly centered.
- * - Overflow is handled to prevent layout issues when the title is too long.
+ * The component passes `currentSlug` to the `TableOfContents` component for highlighting and srolling
+ * into view.
  */
 
 import React from "react";
@@ -169,7 +166,10 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
 
           {/* Table of Contents */}
           <aside className="fixed top-20 left-4 w-64 lg:block z-20">
-            <TableOfContents sortedLessonOrder={sortedLessonOrder} />
+            <TableOfContents
+              sortedLessonOrder={sortedLessonOrder}
+              currentSlug={slug} // Passes the current slug to highlight the current page
+            />
           </aside>
 
           {/* Main Content */}

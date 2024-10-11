@@ -7,13 +7,9 @@
  * -------------------------
  * This component provides a slide-in table of contents (TOC) for navigating through a sorted list of lessons.
  * Users can toggle the visibility of the TOC, and it closes when a user clicks outside or selects a lesson link.
- * The component ensures accessibility, prevents body scrolling when open, and handles focus management.
- *
- * Update:
- * -------
- * The heading section ("Table of Contents" and the close "X" icon) is now fixed at the top,
- * allowing the list of links to scroll independently. This ensures the user can always access
- * the close button without needing to scroll back to the top.
+ * The component ensures accessibility, prevents body scrolling when open, and handles focus management. 
+ * Additionally, it highlights the current page being viewed and scrolls it into view when the TOC is opened.:
+ 
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -44,6 +40,11 @@ interface TableOfContentsProps {
    * Array of lessons sorted in the desired order.
    */
   sortedLessonOrder: Lesson[];
+
+  /**
+   * The slug of the current page being viewed.
+   */
+  currentSlug: string;
 }
 
 /**
@@ -54,13 +55,19 @@ interface TableOfContentsProps {
  * clicks outside of it or selects a lesson link. The TOC panel provides keyboard and screen reader
  * accessibility features and prevents scrolling while the TOC is open.
  *
- * @param {TableOfContentsProps} props - The component props containing a sorted list of lessons.
+ * It now highlights the current page being viewed and scrolls it into view when the TOC is opened.
+ *
+ * @param {TableOfContentsProps} props - The component props containing a sorted list of lessons and the current slug.
  * @returns {JSX.Element} The rendered table of contents with a toggle button and interactive lesson links.
  */
-const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) => {
+const TableOfContents: React.FC<TableOfContentsProps> = ({
+  sortedLessonOrder,
+  currentSlug,
+}) => {
   const [isOpen, setIsOpen] = useState<boolean>(false); // State to track the open/closed state of the TOC.
   const tocRef = useRef<HTMLDivElement>(null); // Reference to the TOC panel.
   const buttonRef = useRef<HTMLButtonElement>(null); // Reference to the toggle button.
+  const currentLessonRef = useRef<HTMLAnchorElement>(null); // Reference to the current lesson link.
 
   /**
    * Toggles the TOC panel open or closed.
@@ -69,8 +76,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
 
   /**
    * Closes the TOC if a click occurs outside the panel.
-   *
-   * @param {MouseEvent} event - The click event.
    */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent): void => {
@@ -88,6 +93,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
       document.addEventListener("mousedown", handleClickOutside);
       // Prevent scrolling when TOC is open
       document.body.style.overflow = "hidden";
+
+      // Scroll the current lesson into view
+      currentLessonRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
       // Restore scrolling when TOC is closed
@@ -168,17 +179,23 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
             {/* TOC Links */}
             <nav className="p-4 text-left overflow-y-auto flex-grow">
               <ul>
-                {sortedLessonOrder.map((lesson) => (
-                  <li key={lesson.slug} className="mb-3">
-                    <Link
-                      href={`/members/code/${lesson.slug}`}
-                      onClick={handleLinkClick}
-                      className="text-white text-sm hover:underline"
-                    >
-                      {lesson.title}
-                    </Link>
-                  </li>
-                ))}
+                {sortedLessonOrder.map((lesson) => {
+                  const isCurrent = lesson.slug === currentSlug;
+                  return (
+                    <li key={lesson.slug} className="mb-3">
+                      <Link
+                        href={`/members/code/${lesson.slug}`}
+                        onClick={handleLinkClick}
+                        className={`text-sm hover:underline ${
+                          isCurrent ? "text-sky-400" : "text-white"
+                        }`}
+                        ref={isCurrent ? currentLessonRef : null}
+                      >
+                        {lesson.title}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </nav>
           </motion.aside>
