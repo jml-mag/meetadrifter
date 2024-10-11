@@ -1,3 +1,4 @@
+// @/amplify/functions/manage-users/resource.ts
 import { defineFunction } from "@aws-amplify/backend";
 
 /**

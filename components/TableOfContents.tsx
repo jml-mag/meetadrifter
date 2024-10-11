@@ -8,6 +8,12 @@
  * This component provides a slide-in table of contents (TOC) for navigating through a sorted list of lessons.
  * Users can toggle the visibility of the TOC, and it closes when a user clicks outside or selects a lesson link.
  * The component ensures accessibility, prevents body scrolling when open, and handles focus management.
+ *
+ * Update:
+ * -------
+ * The heading section ("Table of Contents" and the close "X" icon) is now fixed at the top,
+ * allowing the list of links to scroll independently. This ensures the user can always access
+ * the close button without needing to scroll back to the top.
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -52,22 +58,22 @@ interface TableOfContentsProps {
  * @returns {JSX.Element} The rendered table of contents with a toggle button and interactive lesson links.
  */
 const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) => {
-  const [isOpen, setIsOpen] = useState(false); // State to track the open/closed state of the TOC.
+  const [isOpen, setIsOpen] = useState<boolean>(false); // State to track the open/closed state of the TOC.
   const tocRef = useRef<HTMLDivElement>(null); // Reference to the TOC panel.
   const buttonRef = useRef<HTMLButtonElement>(null); // Reference to the toggle button.
 
   /**
    * Toggles the TOC panel open or closed.
    */
-  const toggleOpen = () => setIsOpen((prev) => !prev);
+  const toggleOpen = (): void => setIsOpen((prev) => !prev);
 
   /**
    * Closes the TOC if a click occurs outside the panel.
-   * 
+   *
    * @param {MouseEvent} event - The click event.
    */
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (
         tocRef.current &&
         !tocRef.current.contains(event.target as Node) &&
@@ -97,7 +103,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
   /**
    * Handles closing the TOC when a link is clicked and returns focus to the toggle button.
    */
-  const handleLinkClick = () => {
+  const handleLinkClick = (): void => {
     setIsOpen(false);
     buttonRef.current?.focus(); // Return focus to the toggle button after closing the TOC.
   };
@@ -140,12 +146,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed z-40 top-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 shadow-lg overflow-y-auto"
+            className="fixed z-40 top-0 bottom-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 shadow-lg flex flex-col"
             ref={tocRef}
             aria-labelledby="toc-title"
           >
             {/* Header Inside TOC */}
-            <header className="flex justify-between items-center p-4 border-b">
+            <header className="flex justify-between items-center p-4 border-b flex-shrink-0">
               <h2 id="toc-title" className="text-lg font-extralight">
                 Table of Contents
               </h2>
@@ -155,12 +161,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
                 className="text-blue-600 hover:text-blue-800 focus:outline-none"
                 aria-label="Close Table of Contents"
               >
-                <XCircleIcon className="size-8 text-white" />
+                <XCircleIcon className="w-6 h-6 text-white" />
               </button>
             </header>
 
             {/* TOC Links */}
-            <nav className="p-4 text-left">
+            <nav className="p-4 text-left overflow-y-auto flex-grow">
               <ul>
                 {sortedLessonOrder.map((lesson) => (
                   <li key={lesson.slug} className="mb-3">

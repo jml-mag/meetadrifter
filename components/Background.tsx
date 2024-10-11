@@ -1,3 +1,4 @@
+// @/components/Background.tsx
 "use client";
 
 import { motion } from "framer-motion";

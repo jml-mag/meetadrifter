@@ -95,9 +95,9 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
           </section>
 
           {/* Code Section */}
-          <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
+         { (lesson.code && <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
             {lesson.code && <CodeBlock code={lesson.code} language="typescript" />}
-          </section>
+          </section>)}
         </div>
       </main>
     );

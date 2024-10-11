@@ -10,10 +10,9 @@
  * to provide feedback to the user. The layout is responsive and adapts to various screen sizes.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
-import { useContext } from "react";
 import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Toast notifications context
 
 /**

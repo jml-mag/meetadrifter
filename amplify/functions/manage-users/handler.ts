@@ -1,5 +1,5 @@
 /**
- * File: amplify/functions/manage-users/resource.ts
+ * File: amplify/functions/manage-users/handler.ts
  * 
  * Description:
  * -------------

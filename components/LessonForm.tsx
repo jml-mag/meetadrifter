@@ -1,3 +1,4 @@
+// @/components/LessonForm.tsx
 "use client";
 
 /**

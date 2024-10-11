@@ -1,4 +1,4 @@
-/**
+/** @/amplify/auth/resource.ts
  * Authentication Resource Configuration
  * -------------------------------------
  * This module configures the authentication resource for the application using AWS Amplify Gen 2.
