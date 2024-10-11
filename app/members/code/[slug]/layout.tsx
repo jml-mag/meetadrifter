@@ -109,8 +109,8 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
     return (
       <>
         <SetLessonStage slug={slug} />
-        <div className="relative w-full min-h-screen bg-gray-900 text-white">
-          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20">
+        <div className="relative w-full min-h-screen  text-white">
+          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20 border-b-2 border-t-2 border-white">
             <div className="max-w-xl mx-auto grid grid-cols-3 items-center gap-2 rounded-lg">
               {/* Previous Lesson */}
               <div className="justify-self-start">
@@ -136,7 +136,7 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
 
           {/* Main Content */}
           <main className="ml-0 mt-44 sm:mt-40 md:mt-32">
-            <div className="bg-sky-950">{children}</div>
+            <div className="">{children}</div>
           </main>
         </div>
       </>

@@ -1,3 +1,4 @@
+// @/ampify/backend.ts
 /**
  * Backend Configuration
  * ---------------------
@@ -19,11 +20,13 @@ import { manageUsers } from './functions/manage-users/resource'; // User managem
  * 
  * @returns {void} This function does not return a value.
  */
+/*
 defineBackend({
   auth, // Auth resource setup
   data, // Data resource setup
   manageUsers, // User management functionality
 });
+*/
 
 /**
  * (Optional) Backend Setup with AWS SES Email Configuration
@@ -31,7 +34,7 @@ defineBackend({
  * This commented section includes optional setup to integrate AWS SES for production email 
  * using an Email Identity. Uncomment and configure as needed.
  */
-/*
+
 import { Stack } from "aws-cdk-lib/core"; // AWS CDK core library
 import { EmailIdentity } from "aws-cdk-lib/aws-ses"; // AWS SES Email Identity utility
 
@@ -50,7 +53,7 @@ const authStack = Stack.of(cfnUserPool);
 const email = EmailIdentity.fromEmailIdentityName(
   authStack,
   "EmailIdentity",
-  process.env.EMAIL || '' // Email address to be used for SES
+  "no-reply@meetadrifter.com" // Email address to be used for SES
 );
 
 // Set the email configuration for the Cognito user pool
@@ -58,4 +61,3 @@ cfnUserPool.emailConfiguration = {
   emailSendingAccount: "DEVELOPER",
   sourceArn: email.emailIdentityArn, // ARN for the SES Email Identity
 };
-*/

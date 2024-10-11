@@ -1,79 +1,88 @@
 File Path: amplify/backend.ts
-// amplify/backend.ts
+/**
+ * Backend Configuration
+ * ---------------------
+ * This module defines and configures the backend for the application using AWS Amplify.
+ * It integrates authentication, data resources, and user management functions into the backend.
+ */
+
+import { defineBackend } from '@aws-amplify/backend'; // Amplify backend configuration utility
+import { auth } from './auth/resource'; // Authentication configuration module
+import { data } from './data/resource'; // Data resource configuration module
+import { manageUsers } from './functions/manage-users/resource'; // User management function module
 
 /**
- * File Path: amplify/backend.ts
+ * Sets up the backend by integrating the authentication, data, and user management functions.
  * 
- * Backend Definition
- * ------------------
- * This file defines the backend configuration for the application using AWS Amplify.
- * It imports and integrates the authentication and data resources into the backend setup.
+ * @remarks
+ * This function call initializes the backend for the application with the necessary resources
+ * for authentication, data management, and user administration.
+ * 
+ * @returns {void} This function does not return a value.
  */
-import { Stack } from "aws-cdk-lib/core"
-import { EmailIdentity } from "aws-cdk-lib/aws-ses"
-import { defineBackend } from '@aws-amplify/backend'; // Import the defineBackend function from AWS Amplify.
-import { auth } from './auth/resource'; // Import the authentication resource configuration.
-import { data } from './data/resource'; // Import the data resource configuration.
-import { manageUsers } from './functions/manage-users/resource'; // Import the manageUsers function
-
-/**
- * Backend Configuration
- * ---------------------
- * This function call sets up the backend by integrating the auth, data, and manageUsers configurations.
- 
 defineBackend({
-  auth,
-  data,
-  manageUsers,
+  auth, // Auth resource setup
+  data, // Data resource setup
+  manageUsers, // User management functionality
 });
-*/
 
 /**
- * Backend Configuration
- * ---------------------
- * This sets up the backend by integrating the auth, data, and manageUsers configurations as well as AWS SES for production email.
+ * (Optional) Backend Setup with AWS SES Email Configuration
+ * ---------------------------------------------------------
+ * This commented section includes optional setup to integrate AWS SES for production email 
+ * using an Email Identity. Uncomment and configure as needed.
  */
+/*
+import { Stack } from "aws-cdk-lib/core"; // AWS CDK core library
+import { EmailIdentity } from "aws-cdk-lib/aws-ses"; // AWS SES Email Identity utility
 
+// Define the backend configuration, including email identity for SES
 const backend = defineBackend({
   auth,
   data,
   manageUsers,
-})
+});
 
-const { cfnUserPool } = backend.auth.resources.cfnResources
-const authStack = Stack.of(cfnUserPool)
+// Configure the SES email identity for the user pool
+const { cfnUserPool } = backend.auth.resources.cfnResources;
+const authStack = Stack.of(cfnUserPool);
 
+// Retrieve the email identity from SES based on environment variables or fallback
 const email = EmailIdentity.fromEmailIdentityName(
   authStack,
   "EmailIdentity",
-  // your email configured for use in SES
-  //process.env.EMAIL || ''
-  "no-reply@meetadrifter.com"
-)
+  process.env.EMAIL || '' // Email address to be used for SES
+);
 
+// Set the email configuration for the Cognito user pool
 cfnUserPool.emailConfiguration = {
   emailSendingAccount: "DEVELOPER",
-  sourceArn: email.emailIdentityArn,
-}
+  sourceArn: email.emailIdentityArn, // ARN for the SES Email Identity
+};
+*/
+
 ---
 File Path: amplify/auth/resource.ts
 /**
- * File Path: amplify/auth/resource.ts
- * 
  * Authentication Resource Configuration
  * -------------------------------------
- * This file defines the authentication resource for the application using Gen 2 AWS Amplify.
- * It configures the login method via email and customizes the verification email content.
+ * This module configures the authentication resource for the application using AWS Amplify Gen 2.
+ * It enables email-based login with customizable verification emails and specifies required 
+ * user attributes for registration. The module also defines user groups and access permissions 
+ * for managing users within the application.
  */
 
-import { defineAuth } from '@aws-amplify/backend'; // Import the defineAuth function from AWS Amplify.
-import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function
+import { defineAuth } from '@aws-amplify/backend'; // AWS Amplify backend utility for authentication
+import { manageUsers } from '../functions/manage-users/resource'; // User management function
 
 /**
- * Auth Configuration
- * ------------------
- * Defines the authentication setup for the application.
- * Configures email-based login with a verification code and custom email content.
+ * Configures the authentication setup, including email-based login, user attributes, user groups,
+ * and access permissions for user management operations.
+ * 
+ * @remarks
+ * This configuration uses email as the login method and customizes the verification email sent to users.
+ * It also defines required user attributes and creates an admin group for authorization purposes.
+ * The `manage-users` function is granted permissions to interact with the user pool.
  * 
  * @constant
  * @type {ReturnType<typeof defineAuth>}
@@ -81,87 +90,125 @@ import { manageUsers } from '../functions/manage-users/resource'; // Import the 
 export const auth = defineAuth({
   loginWith: {
     email: {
-      verificationEmailStyle: "CODE", // Specifies the style of the verification email (e.g., code or link).
-      verificationEmailSubject: "Welcome to Meet A Drifter", // Subject line for the verification email.
+      verificationEmailStyle: "CODE", // Specifies verification method as a code.
+      verificationEmailSubject: "Welcome to Meet A Drifter", // Custom subject for the verification email.
+      /**
+       * Generates a custom body for the verification email.
+       * 
+       * @param createCode - A function that generates a unique verification code.
+       * @returns {string} The complete verification email content with the generated code.
+       */
       verificationEmailBody: (createCode: () => string) =>
-        `Use this code to confirm your Meet A Drifter account: ${createCode()}`, // Custom body of the verification email.
+        `Use this code to confirm your Meet A Drifter account: ${createCode()}`,
     },
   },
   userAttributes: {
     familyName: {
-      required: true, // Makes the family name (lastName) attribute required.
+      required: true, // Family name (lastName) is a required field for user registration.
     },
     givenName: {
-      required: true, // Makes the given name (firstName) attribute required.
+      required: true, // Given name (firstName) is a required field for user registration.
     },
     preferredUsername: {
-      required: true, // Makes the preferred username attribute required.
+      required: true, // Preferred username is required for user registration.
     },
   },
-  /**
-   * User Groups Configuration
-   * -------------------------
-   * Defines user groups for authorization purposes.
-   */
-  groups: ['admin'], // Create new group
+  groups: ['admin'], // Defines the 'admin' user group for authorization purposes.
 
   /**
-   * Access Permissions
-   * ------------------
-   * Grants the `manage-users` function the necessary permissions to interact with Cognito.
+   * Grants permissions for the `manage-users` function to perform actions on Cognito.
+   * 
+   * @param allow - A utility to specify allowed actions on the `manageUsers` function.
+   * @returns {Array} The list of allowed actions for managing users and user groups.
    */
   access: (allow) => [
     allow.resource(manageUsers).to([
-      "listUsers",
-      "listGroupsForUser",
-      "addUserToGroup",          // Corrected action name
-      "removeUserFromGroup",     // Corrected action name
+      "listUsers", // Permission to list all users.
+      "listGroupsForUser", // Permission to list groups for a specific user.
+      "addUserToGroup", // Permission to add a user to a group.
+      "removeUserFromGroup", // Permission to remove a user from a group.
     ]),
   ],
 });
 
 ---
 File Path: amplify/functions/manage-users/resource.ts
-// amplify/functions/manage-users/resource.ts
-
 import { defineFunction } from "@aws-amplify/backend";
 
 /**
- * Amplify Function Resource: manage-users
- *
- * This function is responsible for user management tasks, including:
- * - Listing users
- * - Retrieving groups for each user
- * - Adding users to groups
- * - Removing users from groups
- *
- * The function leverages AWS Cognito Identity Provider APIs to interact with the user pool.
+ * Amplify Function: manage-users
+ * ------------------------------
+ * This function handles user management tasks within the application, utilizing AWS Cognito APIs
+ * to interact with the user pool for various operations, such as listing users, managing groups, 
+ * and updating user information.
+ * 
+ * @remarks
+ * This function can be extended with additional capabilities like custom authentication flows
+ * or more complex group management if needed.
+ * 
+ * @constant
+ * @type {ReturnType<typeof defineFunction>}
  */
 export const manageUsers = defineFunction({
   /**
-   * The name of the function. This will be used in the generated AWS resources
-   * and should be unique within your Amplify project.
+   * Unique name for the function.
+   * 
+   * @remarks
+   * This name will be used for AWS resource generation and must be unique within the Amplify project.
+   * 
+   * @type {string}
    */
   name: "manage-users",
 
   /**
    * Entry point for the function handler.
-   * By default, it looks for 'handler.ts' in the same directory.
-   * You can specify a different path if needed.
+   * 
+   * @remarks
+   * The default entry is 'handler.ts' in the same directory as this file, but can be customized 
+   * to point to a different handler if required.
+   * 
+   * @type {string}
    */
   entry: "./handler.ts",
 
   /**
-   * Optional configuration settings can be added here, such as environment variables,
-   * timeout settings, memory allocation, etc.
-   * Example:
-   * timeoutSeconds: 30,
-   * memoryMB: 512,
+   * Optional configuration for the function.
+   * 
+   * @remarks
+   * You can specify function-specific settings, such as memory allocation, timeout limits,
+   * and environment variables. Adjust these settings based on the expected usage and 
+   * requirements of the function.
+   * 
+   * @example
+   * {
+   *   timeoutSeconds: 30, // Sets the function timeout to 30 seconds.
+   *   memoryMB: 512, // Allocates 512MB of memory for the function.
+   * }
+   * 
+   * @type {object}
+   * @property {number} [timeoutSeconds] - Optional timeout in seconds for the function execution.
+   * @property {number} [memoryMB] - Optional memory allocation in megabytes.
    */
+  // Add configuration options here if needed, such as:
+  // timeoutSeconds: 30,
+  // memoryMB: 512,
 });
 
 ---
 File Path: amplify/functions/manage-users/handler.ts
+/**
+ * File: amplify/functions/manage-users/resource.ts
+ * 
+ * Description:
+ * -------------
+ * This file defines the `manage-users` function that handles user management tasks
+ * in the application, such as listing users and their groups, adding users to groups,
+ * and removing users from groups. It uses AWS Cognito to interact with the user pool
+ * and execute these actions.
+ * 
+ * The function is invoked through AppSync and operates based on the event's `fieldName`.
+ */
+
 import {
   CognitoIdentityProviderClient,
   ListUsersCommand,
@@ -175,8 +222,9 @@ import { env } from '$amplify/env/manage-users';
 import { AppSyncIdentityIAM, AppSyncIdentityCognito, AppSyncIdentityOIDC } from 'aws-lambda';
 
 /**
- * Interface for the manage-users function arguments.
- * Defines optional fields based on the type of operation.
+ * Interface for the arguments passed to the manage-users function.
+ * These arguments define the username and groupName, both of which are optional and vary 
+ * depending on the operation (e.g., adding/removing users from groups).
  */
 interface ManageUsersArguments {
   username?: string;
@@ -184,7 +232,9 @@ interface ManageUsersArguments {
 }
 
 /**
- * Interface for a user with their associated groups.
+ * Interface representing a user along with their associated groups.
+ * Extends the `UserType` from Cognito with a mandatory `Username` field and includes 
+ * an array of groups.
  */
 interface UserWithGroups {
   user: UserType & { Username: string };
@@ -192,7 +242,10 @@ interface UserWithGroups {
 }
 
 /**
- * Custom event type to match the actual event structure.
+ * Custom AppSync event structure.
+ * Defines the structure of the event passed to the function when triggered via AppSync.
+ * 
+ * @template T - The type of the arguments passed in the event.
  */
 interface CustomAppSyncResolverEvent<T> {
   fieldName: string;
@@ -206,23 +259,25 @@ interface CustomAppSyncResolverEvent<T> {
 }
 
 /**
- * Handler for the manage-users function.
- *
- * This function handles user management tasks, including:
- * - Listing users and their groups
- * - Adding a user to a group
- * - Removing a user from a group
- *
- * The function distinguishes actions based on the `event.fieldName`.
- *
- * @param event - The event data from AppSync.
- * @returns The result of the requested action.
+ * Handler function for managing users.
+ * 
+ * @remarks
+ * This function processes user management operations such as listing users and their associated
+ * groups, adding users to specific groups, and removing users from groups in AWS Cognito.
+ * The specific action is determined by the `fieldName` provided in the event.
+ * 
+ * @param event - The AppSync event, including the operation field and the necessary arguments.
+ * 
+ * @returns {Promise<UserWithGroups[] | string>} The result of the user management operation, 
+ * either a list of users with their groups or a success message.
+ * 
+ * @throws {Error} If the `fieldName` is missing or invalid, or if an error occurs during the operation.
  */
-export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArguments>) => {
+export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArguments>): Promise<UserWithGroups[] | string> => {
   console.log('Received event:', JSON.stringify(event, null, 2));
 
+  // Initialize the Cognito client
   const cognitoClient = new CognitoIdentityProviderClient({});
-
   const fieldName = event.fieldName;
 
   if (!fieldName) {
@@ -232,19 +287,19 @@ export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArgum
   try {
     switch (fieldName) {
       case 'listUsersAndGroups':
-        // List all users
+        // List all users in the user pool
         const listUsersCommand = new ListUsersCommand({
           UserPoolId: env.AMPLIFY_AUTH_USERPOOL_ID,
         });
         const usersResponse = await cognitoClient.send(listUsersCommand);
         const users: UserType[] = usersResponse.Users || [];
 
-        // Filter out users without a Username
+        // Filter users with valid usernames
         const validUsers: (UserType & { Username: string })[] = users.filter(
           (user): user is UserType & { Username: string } => !!user.Username
         );
 
-        // Get groups for each user
+        // Retrieve groups for each user
         const usersWithGroups: UserWithGroups[] = await Promise.all(
           validUsers.map(async (user) => {
             const listGroupsCommand = new AdminListGroupsForUserCommand({
@@ -264,7 +319,7 @@ export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArgum
           })
         );
 
-        // Return the users with groups directly
+        // Return users with their groups
         return usersWithGroups;
 
       case 'addUserToGroup':
@@ -304,7 +359,7 @@ export const handler = async (event: CustomAppSyncResolverEvent<ManageUsersArgum
     }
   } catch (error) {
     console.error('Error in manage-users function:', error);
-    throw error; // Let Amplify handle the error appropriately
+    throw error;
   }
 };
 
@@ -315,180 +370,226 @@ File Path: amplify/data/resource.ts
  * 
  * Data Resource Configuration
  * ---------------------------
- * This file defines the data model for the application using Gen 2 AWS Amplify.
- * It sets up the schema for the `Poll`, `Vote`, `SiteNotification`, `CodeAndDocs`,
- * `SetupAndPrereqs`, and `LessonOrder` models, including their fields, relationships, and authorization rules.
+ * This file defines the data models and their configuration for the application using AWS Amplify Gen 2.
+ * It sets up the schema for the following models: 
+ * - `Poll`: Manages polls with options, status, and creation timestamp.
+ * - `Vote`: Records votes linked to polls and users.
+ * - `SiteNotification`: Stores notifications to be displayed to users.
+ * - `LessonContent`: Stores content such as code, setup instructions, or prerequisites, with ordering capabilities.
  * 
- * Additionally, it includes custom queries and mutations for user management tasks:
- * - Listing users and their groups
- * - Adding users to groups
- * - Removing users from groups
+ * Additionally, custom queries and mutations for user management tasks such as listing users, adding users to groups,
+ * and removing users from groups are implemented with proper authorization.
  */
 
-import { type ClientSchema, a, defineData } from '@aws-amplify/backend'; // Import necessary types and functions from AWS Amplify.
-import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function
+import { type ClientSchema, a, defineData } from '@aws-amplify/backend'; // AWS Amplify types and functions import
+import { manageUsers } from '../functions/manage-users/resource'; // Import the manageUsers function for custom queries/mutations
 
 /**
  * Schema Definition
  * -----------------
- * Defines the data models and their respective fields and authorization rules.
+ * Defines the data models used in the application and their authorization rules.
+ * These models define the structure for polls, votes, notifications, and lesson content.
  */
 const schema = a.schema({
+  // Custom Link type for use in lesson content
   Link: a.customType({
-    text: a.string(),
-    url: a.string(),
+    text: a.string(), // Display text for the link
+    url: a.string(),  // URL the link points to
   }),
-  // Poll model
+
+  // Poll model definition
   Poll: a.model({
-    title: a.string().required(),
-    options: a.string().array().required(),
-    createdAt: a.datetime().required(),
-    status: a.string().required(),
+    title: a.string().required(),  // Poll title
+    options: a.string().array().required(), // List of options for the poll
+    createdAt: a.datetime().required(), // Poll creation timestamp
+    status: a.string().required(), // Status of the poll (e.g., active, closed)
   }).authorization((allow) => [
-    allow.group('admin').to(['create', 'update', 'delete']),
-    allow.authenticated('userPools').to(['read']),
+    allow.group('admin').to(['create', 'update', 'delete']), // Admins can create, update, and delete
+    allow.authenticated('userPools').to(['read']), // Authenticated users can read
   ]),
-  
-  // Vote model
+
+  // Vote model definition
   Vote: a.model({
-    pollId: a.id().required(),
-    userId: a.string().required(),
-    option: a.string().required(),
+    pollId: a.id().required(),  // ID of the poll being voted on
+    userId: a.string().required(),  // ID of the user casting the vote
+    option: a.string().required(),  // The selected poll option
   }).authorization((allow) => [
-    allow.authenticated('userPools').to(['create', 'read']),
+    allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create votes and read
   ]),
 
-  // SiteNotification model
+  // SiteNotification model definition
   SiteNotification: a.model({
-    message: a.string().required(),
+    message: a.string().required(), // Notification message
   }).authorization((allow) => [
-    allow.authenticated('userPools').to(['read']),
-    allow.group('admin').to(['create', 'update', 'delete', 'read']),
+    allow.authenticated('userPools').to(['read']), // Authenticated users can read notifications
+    allow.group('admin').to(['create', 'update', 'delete', 'read']), // Admins have full access
   ]),
 
+  // LessonContent model definition for managing content
   LessonContent: a.model({
-    type: a.string().required(), // Can be "code", "setup", or "prereq" to distinguish content type
-    title: a.string().required(), // Title of the content (replaces filepath in `CodeAndDocs`).
-    slug: a.string().required(), // Unique slug for dynamic routing.
-    code: a.string(), // Optional field for code content (if applicable).
-    docs: a.string().required(), // Documentation content, required for all content types.
-    links: a.ref('Link').array(),
-    isOrdered: a.boolean().required().default(false), // Track if the item is part of an ordered lesson.
-    orderIndex: a.integer(), // Position in the lesson order (if applicable).
+    type: a.string().required(), // Content type (e.g., "code", "setup", or "prereq")
+    title: a.string().required(), // Title of the content
+    slug: a.string().required(), // Unique slug for dynamic routing
+    code: a.string(), // Optional code content (if applicable)
+    docs: a.string().required(), // Documentation for the content
+    links: a.ref('Link').array(), // Array of associated links
+    isOrdered: a.boolean().required().default(false), // Flag indicating if this content is part of a lesson order
+    orderIndex: a.integer(), // Position in the lesson order (if applicable)
   }).authorization((allow) => [
-    allow.authenticated('userPools').to(['read']),
-    allow.group('admin').to(['create', 'update', 'delete', 'read']), // Full access for admins.
+    allow.authenticated('userPools').to(['read']), // Authenticated users can read lesson content
+    allow.group('admin').to(['create', 'update', 'delete', 'read']), // Admins have full access
   ]),
-  
 
   // Custom Queries and Mutations for User Management
   listUsersAndGroups: a
     .query()
-    .authorization((allow) => [allow.group('admin')])
-    .handler(a.handler.function(manageUsers))
-    .returns(a.json()),
+    .authorization((allow) => [allow.group('admin')]) // Only admins can list users and groups
+    .handler(a.handler.function(manageUsers)) // Links to the manageUsers function
+    .returns(a.json()), // Returns JSON data
 
   addUserToGroup: a
     .mutation()
     .arguments({
-      username: a.string().required(),
-      groupName: a.string().required(),
+      username: a.string().required(),  // Username of the user to be added to the group
+      groupName: a.string().required(), // Name of the group to which the user will be added
     })
-    .authorization((allow) => [allow.group('admin')])
-    .handler(a.handler.function(manageUsers))
-    .returns(a.string()),
+    .authorization((allow) => [allow.group('admin')]) // Only admins can add users to groups
+    .handler(a.handler.function(manageUsers)) // Links to the manageUsers function
+    .returns(a.string()), // Returns a success message
 
   removeUserFromGroup: a
     .mutation()
     .arguments({
-      username: a.string().required(),
-      groupName: a.string().required(),
+      username: a.string().required(),  // Username of the user to be removed from the group
+      groupName: a.string().required(), // Name of the group from which the user will be removed
     })
-    .authorization((allow) => [allow.group('admin')])
-    .handler(a.handler.function(manageUsers))
-    .returns(a.string()),
+    .authorization((allow) => [allow.group('admin')]) // Only admins can remove users from groups
+    .handler(a.handler.function(manageUsers)) // Links to the manageUsers function
+    .returns(a.string()), // Returns a success message
 });
 
 /**
  * Schema Type Definition
  * ----------------------
- * Exports the schema type for use in other parts of the application.
+ * Defines the schema type for use across the application.
+ * This type is inferred from the schema object, ensuring consistency in the data models.
  */
 export type Schema = ClientSchema<typeof schema>;
 
 /**
  * Data Configuration
  * ------------------
- * Defines the data configuration using the defined schema.
+ * Configures the data layer for the application, including schema and authorization modes.
+ * The default authorization mode is `userPool`, which ensures that authenticated users
+ * from the user pool can interact with the data models based on the authorization rules.
  */
 export const data = defineData({
-  schema,
+  schema, // The defined schema
   authorizationModes: {
-    defaultAuthorizationMode: 'userPool',
+    defaultAuthorizationMode: 'userPool', // Default authorization mode
   },
 });
 
 ---
 File Path: app/fonts.ts
-// app/fonts.ts
-// Purpose: This module configures the Google fonts used throughout the application.
-// It sets up 'Inter' and 'Josefin Slab' fonts with specific subsets and display settings.
-// These fonts are imported and configured using the new font API from Next.js.
+/**
+ * File Path: app/fonts.ts
+ * 
+ * Font Configuration
+ * ------------------
+ * This module configures the Google fonts used throughout the application. It sets up fonts such as
+ * 'Inter', 'Josefin Slab', 'Climate Crisis', and 'Tilt Warp' with specific subsets and display settings.
+ * These fonts are imported and configured using the Next.js font API for efficient loading and usage.
+ */
 
-import { Inter, Josefin_Slab, Climate_Crisis, Tilt_Warp } from 'next/font/google';  // Import specific fonts from the Google fonts library provided by Next.js.
+import { Inter, Josefin_Slab, Climate_Crisis, Tilt_Warp } from 'next/font/google';  // Import Google fonts using the Next.js font API.
 
-// Configure the 'Inter' font.
-// 'subsets' specifies which subsets of the font to include, focusing here on 'latin'.
-// 'display' is set to 'swap' to ensure text remains visible during font loading, enhancing the perceived performance.
+/**
+ * Configuration for the 'Inter' font.
+ * 
+ * @remarks
+ * The 'Inter' font is set up to include the 'latin' subset, making it suitable for texts using the Latin script.
+ * The 'display' property is set to 'swap' to ensure that text is displayed immediately with a fallback font,
+ * then swapped with the custom font once it's loaded. This improves perceived performance and user experience.
+ * 
+ * @returns {ReturnType<typeof Inter>} The configured 'Inter' font.
+ */
 export const inter = Inter({
-  subsets: ['latin'],  // Targets the Latin character set for broad compatibility.
-  display: 'swap',      // Uses font-display: swap to provide a fast rendering path for text.
+  subsets: ['latin'],  // Includes the Latin character set for broad compatibility.
+  display: 'swap',     // Uses 'swap' to ensure text remains visible during font loading.
 });
 
-// Configure the 'Josefin Slab' font similarly to 'Inter'.
-// This font also targets the Latin subset and uses the 'swap' strategy for consistency across the application's typography.
+/**
+ * Configuration for the 'Josefin Slab' font.
+ * 
+ * @remarks
+ * Similar to the 'Inter' font, 'Josefin Slab' is configured to target the 'latin' subset and uses the 'swap' display strategy.
+ * This font provides a distinct slab-serif style and is used consistently throughout the application.
+ * 
+ * @returns {ReturnType<typeof Josefin_Slab>} The configured 'Josefin Slab' font.
+ */
 export const josefin_slab = Josefin_Slab({
-  subsets: ['latin'],  // Consistent with 'inter', targeting the Latin subset.
-  display: 'swap',      // Ensures text is visible early, swapping with the web font once it loads.
+  subsets: ['latin'],  // Targets the Latin character set.
+  display: 'swap',     // Ensures the text is displayed with a fallback font until the web font is fully loaded.
 });
 
-// Configure the 'Climate_Crisis'.
-// This font also targets the Latin subset and uses the 'swap' strategy for consistency across the application's typography.
+/**
+ * Configuration for the 'Climate Crisis' font.
+ * 
+ * @remarks
+ * 'Climate Crisis' is also configured to use the Latin subset and the 'swap' display strategy, ensuring fast and consistent font rendering.
+ * 
+ * @returns {ReturnType<typeof Climate_Crisis>} The configured 'Climate Crisis' font.
+ */
 export const climate_crisis = Climate_Crisis({
-  subsets: ['latin'],  // Consistent with 'inter', targeting the Latin subset.
-  display: 'swap',      // Ensures text is visible early, swapping with the web font once it loads.
+  subsets: ['latin'],  // Includes the Latin subset for compatibility.
+  display: 'swap',     // Ensures text is visible during font loading.
 });
 
-// Configure the 'Tilt_Warp'.
-// This font also targets the Latin subset and uses the 'swap' strategy for consistency across the application's typography.
+/**
+ * Configuration for the 'Tilt Warp' font.
+ * 
+ * @remarks
+ * The 'Tilt Warp' font is included with the Latin subset and uses 'swap' for its display property, maintaining consistency with other fonts in the application.
+ * 
+ * @returns {ReturnType<typeof Tilt_Warp>} The configured 'Tilt Warp' font.
+ */
 export const tiltWarp = Tilt_Warp({
-  subsets: ['latin'],  // Consistent with 'inter', targeting the Latin subset.
-  display: 'swap',      // Ensures text is visible early, swapping with the web font once it loads.
+  subsets: ['latin'],  // Targets the Latin character set for broad compatibility.
+  display: 'swap',     // Uses 'swap' to ensure text is displayed with a fallback font while loading.
 });
 
-// These configured fonts can then be used throughout the application to ensure a consistent and performant typography experience.
+/**
+ * Usage
+ * -----
+ * These configured fonts can be used throughout the application to ensure a consistent and performant typography experience.
+ * By using the 'swap' display strategy, the application provides better perceived performance as text is visible quickly.
+ */
 
 ---
 File Path: app/layout.tsx
 /**
  * File Path: app/layout.tsx
- *
+ * 
  * RootLayout Component
  * --------------------
- * This component provides the top-level layout for the application, integrating global styles,
- * toast notifications, and Amplify configuration. It wraps around all child components, setting
- * foundational elements such as document metadata and accessibility attributes.
+ * This component defines the root layout for the application. It integrates global styles, toast notifications,
+ * and Amplify client-side configuration. It also ensures that all child components are wrapped with 
+ * foundational elements such as SEO metadata, accessibility features, and general styling.
  */
 
-import type { Metadata } from "next";
-import { ToastProvider } from "@/contexts/ToastContext";
-import Toast from "@/components/Toast";
-import { inter } from "@/app/fonts";
-import ConfigureAmplifyClientSide from '@/components/ConfigureAmplify';
-import "./globals.css";
+import type { Metadata } from "next"; // Import Next.js metadata type
+import { ToastProvider } from "@/contexts/ToastContext"; // Import ToastProvider for toast notifications
+import Toast from "@/components/Toast"; // Import Toast component for displaying notifications
+import { inter } from "@/app/fonts"; // Import custom fonts (Inter) for global styling
+import ConfigureAmplifyClientSide from '@/components/ConfigureAmplify'; // Import Amplify configuration for client-side setup
+import "./globals.css"; // Import global CSS styles
 
 /**
- * Metadata configuration for SEO, defining the title and description of the application.
+ * Metadata configuration for the entire application.
+ * 
+ * @remarks
+ * This configuration defines the metadata for SEO purposes, such as the title and description of the site.
  */
 export const metadata: Metadata = {
   title: "Meet A Drifter", 
@@ -498,14 +599,15 @@ export const metadata: Metadata = {
 /**
  * RootLayout Component
  * 
- * This component serves as the root layout of the application. It wraps the entire app with global styles,
- * configures Amplify on the client side, and integrates toast notifications. It ensures accessibility
- * and SEO enhancements by setting the document's language and metadata.
+ * @remarks
+ * The RootLayout component serves as the main wrapper for the entire application. It ensures that global styles,
+ * Amplify client-side configuration, and toast notifications are applied across all pages. Additionally, it 
+ * provides accessibility improvements by setting the document language and ensures that metadata for SEO is applied.
  * 
- * @param {Readonly<{ children: React.ReactNode }>} props - The component's properties.
- * @param {React.ReactNode} props.children - The child components to be rendered within the layout.
+ * @param {Readonly<{ children: React.ReactNode }>} props - The properties of the RootLayout component.
+ * @param {React.ReactNode} props.children - The child components that will be rendered within the layout.
  * 
- * @returns {JSX.Element} The root layout component wrapping the provided children.
+ * @returns {JSX.Element} Returns the root layout component, wrapping all child components in the application.
  */
 export default function RootLayout({
   children,
@@ -535,20 +637,30 @@ File Path: app/page.tsx
  * File Path: app/page.tsx
  * 
  * Home Component
- * --------------------
- * Renders the main structure of the home page with animations for various elements.
- * Integrates animations for the center text, top text, lines, and footer.
- * Handles the sequence of animations on component mount.
+ * --------------
+ * This component renders the home page of the application, including animated text elements and a footer.
+ * It leverages Framer Motion for animations that are triggered when the component is mounted. The animations 
+ * include text sliding in, lines appearing sequentially, and the footer fading in.
  */
 
 import { useEffect, useState, MouseEvent } from "react";
 import { motion, useAnimation, AnimationControls, Variants } from "framer-motion";
-import { climate_crisis, tiltWarp } from "@/app/fonts";
+import { climate_crisis, tiltWarp } from "@/app/fonts"; // Import custom fonts
 import Link from "next/link";
 import { Background } from "@/components/Background";
 
+/**
+ * Home Component
+ * 
+ * @remarks
+ * This component sets up the main layout for the home page and integrates various animations
+ * using Framer Motion. It ensures that the animations play sequentially on component mount.
+ * The home page contains animated lines of text, a clickable footer, and a background component.
+ * 
+ * @returns {JSX.Element} The rendered home page with animations and interactive elements.
+ */
 export default function Home(): JSX.Element {
-  // Animation controls for various elements.
+  // Animation controls for different elements of the home page.
   const centerControls: AnimationControls = useAnimation();
   const topControls: AnimationControls = useAnimation();
   const line1Controls: AnimationControls = useAnimation();
@@ -556,34 +668,31 @@ export default function Home(): JSX.Element {
   const line3Controls: AnimationControls = useAnimation();
   const footerControls: AnimationControls = useAnimation();
 
-  // State to track if component has mounted and if animations are complete.
+  // State to track if the component has mounted and if animations have completed.
   const [mounted, setMounted] = useState<boolean>(false);
   const [animationsComplete, setAnimationsComplete] = useState<boolean>(false);
 
-  // Ensure component is mounted before triggering animations.
+  // Set the component as mounted after initial render.
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Sequence the animations upon mounting.
+  // Trigger the animation sequence once the component is mounted.
   useEffect(() => {
     if (!mounted) return;
 
     const sequenceAnimations = async () => {
-      // Wait before starting animations.
+      // Start the animations with delays between different elements.
       await new Promise((resolve) => setTimeout(resolve, 500));
       await centerControls.start("visible");
 
-      // Wait before sliding out center text.
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await centerControls.start("slideOut");
 
-      // Fade in top text after slide out begins.
       setTimeout(async () => {
         await topControls.start("visible");
       }, 500);
 
-      // Animate lines sequentially.
       await new Promise((resolve) => setTimeout(resolve, 1000));
       await line1Controls.start("visible");
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -591,22 +700,23 @@ export default function Home(): JSX.Element {
       await new Promise((resolve) => setTimeout(resolve, 500));
       await line3Controls.start("visible");
 
-      // Fade in footer elements.
       await footerControls.start("visible");
-
-      // Mark animations as complete.
       setAnimationsComplete(true);
     };
 
     sequenceAnimations();
   }, [mounted, centerControls, topControls, line1Controls, line2Controls, line3Controls, footerControls]);
 
-  // Handle click events only when animations are complete.
+  /**
+   * Handles clicks on links and prevents navigation until animations are complete.
+   * 
+   * @param e - The mouse event triggered by clicking a link.
+   */
   const handleClick = (e: MouseEvent<HTMLAnchorElement>): void => {
     if (!animationsComplete) e.preventDefault();
   };
 
-  // Variants for animations.
+  // Animation variants for the center text.
   const centerVariants: Variants = {
     hidden: { x: "-100vw", opacity: 1 },
     visible: {
@@ -617,16 +727,19 @@ export default function Home(): JSX.Element {
     slideOut: { x: "100vw", opacity: 1, transition: { duration: 0.3, ease: "easeIn" } },
   };
 
+  // Animation variants for the top text.
   const topVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 1, ease: "easeIn" } },
   };
 
+  // Animation variants for the footer.
   const footerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5, ease: "easeIn" } },
   };
 
+  // Animation variants for the animated lines of text.
   const lineVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5, ease: "easeIn" } },
@@ -637,7 +750,7 @@ export default function Home(): JSX.Element {
     <>
       <Background />
       <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden">
-        {/* Top text with fade-in animation. */}
+        {/* Top text with fade-in animation */}
         <motion.div
           className={`${climate_crisis.className} fixed top-6 left-4 text-white text-base sm:text-xl md:text-2xl lg:text-3xl`}
           variants={topVariants}
@@ -647,7 +760,7 @@ export default function Home(): JSX.Element {
           Meet A Drifter
         </motion.div>
 
-        {/* Center text that slides in and slides out. */}
+        {/* Center text with slide-in and slide-out animations */}
         <motion.div
           className={`${climate_crisis.className} text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white`}
           variants={centerVariants}
@@ -657,7 +770,7 @@ export default function Home(): JSX.Element {
           Meet A Drifter
         </motion.div>
 
-        {/* Animated lines with fade-in effect. */}
+        {/* Animated lines of text with fade-in effect */}
         <div className={`${tiltWarp.className} leading-relaxed text-xl sm:text-3xl md:text-4xl md:leading-loose`}>
           <motion.div variants={lineVariants} initial="hidden" animate={line1Controls}>
             The website you join
@@ -670,7 +783,7 @@ export default function Home(): JSX.Element {
           </motion.div>
         </div>
 
-        {/* Footer and button with fade-in animation. */}
+        {/* Footer with fade-in animation */}
         <motion.div
           className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
           variants={footerVariants}
@@ -681,8 +794,8 @@ export default function Home(): JSX.Element {
             Join/Login
           </Link>
         </motion.div>
-        
-        {/* Attribution link with fade-in animation. */}
+
+        {/* Attribution link with fade-in animation */}
         <motion.a
           href="https://www.matterandgas.com"
           className="text-white p-2 fixed bottom-2 right-3 text-xs"
@@ -690,7 +803,7 @@ export default function Home(): JSX.Element {
           initial="hidden"
           animate={footerControls}
         >
-          © {new Date().getFullYear()} matterandgas
+          © {new Date().getFullYear()} MeetADrifter
         </motion.a>
       </main>
     </>
@@ -699,107 +812,141 @@ export default function Home(): JSX.Element {
 
 ---
 File Path: app/globals.css
-/* File Path: app/globals.css
+/* 
+ * File Path: app/globals.css
  * 
  * Purpose:
  * --------
- * Consolidates shared styles using Tailwind CSS to provide reusable classes across the application.
- * Reduces redundant inline styles and ensures consistency in design.
+ * This file defines global styles using Tailwind CSS, ensuring consistency across the entire application.
+ * It consolidates shared styles such as buttons, containers, and form elements to avoid redundancy 
+ * and improve maintainability. Additionally, it includes custom utility classes for specific design patterns.
  */
 
- @tailwind base;
- @tailwind components;
- @tailwind utilities;
- 
- /* Base Layer Modifications */
- @layer base {
-   /* Apply global background and text color */
-   body {
-     @apply bg-black text-white;
-   }
- }
- 
- /* Custom Components */
- @layer components {
-   /* Button Styles */
-   
-   /* Generic button with basic styling */
-   .btn {
-     @apply text-xs py-2 px-3 rounded-md shadow-md;
-   }
-   
-   /* Primary button for main actions (e.g., save, submit) */
-   .btn-primary {
-     @apply bg-blue-600 text-white border border-blue-500 hover:bg-blue-700;
-   }
-   
-   /* Secondary button for less prominent actions (e.g., cancel, delete) */
-   .btn-secondary {
-     @apply bg-red-600 text-white border border-red-500 hover:bg-red-700;
-   }
- 
-   /* Tertiary button for alternate actions (e.g., links) */
-   .btn-tertiary {
-     @apply bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200;
-   }
- 
-   /* Container Styles */
- 
-   /* Generic container for section content */
-   .section-container {
-     @apply w-full my-1 p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg;
-   }
- 
-   /* Text Styling */
- 
-   /* Shared heading styles for titles and section headers */
-   .heading {
-     @apply font-extralight text-2xl text-left p-3;
-   }
-   
-   /* Form Elements */
- 
-   /* Standard input field styling for forms */
-   .form-input {
-     @apply p-2 mb-3 w-full text-xs sm:text-sm md:text-base text-white rounded border bg-blue-950 bg-opacity-20;
-   }
- 
-   /* Background Image Styling */
-   
-   /* Full-screen fixed background image with a blur effect */
-   .bg-image {
-     @apply w-full h-screen fixed top-0 left-0 -z-50;
-     object-fit: cover;
-   }
- 
-   /* Centered text content typically for page headings */
-   .centered-heading {
-     @apply fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white;
-   }
- 
-   /* Custom Button for Members */
- 
-   /* Custom-styled button specifically for member-related actions */
-   .member-btn {
-     @apply btn w-24 mx-2 mt-4 bg-teal-600 hover:bg-teal-500;
-   }
- }
- 
- /* Global Utility Classes */
- @layer utilities {
-   /* Define any additional global utility classes here as needed */
- }
- 
+/* Import Tailwind's base, components, and utility layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Layer Modifications */
+@layer base {
+  /* Global styles for body element: sets the background and text colors */
+  body {
+    @apply bg-black text-white; /* Applies a black background and white text */
+  }
+}
+
+/* Custom Components */
+@layer components {
+  /* 
+   * Button Styles 
+   * -------------
+   * Custom button classes for consistent button design across the application.
+   */
+
+  /* Generic button with basic styling */
+  .btn {
+    @apply text-xs py-2 px-3 rounded-md shadow-md; /* Small text with padding and a rounded shape */
+  }
+
+  /* Primary button style for main actions such as 'save' or 'submit' */
+  .btn-primary {
+    @apply bg-blue-600 text-white border border-blue-500 hover:bg-blue-700; /* Blue background with hover effects */
+  }
+
+  /* Secondary button style for less important actions such as 'cancel' */
+  .btn-secondary {
+    @apply bg-red-600 text-white border border-red-500 hover:bg-red-700; /* Red background with hover effects */
+  }
+
+  /* Tertiary button for alternate actions like links or minor actions */
+  .btn-tertiary {
+    @apply bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200; /* Yellow background with opacity and hover transitions */
+  }
+
+  /*
+   * Container Styles
+   * ----------------
+   * Generic container styles used for section content or grouping elements.
+   */
+
+  /* Generic container for section content with blurred background */
+  .section-container {
+    @apply w-full my-1 p-2 backdrop-blur-md bg-white bg-opacity-35 rounded-lg; /* Full width, padding, and a blurred white background */
+  }
+
+  /*
+   * Text Styling
+   * ------------
+   * Common heading styles for section titles or page headings.
+   */
+
+  /* Shared heading styles for titles or section headers */
+  .heading {
+    @apply font-extralight text-2xl text-left p-3; /* Large, light font with padding */
+  }
+
+  /*
+   * Form Elements
+   * -------------
+   * Standard styles for form input fields used throughout the application.
+   */
+
+  /* Input field styling for form elements */
+  .form-input {
+    @apply p-2 mb-3 w-full text-xs sm:text-sm md:text-base text-white rounded border bg-blue-950 bg-opacity-20; /* Full-width input with padding and a semi-transparent background */
+  }
+
+  /*
+   * Background Image Styling
+   * ------------------------
+   * Styles for full-screen fixed background images with effects.
+   */
+
+  /* Full-screen, fixed background image with a blur effect */
+  .bg-image {
+    @apply w-full h-screen fixed top-0 left-0 -z-50; /* Covers the entire screen and is fixed behind content */
+    object-fit: cover; /* Ensures the image scales properly to cover the entire background */
+  }
+
+  /*
+   * Centered Heading
+   * ----------------
+   * Styles for centered headings, typically used for page titles or main headings.
+   */
+
+  /* Fixed, centered heading typically used for page titles */
+  .centered-heading {
+    @apply fixed top-3 left-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl lg:left-4 text-white; /* White text with size adjustments based on screen size */
+  }
+
+  /*
+   * Custom Member Button
+   * --------------------
+   * A custom-styled button for member-related actions such as login or signup.
+   */
+
+  /* Button specifically for member-related actions */
+  .member-btn {
+    @apply btn w-24 mx-2 mt-4 bg-teal-600 hover:bg-teal-500; /* Width and margin adjustments with teal background */
+  }
+}
+
+/* Global Utility Classes */
+@layer utilities {
+  /* Define any additional utility classes as needed for global use */
+}
+
 ---
 File Path: app/members/layout.tsx
 /**
  * File Path: app/members/layout.tsx
- *
+ * 
  * Member Layout Component
  * -----------------------
- * This file defines the Layout component specifically for member areas. It incorporates authentication,
- * dynamic styling elements like background image opacity control, and conditionally renders either the
- * members menu or admin menu based on the pathname.
+ * This component defines the layout specifically for member areas of the application. It incorporates
+ * AWS Amplify authentication, dynamic background opacity control, and conditionally renders
+ * member or admin menus based on the application's pathname. Additionally, it provides a configurable
+ * background and navigation bar with animations.
  */
 
 "use client";
@@ -813,15 +960,15 @@ import Image from "next/image";
 import bg from "@/public/nacho-champion.png";
 import "@aws-amplify/ui-react/styles.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import AuthenticatedNavBar from "@/components/AuthenticatedNavBar"; // Import AuthenticatedNavBar component.
+import AuthenticatedNavBar from "@/components/AuthenticatedNavBar"; // Import for authenticated navigation bar
 import MembersMenu from "@/components/MembersMenu";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import { climate_crisis } from "@/app/fonts";
 
-// Configure AWS Amplify
+// Configure AWS Amplify using the generated outputs
 Amplify.configure(outputs);
 
-// Custom form fields configuration
+// Custom sign-up form fields for Amplify's Authenticator
 const formFields = {
   signUp: {
     email: {
@@ -857,7 +1004,7 @@ const formFields = {
   },
 };
 
-// Custom components for Authenticator
+// Custom header component for Amplify's Authenticator
 const components = {
   Header() {
     return (
@@ -877,35 +1024,33 @@ const components = {
 
 /**
  * Layout Component
- * ----------------
- * This component serves as the layout wrapper for member-specific areas of the application.
- * It handles authentication, manages background opacity, and controls the visibility of the navigation menu.
- *
- * @component
- * @param {Readonly<{ children: React.ReactNode }>} props - The component props.
- * @returns {JSX.Element} The rendered Layout component.
+ * 
+ * @remarks
+ * The root layout component for member-specific sections of the application. It handles background
+ * image opacity adjustments, menu toggle controls, and manages authenticated navigation for users.
+ * AWS Amplify is used to manage authentication flows.
+ * 
+ * @param {Readonly<{ children: React.ReactNode }>} props - The children components to be rendered within the layout.
+ * 
+ * @returns {JSX.Element} The layout component that wraps all member-specific pages.
  */
 export default function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>): JSX.Element {
-  const [bgOpacity, setBgOpacity] = useState<number>(0.65); // State to manage the background opacity level.
-  const [menuOpen, setMenuOpen] = useState<boolean>(false); // State to track menu open/close status.
+  const [bgOpacity, setBgOpacity] = useState<number>(0.65); // Background opacity state
+  const [menuOpen, setMenuOpen] = useState<boolean>(false); // Menu open/close state
 
   /**
-   * handleOpacityChange Function
-   * ----------------------------
    * Updates the background opacity state based on user input.
-   *
-   * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event.
+   * 
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event from the background opacity slider.
    */
   const handleOpacityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setBgOpacity(parseFloat(event.target.value));
   };
 
   /**
-   * toggleMenu Function
-   * -------------------
-   * Toggles the menu's open/close state.
+   * Toggles the state of the navigation menu between open and closed.
    */
   const toggleMenu = () => {
     setMenuOpen((prev) => !prev);
@@ -936,17 +1081,18 @@ export default function Layout({
 
 /**
  * LayoutContent Component
- * -----------------------
- * This component handles the rendering of the main layout content, including background image,
- * menu control, and member-specific child components.
- *
- * @component
- * @param {number} bgOpacity - The current opacity level of the background image.
- * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
- * @param {boolean} menuOpen - State indicating whether the menu is open or closed.
+ * 
+ * @remarks
+ * This component renders the core layout content including the background image, animated menu,
+ * and child components. It provides controls for background opacity and the member's navigation menu.
+ * 
+ * @param {number} bgOpacity - The opacity level of the background image.
+ * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle background opacity adjustments.
+ * @param {boolean} menuOpen - The state indicating whether the menu is open or closed.
  * @param {() => void} toggleMenu - Function to toggle the menu open/close state.
- * @param {React.ReactNode} children - The child components to be rendered within the layout.
- * @returns {JSX.Element} The rendered LayoutContent component.
+ * @param {React.ReactNode} children - The content to be rendered within the layout.
+ * 
+ * @returns {JSX.Element} The rendered layout content component.
  */
 function LayoutContent({
   bgOpacity,
@@ -961,10 +1107,10 @@ function LayoutContent({
   toggleMenu: () => void;
   children: React.ReactNode;
 }): JSX.Element {
-  const { loading } = useAuth(); // Access authentication context to determine if the user is an admin and if the status is still loading.
+  const { loading } = useAuth(); // Authentication context to determine if user status is loading
 
   if (loading) {
-    return <div>Loading...</div>; // Render a loading state while determining admin status.
+    return <div>Loading...</div>; // Display a loading message while authentication is being checked
   }
 
   return (
@@ -996,8 +1142,6 @@ function LayoutContent({
             </button>
           )}
         </div>
-
-        
       </div>
       <div className="z-40">
         {/* Members Menu */}
@@ -1028,47 +1172,47 @@ function LayoutContent({
 File Path: app/members/page.tsx
 /**
  * File Path: app/members/page.tsx
- *
+ * 
  * Member Home Component
  * ---------------------
- * This file defines the Home component for member areas. It features personalized user information,
- * actions like sign-out, and demonstrates the integration of authentication context and toast notifications
- * to enhance user experience.
+ * This component defines the Home page for member-specific areas of the application. It displays 
+ * personalized user information, handles site notifications, and integrates authentication context 
+ * to provide user-specific actions such as signing out. Additionally, the Poll component is rendered 
+ * to allow users to interact with active polls.
  */
 
 "use client";
 
 import { useEffect, useState } from "react";
-import { generateClient } from "aws-amplify/data"; // Import Amplify Data Client.
-import type { Schema } from "@/amplify/data/resource"; // Import the data schema type.
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
-import Poll from "@/components/Poll"; // Import Poll component for rendering active polls.
+import { generateClient } from "aws-amplify/data"; // Import Amplify Data Client
+import type { Schema } from "@/amplify/data/resource"; // Import the data schema type
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context
+import Poll from "@/components/Poll"; // Import Poll component for rendering active polls
 
 /**
- * Interface for the Site Notification.
+ * Interface representing a Site Notification.
  */
 interface SiteNotification {
-  message: string;
+  message: string; // The message content of the notification
 }
 
-// Generate the Amplify client with the schema
+// Generate an Amplify client instance with the defined schema
 const client = generateClient<Schema>();
 
 /**
  * Home Component
  * --------------
- * This component serves as the landing page for members, displaying personalized information
- * and providing actions such as signing out. It also showcases the use of toast notifications.
- *
- * @component
+ * The Home component serves as the member's landing page, displaying profile information, site notifications,
+ * and other personalized content based on authentication context.
+ * 
  * @returns {JSX.Element} The rendered Home component for member areas.
  */
 export default function Home(): JSX.Element {
-  // Destructure user, profile, and loading from the authentication context
-  const { user, profile, loading, isAdmin } = useAuth(); // Access user details and profile from authentication context.
-  const [notification, setNotification] = useState<string | null>(null); // State for site notification
+  // Access user details, profile, and loading state from authentication context
+  const { user, profile, loading, isAdmin } = useAuth();
+  const [notification, setNotification] = useState<string | null>(null); // State to manage site notification
 
-  // Fetch the current site notification on component mount
+  // Fetch the current site notification when the component mounts
   useEffect(() => {
     const fetchNotification = async () => {
       try {
@@ -1077,7 +1221,7 @@ export default function Home(): JSX.Element {
           console.error("Failed to fetch notification", errors);
           return;
         }
-        // Assume there's only one notification for simplicity
+        // Assume there's only one active notification
         const currentNotification = data[0] as SiteNotification | undefined;
         setNotification(currentNotification?.message || null);
       } catch (err) {
@@ -1091,7 +1235,7 @@ export default function Home(): JSX.Element {
   return (
     <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2">
       <div className="w-full max-w-5xl">
-        {/* Display the site notification */}
+        {/* Display the site notification if available */}
         {notification && (
           <div className="section-container pb-4 sm:p-4">
             <div className="heading">Notifications</div>
@@ -1102,8 +1246,8 @@ export default function Home(): JSX.Element {
         )}
       </div>
       <div className="w-full max-w-5xl">
-        <div className="flex flex-col sm:flex-row  md:space-x-8 ">
-          {/* Render the Profile component */}
+        <div className="flex flex-col sm:flex-row md:space-x-8">
+          {/* Render Profile Section */}
           <div className="section-container sm:mr-1 md:mr-0 pb-4 sm:p-4 h-min">
             <h2 className="heading">Profile</h2>
             {loading ? (
@@ -1115,8 +1259,7 @@ export default function Home(): JSX.Element {
                     <strong>Username:</strong> {profile.username}
                   </p>
                   <p className="mb-2">
-                    <strong>Name:</strong> {profile.firstName}{" "}
-                    {profile.lastName}
+                    <strong>Name:</strong> {profile.firstName} {profile.lastName}
                   </p>
                   <p className="mb-2">
                     <strong>Email:</strong> {profile.emailAddress}
@@ -1135,7 +1278,7 @@ export default function Home(): JSX.Element {
               </p>
             )}
           </div>
-          {/* Render the Poll component */}
+          {/* Render Poll Component */}
           <Poll />
         </div>
       </div>
@@ -1147,43 +1290,47 @@ export default function Home(): JSX.Element {
 File Path: app/members/admin/layout.tsx
 /**
  * File Path: @/app/members/admin/layout.tsx
- *
+ * 
  * Admin Layout Component
  * ----------------------
- * This file defines the AdminLayout component, which serves as the layout wrapper for all admin-specific pages.
- * It ensures that only users with admin privileges can access these pages. If a non-admin user attempts to access
- * the admin area, they are redirected to the members' homepage. The component also integrates with ToastContext
- * for displaying notifications and handles loading states during admin status checks.
+ * This component defines the layout for all admin-specific pages within the application. It ensures that
+ * only users with admin privileges can access these pages. If a non-admin user attempts to access the 
+ * admin area, they are automatically redirected to the members' homepage. Additionally, the component
+ * integrates with the `ToastContext` to display notifications and manages loading states during admin 
+ * status verification.
  */
 
 "use client";
 
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
-import { useRouter } from "next/navigation"; // Import useRouter and usePathname from Next.js.
+import { useAuth } from "@/contexts/AuthContext"; // Hook for accessing authentication context.
+import { useRouter } from "next/navigation"; // Import the Next.js useRouter for navigation handling.
 import type { ReactNode } from "react";
 
 /**
  * AdminLayout Component
- * ---------------------
- * Renders the layout for admin pages, handling user authentication and admin status checks.
- * It highlights the active navigation link based on the current pathname.
- *
- * @component
- * @param {Readonly<{ children: ReactNode }>} props - The children elements to render within the layout.
- * @returns {JSX.Element} The rendered AdminLayout component.
+ * 
+ * @remarks
+ * This component serves as the layout wrapper for all admin pages. It checks the user's admin status and 
+ * redirects non-admin users to the members' homepage. While checking admin status, it can display a loading
+ * state to avoid rendering content prematurely.
+ * 
+ * @param {Readonly<{ children: ReactNode }>} props - The component's props, specifically the child elements to render within the layout.
+ * 
+ * @returns {JSX.Element} The rendered AdminLayout component for admin-specific pages.
  */
 export default function AdminLayout({
   children,
 }: Readonly<{ children: ReactNode }>): JSX.Element {
-  const { isAdmin, loading } = useAuth(); // Access user details, admin status, and loading state from authentication context.
-  const router = useRouter(); // Access useRouter to handle navigation.
+  const { isAdmin, loading } = useAuth(); // Destructure isAdmin and loading state from authentication context.
+  const router = useRouter(); // Router for redirecting users.
+
   useEffect(() => {
     /**
      * Admin Status Check
-     * ------------------
-     * Monitors the loading state and admin status. If loading is complete and the user is not an admin,
-     * the user is redirected to the members' homepage.
+     * 
+     * Monitors the admin status and redirects the user to the members' homepage if they are not an admin.
+     * It waits for the loading state to complete before making this decision.
      */
     if (!loading) {
       if (!isAdmin) {
@@ -1194,14 +1341,12 @@ export default function AdminLayout({
   }, [loading, isAdmin, router]);
 
   if (loading) {
-    return <div>Loading...</div>; // Optionally render a loading state while checking admin status.
+    return <div>Loading...</div>; // Display a loading state while checking admin status.
   }
 
-
-  // Render the component with user-specific content and actions.
   return (
     <main className="flex flex-col w-full min-h-screen py-12 items-center">
-      {/* Content */}
+      {/* Main content area */}
       <div className="flex-grow w-full px-4">
         {children}
       </div>
@@ -1216,20 +1361,22 @@ File Path: app/members/admin/page.tsx
  * 
  * Admin Page Component
  * --------------------
- * This file defines the AdminPage component, which serves as the main page for admin functionalities.
- * It includes components for listing existing polls and creating new polls. The page layout is responsive,
- * ensuring a consistent user experience across different screen sizes.
+ * This component defines the admin page for managing polls. It provides sections for listing existing
+ * polls and creating new ones. The layout is responsive, ensuring the user interface adapts to various
+ * screen sizes, particularly for larger viewports.
  */
 
 import CurrentPoll from "@/components/CurrentPoll";
 
 /**
  * AdminPage Component
- * -------------------
- * Renders the admin dashboard with sections for listing and creating polls.
  * 
- * @component
- * @returns {JSX.Element} The rendered AdminPage component.
+ * @remarks
+ * This component renders the main admin dashboard, focused on poll management. It displays existing polls
+ * via the `CurrentPoll` component and ensures that the layout is responsive for an optimal user experience
+ * across different screen sizes.
+ * 
+ * @returns {JSX.Element} The rendered AdminPage component with sections for managing polls.
  */
 export default function AdminPage(): JSX.Element {
   return (
@@ -1252,44 +1399,47 @@ File Path: app/members/admin/code/page.tsx
 
 /**
  * File Path: @/app/members/admin/code/page.tsx
- *
+ * 
  * AdminCodePage Component
  * -----------------------
- * This component provides an interface for administrators to manage lessons.
- * Administrators can create, update, view, and reorder lesson items.
+ * This component provides an interface for administrators to manage lessons. Administrators can create new lessons,
+ * update existing ones, and reorder lesson items. The page integrates several components to handle these operations,
+ * including lesson listing, CRUD operations, and lesson ordering.
  */
 
 import React, { useState } from "react";
-import AllLessonsList from "@/components/AllLessonsList"; // Import unified lesson list component.
-import LessonForm from "@/components/LessonForm"; // Import lesson form component for CRUD operations.
-import LessonOrder from "@/components/LessonOrder"; // Import component to manage lesson ordering.
+import AllLessonsList from "@/components/AllLessonsList"; // Component for listing all lessons
+import LessonForm from "@/components/LessonForm"; // Component for creating or updating lessons
+import LessonOrder from "@/components/LessonOrder"; // Component for managing lesson order
 
 /**
- * DisplayState type
+ * DisplayState Type
  * -----------------
- * Defines the possible states for displaying the content, either the list of lessons or the lesson form.
+ * Defines the possible states for displaying content on the page: either the lesson list or the lesson form.
  */
 type DisplayState = "list" | "form";
 
 /**
  * AdminCodePage Component
- * -----------------------
- * Provides functionality for managing lessons and lesson ordering.
- * Displays a unified list of lessons, a form for CRUD operations, and the lesson ordering component based on user interactions.
- *
- * @component
- * @returns {JSX.Element} The rendered AdminCodePage component.
+ * 
+ * @remarks
+ * This component is designed for administrators to manage lessons within the application. It provides
+ * functionalities to display a list of all lessons, handle CRUD operations through a lesson form, and
+ * manage the order of lessons via a dedicated section. The display state alternates between the list view
+ * and the form view based on user interaction.
+ * 
+ * @returns {JSX.Element} The rendered AdminCodePage component for managing lessons and lesson order.
  */
 export default function AdminCodePage(): JSX.Element {
-  // State for tracking the currently selected lesson (for update) or "new" (for create).
+  // State to track the currently selected lesson ID for update or null for creating a new lesson.
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  
-  // State for determining which view is displayed (list of lessons or form for CRUD operations).
+
+  // State to determine whether to display the list of lessons or the lesson form for CRUD operations.
   const [displayState, setDisplayState] = useState<DisplayState>("list");
 
   /**
-   * Show the lesson form for creating or updating a lesson.
-   *
+   * Displays the lesson form for creating a new lesson or editing an existing lesson.
+   * 
    * @param {string | null} lessonId - The ID of the lesson to edit, or "new" for creating a new lesson.
    */
   const showLessonForm = (lessonId: string | null): void => {
@@ -1298,22 +1448,22 @@ export default function AdminCodePage(): JSX.Element {
   };
 
   /**
-   * Show the list of all lessons.
+   * Displays the list of all lessons.
    */
   const showLessonList = (): void => {
     setDisplayState("list");
   };
 
-  // Render the main layout for managing lessons and lesson ordering.
+  // Render the main layout with sections for managing lessons and lesson order.
   return (
-    <main className="section-container w-full lg:flex ">
-      {/* Section for managing all lessons */}
+    <main className="section-container w-full lg:flex">
+      {/* Section for managing the list of lessons or displaying the lesson form */}
       <div className="text-left flex flex-col md:flex-row md:space-x-6 md:mr-1 w-full">
         {displayState === "list" ? (
           <div className="w-full">
-            <AllLessonsList onSelectItem={showLessonForm} />
+            <AllLessonsList onSelectItem={showLessonForm} /> {/* Render the list of all lessons */}
             <button
-              className="btn btn-primary mt-4 lg:mt-0"
+              className="btn btn-primary mt-4 lg:mt-2"
               onClick={() => showLessonForm("new")}
             >
               Add New Lesson
@@ -1322,16 +1472,16 @@ export default function AdminCodePage(): JSX.Element {
         ) : (
           <div className="w-full">
             <LessonForm
-              selectedLessonId={selectedLessonId}
-              resetSelection={showLessonList}
+              selectedLessonId={selectedLessonId} // Pass the selected lesson ID for updating or null for creating a new lesson.
+              resetSelection={showLessonList} // Reset to the lesson list view after form submission or cancellation.
             />
           </div>
         )}
       </div>
 
-      {/* Section for managing lesson order */}
+      {/* Section for managing the order of lessons */}
       <div className="flex flex-col md:flex-row md:space-x-6 w-full md:mr-1 mt-8 lg:mt-0">
-        <LessonOrder /> {/* Render the LessonOrder component */}
+        <LessonOrder /> {/* Render the LessonOrder component for reordering lessons */}
       </div>
     </main>
   );
@@ -1344,20 +1494,23 @@ File Path: app/members/admin/polls/page.tsx
  * 
  * Polls Page Component
  * --------------------
- * This file defines the AdminPollPage component that displays the list of polls and the poll creation form.
+ * This component defines the admin page for managing polls. It provides sections for displaying the list
+ * of existing polls and creating new polls. The layout is responsive and ensures that components are displayed
+ * in a flexible layout that adapts to various screen sizes.
  */
 
-import CreatePoll from "@/components/CreatePoll"; // Import the CreatePoll component to handle poll creation.
-import ListPolls from "@/components/ListPolls"; // Import the ListPolls component to display existing polls.
+import CreatePoll from "@/components/CreatePoll"; // Component for creating new polls.
+import ListPolls from "@/components/ListPolls"; // Component for listing existing polls.
 
 /**
  * AdminPollPage Component
- * -----------------------
- * Renders the admin dashboard with sections for listing and creating polls.
- * Ensures that components are responsive and take full width or flex to share space evenly.
  * 
- * @component
- * @returns {JSX.Element} The rendered AdminPollPage component.
+ * @remarks
+ * This component renders the admin dashboard for managing polls. It includes two main sections: one for listing
+ * all existing polls and another for creating new polls. The layout is responsive, flexing between columns or
+ * rows depending on screen size. The components take full width on smaller screens and share space on larger screens.
+ * 
+ * @returns {JSX.Element} The rendered AdminPollPage component for managing polls.
  */
 export default function AdminPollPage(): JSX.Element {
   return (
@@ -1366,11 +1519,11 @@ export default function AdminPollPage(): JSX.Element {
         <div className="flex flex-col md:flex-row justify-center md:space-x-6 w-full">
           {/* Section for listing existing polls */}
           <div className="w-full md:w-1/2">
-            <ListPolls />
+            <ListPolls /> {/* Render the ListPolls component */}
           </div>
           {/* Section for creating new polls */}
           <div className="w-full md:w-1/2">
-            <CreatePoll />
+            <CreatePoll /> {/* Render the CreatePoll component */}
           </div>
         </div>
       </div>
@@ -1380,17 +1533,17 @@ export default function AdminPollPage(): JSX.Element {
 
 ---
 File Path: app/members/admin/users/page.tsx
+"use client";
+
 /**
  * File Path: @/app/members/admin/users/page.tsx
  *
  * Users Page Component
  * --------------------
- * This file defines the Admin User Page component, allowing administrators
- * to view all users, see their group memberships, and add or remove users from groups.
- * It is optimized for both mobile and desktop screens, ensuring a flexible, usable layout on smaller screens.
+ * This component provides an interface for administrators to view and manage users,
+ * including their group memberships. Administrators can add or remove users from groups,
+ * and the layout adapts for both mobile and desktop screens.
  */
-
-"use client";
 
 import React, { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
@@ -1435,34 +1588,29 @@ const client = generateClient<Schema>();
 /**
  * AdminUserPage Component
  * -----------------------
- * This component renders a page where administrators can view and manage users
- * and their associated groups, with the ability to add or remove users from groups.
- *
- * @component
- * @returns {JSX.Element} The rendered AdminUserPage component.
+ * Renders a page for administrators to view and manage users and their group memberships.
+ * Administrators can add or remove users from groups, and the component handles fetching and
+ * updating user data from the backend.
+ * 
+ * @returns {JSX.Element} The rendered AdminUserPage component for user management.
  */
 export default function AdminUserPage(): JSX.Element {
-  const [users, setUsers] = useState<UserWithGroups[]>([]); // State for storing the list of users with groups
+  const [users, setUsers] = useState<UserWithGroups[]>([]); // State for storing the list of users with their groups
   const [error, setError] = useState<string | null>(null); // State for handling errors
 
   /**
-   * fetchUsers
-   * ----------
-   * Asynchronously fetches users and their groups from the backend API
-   * and updates the component's state.
+   * Fetches the list of users and their groups from the backend and updates the state.
    */
-  const fetchUsers = async () => {
+  const fetchUsers = async (): Promise<void> => {
     try {
-      // Fetch the users and groups data
       const response = await client.queries.listUsersAndGroups({});
       let responseData = response.data;
 
-      // If the response data is a string, attempt to parse it as JSON
+      // Handle potential stringified response
       if (typeof responseData === "string") {
         responseData = JSON.parse(responseData);
       }
 
-      // Check if the response data is an array and update the state
       if (Array.isArray(responseData)) {
         setUsers(responseData as UserWithGroups[]);
       } else {
@@ -1481,14 +1629,12 @@ export default function AdminUserPage(): JSX.Element {
   }, []);
 
   /**
-   * handleAddUserToGroup
-   * --------------------
-   * Adds a user to a specified group and refetches the user list.
-   *
+   * Adds a user to the specified group and refreshes the user list.
+   * 
    * @param {string} username - The username of the user.
    * @param {string} groupName - The name of the group to add the user to.
    */
-  const handleAddUserToGroup = async (username: string, groupName: string) => {
+  const handleAddUserToGroup = async (username: string, groupName: string): Promise<void> => {
     try {
       await client.mutations.addUserToGroup({ username, groupName });
       await fetchUsers(); // Refresh the user list after adding
@@ -1498,14 +1644,12 @@ export default function AdminUserPage(): JSX.Element {
   };
 
   /**
-   * handleRemoveUserFromGroup
-   * -------------------------
-   * Removes a user from a specified group and refetches the user list.
-   *
+   * Removes a user from the specified group and refreshes the user list.
+   * 
    * @param {string} username - The username of the user.
    * @param {string} groupName - The name of the group to remove the user from.
    */
-  const handleRemoveUserFromGroup = async (username: string, groupName: string) => {
+  const handleRemoveUserFromGroup = async (username: string, groupName: string): Promise<void> => {
     try {
       await client.mutations.removeUserFromGroup({ username, groupName });
       await fetchUsers(); // Refresh the user list after removing
@@ -1515,10 +1659,8 @@ export default function AdminUserPage(): JSX.Element {
   };
 
   /**
-   * isUserAdmin
-   * -----------
    * Checks if a given user belongs to the "admin" group.
-   *
+   * 
    * @param {CognitoGroup[]} groups - The groups the user belongs to.
    * @returns {boolean} True if the user is in the "admin" group.
    */
@@ -1574,7 +1716,7 @@ export default function AdminUserPage(): JSX.Element {
                         }
                         className="btn btn-primary"
                       >
-                        Add to admin Group
+                        Add to Admin Group
                       </button>
                     )}
                     {isAdmin && (
@@ -1584,7 +1726,7 @@ export default function AdminUserPage(): JSX.Element {
                         }
                         className="btn btn-secondary"
                       >
-                        Remove from admin Group
+                        Remove from Admin Group
                       </button>
                     )}
                   </div>
@@ -1596,53 +1738,56 @@ export default function AdminUserPage(): JSX.Element {
       </div>
     </main>
   );
-
 }
 
 ---
 File Path: app/members/admin/messaging/page.tsx
+"use client";
+
 /**
  * File Path: @/app/members/admin/messaging/page.tsx
- *
+ * 
  * Messaging Page Component
  * ------------------------
- * This file defines the Admin Messaging Page component, allowing administrators
- * to create, update, and delete a site-wide notification message.
+ * This component allows administrators to create, update, or delete a site-wide notification message.
+ * The page includes a textarea for managing the message content and integrates with toast notifications 
+ * to provide feedback to the user. The layout is responsive and adapts to various screen sizes.
  */
-
-"use client";
 
 import React, { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 import { useContext } from "react";
-import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Import the toast notifications context
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Toast notifications context
 
-// Define TypeScript interface for notification
+/**
+ * Interface representing the site notification object.
+ */
 interface SiteNotification {
   id: string;
   message: string;
 }
 
-// Generate the Amplify client with the schema
+// Generate an Amplify client instance with the defined schema
 const client = generateClient<Schema>();
 
 /**
  * AdminMessagingPage Component
- * ----------------------------
- * This component renders a textarea allowing admins to manage the site notification message.
- * It includes functionality for creating, updating, and deleting the notification.
- *
- * @component
- * @returns {JSX.Element} The rendered AdminMessagingPage component.
+ * 
+ * @remarks
+ * This component allows administrators to manage a site-wide notification. The notification can be created,
+ * updated, or deleted, and the component provides feedback via toast notifications. Error handling is included
+ * for all operations, and the current notification is fetched when the component is first rendered.
+ * 
+ * @returns {JSX.Element} The rendered AdminMessagingPage component for managing the site notification.
  */
 export default function AdminMessagingPage(): JSX.Element {
   const [notification, setNotification] = useState<SiteNotification | null>(null); // State to store current notification
-  const [message, setMessage] = useState<string>(""); // State to store textarea message
-  const [error, setError] = useState<string | null>(null); // Error handling state
+  const [message, setMessage] = useState<string>(""); // State to store the textarea message content
+  const [error, setError] = useState<string | null>(null); // State for handling errors
   const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast notifications from ToastContext
 
-  // Fetch the current site notification on component mount
+  // Fetch the current site notification when the component is mounted
   useEffect(() => {
     const fetchNotification = async () => {
       try {
@@ -1655,7 +1800,7 @@ export default function AdminMessagingPage(): JSX.Element {
           });
           return;
         }
-        // Assume there's only one notification for simplicity
+        // Assume there is only one notification for simplicity
         const currentNotification = data[0] as SiteNotification | undefined;
         setNotification(currentNotification || null);
         setMessage(currentNotification?.message || "");
@@ -1672,18 +1817,21 @@ export default function AdminMessagingPage(): JSX.Element {
     fetchNotification();
   }, [addToast]);
 
-  // Handle save/update of the notification
-  const handleSave = async () => {
+  /**
+   * Handles saving or updating the notification.
+   * If a notification exists, it updates it; otherwise, it creates a new one.
+   */
+  const handleSave = async (): Promise<void> => {
     try {
       if (notification) {
-        // Update existing notification
+        // Update the existing notification
         const { errors } = await client.models.SiteNotification.update({
           id: notification.id,
           message,
         });
         if (errors) throw new Error("Failed to update notification");
       } else {
-        // Create new notification
+        // Create a new notification
         const { errors } = await client.models.SiteNotification.create({
           message,
         });
@@ -1703,8 +1851,10 @@ export default function AdminMessagingPage(): JSX.Element {
     }
   };
 
-  // Handle delete of the notification
-  const handleDelete = async () => {
+  /**
+   * Handles deleting the notification if one exists.
+   */
+  const handleDelete = async (): Promise<void> => {
     try {
       if (!notification) return;
       const { errors } = await client.models.SiteNotification.delete({ id: notification.id });
@@ -1770,28 +1920,34 @@ File Path: app/members/code/generateStaticParams.ts
  * 
  * Static Params Generation
  * ------------------------
- * Generates the parameters for the dynamic route pages based on lesson slugs.
- * Fetches data from the `LessonContent` model.
+ * This module defines the `generateStaticParams` function, which is responsible for generating
+ * the dynamic route parameters based on lesson slugs. It fetches data from the `LessonContent`
+ * model in AWS Amplify to dynamically build the slugs for each lesson.
  */
 
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 
-// Generate the Amplify client
+// Generate the Amplify client using the defined schema
 const client = generateClient<Schema>();
 
 /**
- * generateStaticParams Function
- * -----------------------------
- * Generates the parameters for the dynamic route pages based on lesson slugs.
+ * generateStaticParams
+ * --------------------
+ * Asynchronously generates the parameters for dynamic routes based on lesson slugs. This is used to
+ * statically generate dynamic pages in a Next.js application, allowing for the pre-rendering of
+ * pages corresponding to each lesson.
  * 
- * @returns {Promise<Array<{ slug: string }>>} An array of slug objects for dynamic route generation.
+ * @async
+ * @function
+ * @returns {Promise<Array<{ slug: string }>>} A promise that resolves to an array of objects,
+ * each containing a `slug` property corresponding to the lesson slug.
  */
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
-  // Fetch all lesson entries
+  // Fetch all lesson entries from the LessonContent model
   const { data: lessons } = await client.models.LessonContent.list();
 
-  // Generate slugs for pages
+  // Map through the lessons and return an array of objects with the slug for each lesson
   return (lessons || []).map((item) => ({ slug: item.slug }));
 }
 
@@ -1801,12 +1957,12 @@ File Path: app/members/code/page.tsx
 
 /**
  * File Path: @/app/members/code/page.tsx
- *
+ * 
  * Member Code Page Component
  * --------------------------
- * This component checks the user's lesson progress stored in `localStorage` and redirects them
- * to the appropriate lesson page. If no progress is found, it initializes the progress and
- * redirects to the welcome page.
+ * This component manages the redirection of users based on their lesson progress stored in `localStorage`.
+ * It checks if the `lessonStage` exists in `localStorage` and redirects users accordingly.
+ * If no progress is found, the component initializes the `lessonStage` and redirects the user to the welcome page.
  */
 
 import React, { useEffect } from "react";
@@ -1814,33 +1970,34 @@ import { useRouter } from "next/navigation"; // Import useRouter for client-side
 
 /**
  * MemberCodePage Component
- * ------------------------
- * Handles user redirection based on the `lessonStage` in `localStorage`.
- * If `lessonStage` is not set, initializes it to "welcome" and redirects.
- * If `lessonStage` exists, redirects to the corresponding lesson page.
- *
- * @component
- * @returns {JSX.Element} The rendered component displaying a loading message during redirection.
+ * 
+ * @remarks
+ * This component checks the user's lesson progress by accessing the `lessonStage` from the browser's
+ * localStorage. Based on the `lessonStage`, the user is redirected to the appropriate lesson page.
+ * If no lesson progress is found, the component initializes the progress and redirects the user to the
+ * welcome lesson page.
+ * 
+ * @returns {JSX.Element} A rendered component that shows a loading message while the redirection is being handled.
  */
 export default function MemberCodePage(): JSX.Element {
   const router = useRouter();
 
   /**
-   * useEffect Hook for Handling Local Storage and Redirection
-   * ---------------------------------------------------------
-   * This effect runs once on component mount to check the `lessonStage` in localStorage.
-   * Depending on its presence, it either initializes it and redirects to the welcome page
-   * or redirects to the current lesson stage.
+   * useEffect Hook
+   * --------------
+   * On component mount, this effect checks the presence of `lessonStage` in localStorage. If it's not found,
+   * the hook initializes the stage to "welcome" and redirects the user to the welcome lesson page.
+   * If a lesson stage is found, the user is redirected to the appropriate lesson page based on the stored value.
    */
   useEffect(() => {
     const lessonStage = localStorage.getItem("lessonStage");
 
     if (!lessonStage) {
-      // If `lessonStage` is not set, initialize it to "welcome" and redirect
+      // Initialize `lessonStage` to "welcome" if it doesn't exist and redirect to the welcome page
       localStorage.setItem("lessonStage", "welcome");
       router.push("/members/code/welcome");
     } else {
-      // If `lessonStage` exists, redirect to the corresponding lesson page
+      // Redirect to the lesson corresponding to the current `lessonStage`
       router.push(`/members/code/${lessonStage}`);
     }
   }, [router]);
@@ -1856,7 +2013,14 @@ export default function MemberCodePage(): JSX.Element {
 
 ---
 File Path: app/members/code/[slug]/layout.tsx
-// File Path: app/members/code/[slug]/layout.tsx
+/**
+ * File Path: app/members/code/[slug]/layout.tsx
+ * 
+ * Layout Component
+ * ----------------
+ * This component fetches the ordered list of lessons, determines the current lesson's
+ * position, and renders the Table of Contents and Lesson Navigation alongside the page content.
+ */
 
 import React from "react";
 import Link from "next/link";
@@ -1867,10 +2031,12 @@ import {
 } from "@heroicons/react/24/solid";
 import TableOfContents from "@/components/TableOfContents";
 import SetLessonStage from "@/components/SetLessonStage";
-import { LessonContent } from "@/types/LessonContent"; // Ensure this type is correctly defined
+import { LessonContent } from "@/types/LessonContent";
 
 /**
- * Interface for the layout properties, containing route parameters and children.
+ * LayoutProps Interface
+ * ---------------------
+ * Defines the properties for the Layout component, including the route parameters and children.
  */
 interface LayoutProps {
   children: React.ReactNode;
@@ -1882,17 +2048,16 @@ interface LayoutProps {
 /**
  * Layout Component
  * ----------------
- * This server component fetches the ordered list of lessons, determines the current lesson's
- * position, and renders the Table of Contents and Lesson Navigation alongside the page content.
- *
- * @param {LayoutProps} props - The component props containing route parameters and children.
- * @returns {JSX.Element} The rendered Layout component.
+ * This component serves as the layout for the lesson pages. It fetches the ordered list of lessons,
+ * determines the current lesson's position, and renders the Table of Contents and navigation links.
+ * 
+ * @param {LayoutProps} props - The component props containing the children elements and route parameters.
+ * @returns {JSX.Element} The rendered layout with lesson navigation, table of contents, and lesson content.
  */
 const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
   const { slug } = params;
 
   try {
-    // Fetch all ordered lessons without using the unsupported 'sort' property
     const { data: lessonOrderData, errors: orderErrors } =
       await cookiesClient.models.LessonContent.list({
         filter: { isOrdered: { eq: true } },
@@ -1903,21 +2068,24 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
       return <div className="text-red-500">Error loading lessons.</div>;
     }
 
-    // Normalize and manually sort the lesson data by 'orderIndex'
+    // Map and sort lessons by orderIndex
     const sortedLessonOrder: LessonContent[] = lessonOrderData
-      .map((lessonData) => ({
-        id: lessonData.id,
-        title: lessonData.title,
-        slug: lessonData.slug,
-        code: lessonData.code,
-        docs: lessonData.docs,
-        isOrdered: lessonData.isOrdered,
-        orderIndex: lessonData.orderIndex,
-        moreInfoUrl: lessonData.moreInfoUrl,
+      .map(({ id, title, slug, code, docs, isOrdered, orderIndex, links }) => ({
+        id,
+        title,
+        slug,
+        code,
+        docs,
+        isOrdered,
+        orderIndex,
+        links: (links || []).filter(
+          (link): link is { text: string; url: string } =>
+            link?.text !== null && link?.url !== null
+        ),
       }))
       .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
 
-    // Determine the current lesson's position
+    // Find the current lesson based on the slug
     const currentLessonIndex = sortedLessonOrder.findIndex(
       (lesson) => lesson.slug === slug
     );
@@ -1931,25 +2099,37 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
     const nextLesson = sortedLessonOrder[currentLessonIndex + 1] || null;
     const prevLesson = sortedLessonOrder[currentLessonIndex - 1] || null;
 
+    // Utility to generate navigation links
+    const renderNavLink = (
+      lesson: LessonContent | null,
+      direction: "prev" | "next"
+    ) => {
+      if (!lesson) return null;
+      const isPrev = direction === "prev";
+      const Icon = isPrev ? ArrowLeftCircleIcon : ArrowRightCircleIcon;
+      const label = isPrev
+        ? `Go to previous lesson: ${lesson.title}`
+        : `Go to next lesson: ${lesson.title}`;
+      return (
+        <Link
+          href={`/members/code/${lesson.slug}`}
+          className="text-white hover:text-green-400 transition-colors duration-200"
+          aria-label={label}
+        >
+          <Icon className="size-10" />
+        </Link>
+      );
+    };
+
     return (
       <>
-        {/* Set Lesson Stage in Local Storage */}
         <SetLessonStage slug={slug} />
         <div className="relative w-full min-h-screen bg-gray-900 text-white">
-          {/* Fixed Lesson Navigation */}
           <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20">
             <div className="max-w-xl mx-auto grid grid-cols-3 items-center gap-2 rounded-lg">
-              {/* Previous Lesson Link */}
+              {/* Previous Lesson */}
               <div className="justify-self-start">
-                {prevLesson && (
-                  <Link
-                    href={`/members/code/${prevLesson.slug}`}
-                    className="text-white hover:text-green-400 transition-colors duration-200"
-                    aria-label={`Go to previous lesson: ${prevLesson.title}`}
-                  >
-                    <ArrowLeftCircleIcon className="size-10" />
-                  </Link>
-                )}
+                {renderNavLink(prevLesson, "prev")}
               </div>
 
               {/* Current Lesson Title */}
@@ -1957,17 +2137,9 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
                 {currentLesson.title}
               </h1>
 
-              {/* Next Lesson Link */}
+              {/* Next Lesson */}
               <div className="justify-self-end">
-                {nextLesson && (
-                  <Link
-                    href={`/members/code/${nextLesson.slug}`}
-                    className="text-white hover:text-green-400 transition-colors duration-200"
-                    aria-label={`Go to next lesson: ${nextLesson.title}`}
-                  >
-                    <ArrowRightCircleIcon className="size-10" />
-                  </Link>
-                )}
+                {renderNavLink(nextLesson, "next")}
               </div>
             </div>
           </div>
@@ -2004,7 +2176,9 @@ import { cookiesClient } from "@/utils/amplifyServerUtils";
 import { LessonContent, Link } from "@/types/LessonContent"; // Ensure this type is correctly defined
 
 /**
- * Interface for the page properties, containing route parameters.
+ * PageProps Interface
+ * -------------------
+ * Defines the structure of the route parameters passed to the page component.
  */
 interface PageProps {
   params: {
@@ -2015,10 +2189,10 @@ interface PageProps {
 /**
  * LessonPage Component
  * --------------------
- * Renders a lesson page based on the provided slug. It fetches the lesson content,
- * displays the documentation as formatted Markdown, renders code snippets with
- * TypeScript syntax highlighting, and displays any relevant lesson links.
- *
+ * Renders a lesson page based on the provided slug. It fetches the lesson content from the backend,
+ * displays the documentation as formatted Markdown, renders code snippets with TypeScript syntax highlighting,
+ * and displays any relevant lesson links.
+ * 
  * @param {PageProps} props - The component props containing the route parameter `slug`.
  * @returns {Promise<JSX.Element>} The rendered lesson page component.
  */
@@ -2031,36 +2205,35 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
       filter: { slug: { eq: slug } },
     });
 
+    // Handle errors or missing lessons
     if (errors || !lessons || lessons.length === 0) {
       console.error("Error fetching lessons:", errors);
       return <div className="text-red-500">Error loading lesson.</div>;
     }
 
-    // Normalize the lesson data
+    // Normalize the lesson data for rendering
     const lessonData = lessons[0];
     const lesson: LessonContent = {
       id: lessonData.id,
       title: lessonData.title,
       slug: lessonData.slug,
-      code: lessonData.code || null, // Ensure that code is either a string or null
+      code: lessonData.code || null, // Ensure code is either a string or null
       docs: lessonData.docs,
       isOrdered: lessonData.isOrdered,
       orderIndex: lessonData.orderIndex || null,
       links: (lessonData.links || [])
-        .filter((link): link is Link => link !== null) // Filter out any null values
+        .filter((link): link is Link => link !== null) // Filter out null values
         .map((link) => ({
           text: link.text || "", // Default to an empty string if text is null
-          url: link.url || "", // Default to an empty string if url is null
+          url: link.url || "", // Default to an empty string if URL is null
         })),
     };
 
     return (
       <main className="text-sm text-left">
-        {/* Documentation and Code Sections */}
         <div className="p-1 flex flex-col lg:flex-row gap-2">
           {/* Documentation Section */}
           <section className="lg:w-2/5">
-            {/* Fixed Documentation Content only for lg and higher */}
             <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto">
               <ReactMarkdown className="whitespace-pre-wrap">
                 {lesson.docs}
@@ -2106,30 +2279,58 @@ export default LessonPage;
 
 ---
 File Path: components/LessonNavigationLinks.tsx
+/**
+ * File Path: app/members/code/[slug]/LessonNavigationLinks.tsx
+ * 
+ * Lesson Navigation Links Component
+ * ---------------------------------
+ * This component renders navigation links for previous and next lessons.
+ * It ensures a clear and accessible layout for lesson progression, 
+ * with appropriate icons indicating the direction of navigation.
+ */
+
 import React from "react";
 import Link from "next/link";
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 
+/**
+ * LessonNavigationLinksProps Interface
+ * ------------------------------------
+ * Defines the structure of the props passed to the `LessonNavigationLinks` component.
+ * It includes optional `prevLesson` and `nextLesson` objects containing the slug and title.
+ */
 interface LessonNavigationLinksProps {
-  prevLesson?: { slug: string; title: string };
-  nextLesson?: { slug: string; title: string };
+  prevLesson?: { slug: string; title: string }; // Optional previous lesson
+  nextLesson?: { slug: string; title: string }; // Optional next lesson
 }
 
+/**
+ * LessonNavigationLinks Component
+ * -------------------------------
+ * Renders navigation links for navigating between lessons. If a previous or next lesson is available,
+ * a clickable link is rendered, styled as a button with directional arrows and lesson titles.
+ * 
+ * @param {LessonNavigationLinksProps} props - The props containing previous and next lesson information.
+ * @returns {JSX.Element} The rendered component with navigation links.
+ */
 const LessonNavigationLinks: React.FC<LessonNavigationLinksProps> = ({
   prevLesson,
   nextLesson,
 }) => (
   <div className="section-container mt-8 flex justify-around text-lg font-bold">
+    {/* Previous Lesson Link */}
     {prevLesson && (
-      <Link href={`/members/code/${prevLesson.slug}`}>
+      <Link href={`/members/code/${prevLesson.slug}`} aria-label={`Go to previous lesson: ${prevLesson.title}`}>
         <div className="bg-green-900 p-2 px-4 text-xs rounded-lg shadow-lg flex items-center">
           <ArrowLeftIcon className="size-8 mr-2" />
           {prevLesson.title}
         </div>
       </Link>
     )}
+    
+    {/* Next Lesson Link */}
     {nextLesson && (
-      <Link href={`/members/code/${nextLesson.slug}`}>
+      <Link href={`/members/code/${nextLesson.slug}`} aria-label={`Go to next lesson: ${nextLesson.title}`}>
         <div className="bg-green-900 p-2 text-xs rounded-lg shadow-lg flex items-center">
           {nextLesson.title}
           <ArrowRightIcon className="size-8 ml-2" />
@@ -2147,14 +2348,12 @@ File Path: components/AllLessonsList.tsx
 
 /**
  * File Path: @/components/AllLessonsList.tsx
- *
+ * 
  * AllLessonsList Component
  * ------------------------
  * Renders a searchable list of all lessons from the `LessonContent` model.
- * Allows selection of an item for viewing or editing.
- *
- * This component interacts with Amplify to fetch data and uses the toast notification system
- * for handling messages during data operations.
+ * Allows selection of an item for viewing or editing, and integrates with Amplify
+ * to fetch data while utilizing toast notifications for error handling.
  */
 
 import React, { useState, useEffect, useContext } from "react";
@@ -2165,13 +2364,18 @@ import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 // Generate the Amplify client with the schema
 const client = generateClient<Schema>();
 
+/**
+ * LessonData Interface
+ * --------------------
+ * Represents the structure of a lesson fetched from the `LessonContent` model.
+ */
 interface LessonData {
-  id: string;
-  type: string;
-  title: string;
-  docs: string;
-  code?: string;
-  slug: string;
+  id: string;   // Unique identifier for the lesson
+  type: string; // The type of the lesson (e.g., tutorial, guide)
+  title: string; // The title of the lesson
+  docs: string; // The documentation content of the lesson
+  code?: string; // Optional code content associated with the lesson
+  slug: string;  // URL-friendly identifier for the lesson
 }
 
 /**
@@ -2180,25 +2384,32 @@ interface LessonData {
  * Defines the props expected by the `AllLessonsList` component.
  *
  * @interface AllLessonsListProps
- * @property {(id: string | null) => void} onSelectItem - Callback function to handle selection of an item for viewing or editing.
+ * @property {(id: string | null) => void} onSelectItem - Callback function to handle selection of a lesson item for viewing or editing.
  */
 interface AllLessonsListProps {
-  onSelectItem: (id: string | null) => void;
+  onSelectItem: (id: string | null) => void; // Callback for selecting a lesson
 }
 
 /**
  * AllLessonsList Component
  * ------------------------
- * Displays a list of all lessons from `LessonContent`.
- * Provides search functionality for filtering items by title, type, or slug.
+ * Displays a searchable list of all lessons from the `LessonContent` model.
+ * Provides filtering functionality based on user input and utilizes toast notifications
+ * for displaying any errors encountered during data fetching.
+ *
+ * @param {AllLessonsListProps} props - The component props.
+ * @returns {JSX.Element} The rendered component displaying a list of lessons.
  */
 const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
-  const [lessons, setLessons] = useState<LessonData[]>([]);
-  const [filteredLessons, setFilteredLessons] = useState<LessonData[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const { addToast } = useContext<ToastContextType>(ToastContext);
+  const [lessons, setLessons] = useState<LessonData[]>([]); // State for storing all lessons
+  const [filteredLessons, setFilteredLessons] = useState<LessonData[]>([]); // State for filtered lessons based on search
+  const [searchTerm, setSearchTerm] = useState<string>(""); // State for managing the search term input
+  const { addToast } = useContext<ToastContextType>(ToastContext); // Access the toast context
 
-  // Fetch all lessons from the `LessonContent` model
+  /**
+   * Fetches all lessons from the `LessonContent` model and normalizes the data.
+   * If errors are encountered, a toast notification is displayed.
+   */
   useEffect(() => {
     const fetchLessons = async () => {
       const { data, errors } = await client.models.LessonContent.list();
@@ -2207,36 +2418,42 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
         addToast({ messageType: "error", message: "Failed to fetch lessons." });
         console.error("Fetch errors:", errors);
       } else {
-        // Normalize data by converting `null` to `undefined` for optional fields
+        // Normalize the lesson data
         const normalizedData = (data || []).map((lesson) => ({
           ...lesson,
           code: lesson.code || undefined, // Normalize code field
-          // Normalize any other fields if necessary
         }));
 
         setLessons(normalizedData);
-        setFilteredLessons(normalizedData);
+        setFilteredLessons(normalizedData); // Initialize filtered lessons with all lessons
       }
     };
 
     fetchLessons();
   }, [addToast]);
 
-  // Update the filtered lesson list based on the search term input
+  /**
+   * Handles changes in the search input field and filters the lessons accordingly.
+   * Lessons can be filtered by title, type, or slug.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The input change event for the search field.
+   */
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const term = event.target.value.toLowerCase();
     setSearchTerm(term);
 
+    // Perform filtering when the search term is at least 3 characters long
     if (term.length >= 3) {
       setFilteredLessons(
-        lessons.filter((lesson) =>
-          lesson.title.toLowerCase().includes(term) ||
-          lesson.type.toLowerCase().includes(term) ||
-          lesson.slug.toLowerCase().includes(term)
+        lessons.filter(
+          (lesson) =>
+            lesson.title.toLowerCase().includes(term) ||
+            lesson.type.toLowerCase().includes(term) ||
+            lesson.slug.toLowerCase().includes(term)
         )
       );
     } else {
-      setFilteredLessons(lessons);
+      setFilteredLessons(lessons); // Reset to all lessons if the search term is less than 3 characters
     }
   };
 
@@ -2244,21 +2461,25 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
     <div className="bg-black bg-opacity-70 rounded-lg w-full">
       <div className="flex p-2 flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
+        {/* Search Input */}
         <input
           type="text"
           value={searchTerm}
           onChange={handleSearch}
           placeholder="Search lessons..."
+          aria-label="Search lessons by title, type, or slug"
           className="form-input max-w-sm md:mt-0 md:ml-4 p-2 rounded"
         />
       </div>
-      <div className="h-fit overflow-scroll">
+      {/* List of Lessons */}
+      <div className="h-fit overflow-y-auto">
         <ul className="text-sm mt-4 ml-6">
           {filteredLessons.map((lesson) => (
             <li
               key={lesson.id}
               className="my-1 py-1 cursor-pointer text-blue-100 hover:text-blue-50"
               onClick={() => onSelectItem(lesson.id)}
+              aria-label={`Select lesson: ${lesson.title}`}
             >
               {lesson.title} ({lesson.type})
             </li>
@@ -2275,45 +2496,64 @@ export default AllLessonsList;
 File Path: components/ConfigureAmplify.tsx
 "use client";
 
+/**
+ * File Path: @/components/ConfigureAmplifyClientSide.tsx
+ *
+ * ConfigureAmplifyClientSide Component
+ * -------------------------------------
+ * This component is responsible for configuring AWS Amplify on the client side with the SSR (Server-Side Rendering) option enabled.
+ * It imports Amplify configuration from a pre-defined JSON file (`amplify_outputs.json`) and applies the configuration globally.
+ * 
+ * Note: This component does not render any UI elements, it only handles configuration logic.
+ */
+
 import { Amplify } from 'aws-amplify';
 import outputs from '@/amplify_outputs.json';
 
+// Configure Amplify with server-side rendering (SSR) enabled
 Amplify.configure(outputs, { ssr: true });
 
-export default function ConfigureAmplifyClientSide() {
+/**
+ * ConfigureAmplifyClientSide Component
+ * ------------------------------------
+ * A functional component that configures AWS Amplify for client-side usage.
+ * It returns `null` as it does not render any visual output.
+ *
+ * @returns {null} - The component does not return any visible UI.
+ */
+export default function ConfigureAmplifyClientSide(): null {
   return null;
 }
 
 ---
 File Path: components/MembersMenu.tsx
+"use client";
+
 /**
  * File Path: components/MembersMenu.tsx
  *
- * Members Menu Component
- * ----------------------
- * This file defines the MembersMenu component, which is responsible for rendering the navigation
- * menu within the member areas of the application. It includes links, background opacity control,
- * and account management features such as sign-out.
+ * MembersMenu Component
+ * ---------------------
+ * This component renders a navigation menu for authenticated members.
+ * It provides links to various sections based on user status, includes a slider for controlling the background opacity,
+ * and offers account management options such as signing out.
+ * The menu can be toggled open or closed and will automatically close when a user clicks outside the menu area.
  */
 
-"use client";
-
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context.
-import { useRouter } from "next/navigation"; // Import useRouter for programmatic navigation.
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 
 /**
- * MembersMenuProps Interface
- * --------------------------
- * Defines the structure of the props passed to the MembersMenu component.
+ * Interface for the MembersMenu component's props.
  *
  * @interface MembersMenuProps
  * @property {number} bgOpacity - The current opacity level of the background image.
- * @property {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Function to handle changes in background opacity.
- * @property {() => void} toggleMenu - Function to toggle the menu open/close state.
- * @property {boolean} isMenuOpen - State indicating whether the menu is open or closed.
+ * @property {(event: React.ChangeEvent<HTMLInputElement>) => void} handleOpacityChange - Callback to handle changes in the background opacity.
+ * @property {() => void} toggleMenu - Function to toggle the menu's open/close state.
+ * @property {boolean} isMenuOpen - Boolean indicating whether the menu is currently open or closed.
  */
 interface MembersMenuProps {
   bgOpacity: number;
@@ -2325,13 +2565,12 @@ interface MembersMenuProps {
 /**
  * MembersMenu Component
  * ---------------------
- * This component renders the navigation menu for member areas, including links, background opacity control,
- * and account management options like sign-out. The menu can be toggled open and closed, and it closes automatically
- * when clicking outside of it.
+ * Renders the navigation menu for authenticated members.
+ * It displays links, controls background opacity, and offers account management options like signing out.
+ * The menu closes automatically when clicking outside of it.
  *
- * @component
- * @param {MembersMenuProps} props - The component props.
- * @returns {JSX.Element} The rendered MembersMenu component.
+ * @param {MembersMenuProps} props - The props for the component.
+ * @returns {JSX.Element} - The rendered MembersMenu component.
  */
 export default function MembersMenu({
   bgOpacity,
@@ -2339,11 +2578,11 @@ export default function MembersMenu({
   toggleMenu,
   isMenuOpen,
 }: MembersMenuProps): JSX.Element {
-  const { user, signOut, isAdmin } = useAuth(); // Access user details, signOut function, and admin status from authentication context.
-  const router = useRouter(); // Access useRouter to handle navigation.
-  const menuRef = useRef<HTMLDivElement>(null); // Create a ref for the menu to detect outside clicks.
+  const { user, signOut, isAdmin } = useAuth(); // Access user, signOut function, and admin status from the AuthContext.
+  const router = useRouter(); // Get Next.js router for programmatic navigation.
+  const menuRef = useRef<HTMLDivElement>(null); // Create a reference to the menu to detect clicks outside it.
 
-  // Define the list of links based on user authentication and admin status.
+  // Define the list of links based on user and admin status.
   const Links = [
     { href: "/", text: "Home" },
     ...(user ? [{ href: "/members/", text: "Members Home" }] : []),
@@ -2351,31 +2590,23 @@ export default function MembersMenu({
   ];
 
   /**
-   * handleSignout Function
-   * ----------------------
-   * Signs out the user and redirects to the homepage. Also closes the menu.
+   * Handles the user sign-out action, redirects to the home page, and closes the menu.
    */
   const handleSignout = (): void => {
     signOut();
-    router.push("/");
-    toggleMenu(); // Close the menu after signing out.
+    router.push("/"); // Navigate to home after signing out.
+    toggleMenu(); // Close the menu.
   };
 
   useEffect(() => {
     /**
-     * handleClickOutside Function
-     * ---------------------------
-     * Closes the menu if the user clicks outside of it and the menu is open.
+     * Handles clicks outside the menu. Closes the menu if a click occurs outside of the menu container.
      *
-     * @param {MouseEvent} event - The mouse event triggered by the user's click.
+     * @param {MouseEvent} event - The click event.
      */
     const handleClickOutside = (event: MouseEvent): void => {
-      if (
-        isMenuOpen &&
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node)
-      ) {
-        toggleMenu(); // Close the menu if the click was outside.
+      if (isMenuOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        toggleMenu(); // Close the menu if the click is outside.
       }
     };
 
@@ -2391,21 +2622,24 @@ export default function MembersMenu({
       ref={menuRef}
       className="z-50 text-left bg-gradient-to-br from-black to-gray-800 via-black fixed top-0 w-full p-6 pt-16 shadow-md"
     >
-      {/* Links Section */}
+      {/* Close Menu Button */}
       <button
         className="fixed top-5 right-2 text-white px-4 rounded-lg"
         onClick={toggleMenu}
+        aria-label="Close menu"
       >
         <XCircleIcon className="size-7 text-white" />
       </button>
+
+      {/* Navigation Links */}
       <div className="mb-6">
-        <nav className="mt-2">
+        <nav className="mt-2" aria-label="Members navigation">
           {Links.map((link) => (
             <div key={link.href} className="py-2">
               <Link
                 href={link.href}
                 className="text-white hover:text-blue-500 mb-2"
-                onClick={toggleMenu} // Close the menu when a link is clicked.
+                onClick={toggleMenu}
               >
                 {link.text}
               </Link>
@@ -2414,9 +2648,11 @@ export default function MembersMenu({
         </nav>
       </div>
 
-      {/* Background Section */}
+      {/* Background Opacity Control */}
       <div className="mb-6">
-        <span className="text-white text-xs">Background Opacity</span>
+        <label htmlFor="bg-opacity-slider" className="text-white text-xs">
+          Background Opacity
+        </label>
         <div className="mt-2 max-w-sm">
           <input
             id="bg-opacity-slider"
@@ -2427,73 +2663,66 @@ export default function MembersMenu({
             value={bgOpacity}
             onChange={handleOpacityChange}
             className="form-input w-full"
+            aria-label="Adjust background opacity"
           />
         </div>
       </div>
 
-      {/* Account Section */}
+      {/* Account Management */}
       <div>
-        <div className="mt-2">
-          <button
-            className="member-btn bg-red-600 hover:bg-red-500"
-            onClick={handleSignout}
-          >
-            Sign Out
-          </button>
-        </div>
+        <button
+          className="member-btn bg-red-600 hover:bg-red-500"
+          onClick={handleSignout}
+          aria-label="Sign out"
+        >
+          Sign Out
+        </button>
       </div>
     </div>
   );
-
 }
 
 ---
 File Path: components/CreatePoll.tsx
+"use client";
+
 /**
  * File Path: components/CreatePoll.tsx
- * 
- * Create Poll Component
- * ---------------------
- * This file defines the CreatePoll component, which allows users to create a new poll by specifying a title
- * and multiple options. The component integrates with AWS Amplify to store the poll data and provides feedback
- * through toast notifications.
+ *
+ * CreatePoll Component
+ * --------------------
+ * This component provides a form interface for creating a new poll. Users can specify a poll title
+ * and up to 10 options. The component integrates with AWS Amplify to store poll data and provides
+ * feedback through toast notifications for both successful and unsuccessful operations.
  */
-
-"use client";
 
 import React, { useState, useContext } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 
-// This type alias could be used for typing the Poll-related state or parameters if needed in the future.
-// For example: const [poll, setPoll] = useState<Poll | null>(null);
-// or: const handlePollUpdate = (updatedPoll: Poll) => { ... };
-// Currently, it's not being used, so it's commented out to avoid TypeScript warnings.
-// type Poll = Schema["Poll"]["type"];
-
-// Generate a client instance for interacting with the data schema.
+// Generate a client instance for interacting with Amplify data schema.
 const client = generateClient<Schema>();
 
 /**
  * CreatePoll Component
  * --------------------
- * Renders a form for creating a new poll. Allows users to add multiple options and submit the poll.
- * Provides feedback through toast notifications.
- * 
+ * Renders a form that allows users to create a new poll with a title and multiple options.
+ * Users can add up to 10 options, and the component provides real-time feedback using toast notifications.
+ *
  * @component
- * @returns {JSX.Element} The rendered CreatePoll component.
+ * @returns {JSX.Element} - The rendered CreatePoll component.
  */
 export default function CreatePoll(): JSX.Element {
   const [title, setTitle] = useState<string>(""); // State to store the poll title.
   const [options, setOptions] = useState<string[]>([""]); // State to store the poll options.
 
-  const { addToast } = useContext<ToastContextType>(ToastContext); // Access the addToast function from ToastContext.
+  const { addToast } = useContext<ToastContextType>(ToastContext); // Access toast notifications from context.
 
   /**
    * addOption Function
    * ------------------
-   * Adds a new option input field if the limit of 10 options has not been reached.
+   * Adds a new option input field if there are fewer than 10 options.
    */
   const addOption = (): void => {
     if (options.length < 10) {
@@ -2509,9 +2738,9 @@ export default function CreatePoll(): JSX.Element {
   /**
    * handleOptionChange Function
    * ---------------------------
-   * Updates the value of a specific option based on user input.
-   * 
-   * @param {number} index - The index of the option being updated.
+   * Updates the value of a specific poll option based on user input.
+   *
+   * @param {number} index - The index of the option being modified.
    * @param {string} value - The new value for the option.
    */
   const handleOptionChange = (index: number, value: string): void => {
@@ -2523,8 +2752,8 @@ export default function CreatePoll(): JSX.Element {
   /**
    * handleOptionRemove Function
    * ---------------------------
-   * Removes a specific option from the list.
-   * 
+   * Removes a poll option based on the index provided.
+   *
    * @param {number} index - The index of the option to be removed.
    */
   const handleOptionRemove = (index: number): void => {
@@ -2535,8 +2764,8 @@ export default function CreatePoll(): JSX.Element {
   /**
    * handleSubmit Function
    * ---------------------
-   * Submits the new poll to the backend and provides feedback through toast notifications.
-   * Validates that all fields are filled before submission.
+   * Validates the poll form fields and submits the poll to the backend.
+   * Displays feedback via toast notifications on success or failure.
    */
   const handleSubmit = async (): Promise<void> => {
     if (!title || options.some((option) => !option)) {
@@ -2552,7 +2781,7 @@ export default function CreatePoll(): JSX.Element {
         title,
         options,
         createdAt: new Date().toISOString(),
-        status: "draft", // Default status is draft.
+        status: "draft", // The initial status of a newly created poll is "draft".
       });
 
       if (errors) {
@@ -2567,7 +2796,7 @@ export default function CreatePoll(): JSX.Element {
           message: "Poll created successfully.",
         });
         setTitle("");
-        setOptions([""]);
+        setOptions([""]); // Reset form fields after successful creation.
       }
     } catch (err) {
       addToast({
@@ -2579,16 +2808,23 @@ export default function CreatePoll(): JSX.Element {
   };
 
   return (
-    <div className="section-container p-2">
-      <h1 className="heading">Create a New Poll</h1>
+    <section className="section-container p-2">
+      <header>
+        <h1 className="heading">Create a New Poll</h1>
+      </header>
       <div className="bg-black bg-opacity-70 p-4 rounded-lg w-full">
         <div className="mb-4 w-full">
-          <label className="block text-white text-xs text-left">Poll Title</label>
+          <label htmlFor="poll-title" className="block text-white text-xs text-left">
+            Poll Title
+          </label>
           <input
+            id="poll-title"
             className="form-input"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter poll title"
+            aria-label="Poll Title"
           />
         </div>
         <div className="mb-4 w-full">
@@ -2600,11 +2836,14 @@ export default function CreatePoll(): JSX.Element {
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
+                placeholder={`Option ${index + 1}`}
+                aria-label={`Poll Option ${index + 1}`}
               />
               <button
                 className="btn btn-secondary ml-2"
                 type="button"
                 onClick={() => handleOptionRemove(index)}
+                aria-label={`Remove Option ${index + 1}`}
               >
                 Delete
               </button>
@@ -2617,6 +2856,7 @@ export default function CreatePoll(): JSX.Element {
               className="btn bg-green-600 hover:bg-green-700 border border-green-500 text-white"
               type="button"
               onClick={addOption}
+              aria-label="Add Poll Option"
             >
               Add Option
             </button>
@@ -2625,61 +2865,54 @@ export default function CreatePoll(): JSX.Element {
             className="btn btn-primary"
             type="button"
             onClick={handleSubmit}
+            aria-label="Create Poll"
           >
             Create Poll
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
-
-
-
 }
 
 ---
 File Path: components/CurrentPoll.tsx
-/**
- * File Path: components/CurrentPoll.tsx
- * 
- * Current Poll Component
- * ----------------------
- * This file defines the CurrentPoll component, which displays the currently active poll
- * along with the vote counts for each option.
- */
-
 "use client";
 
+/**
+ * File Path: components/CurrentPoll.tsx
+ *
+ * CurrentPoll Component
+ * ---------------------
+ * This component fetches and displays the currently active poll along with vote counts for each option.
+ * It handles real-time updates through subscriptions to ensure the vote count is always current.
+ */
+
 import React, { useState, useEffect } from "react";
-//import { motion, AnimatePresence } from "framer-motion";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 
 type Poll = Schema["Poll"]["type"];
-//type Vote = Schema["Vote"]["type"];
 
-// Generate a client instance for interacting with the data schema.
+// Generate a client instance for interacting with the data schema
 const client = generateClient<Schema>();
 
 /**
  * CurrentPoll Component
  * ---------------------
- * Renders the currently active poll along with vote counts for each option.
- * It handles real-time updates via subscriptions.
- * 
+ * Displays the currently active poll with vote counts for each option, with real-time updates.
+ *
  * @component
- * @returns {JSX.Element} The rendered CurrentPoll component.
+ * @returns {JSX.Element} The rendered component displaying the active poll and vote counts.
  */
 export default function CurrentPoll(): JSX.Element {
-  const [poll, setPoll] = useState<Poll | null>(null); // State to store the active poll.
-  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store the vote counts.
-  const [loading, setLoading] = useState<boolean>(true); // State to track loading status.
-  const [error, setError] = useState<string | null>(null); // State to store any error messages.
+  const [poll, setPoll] = useState<Poll | null>(null); // State for the active poll
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State for the vote counts per option
+  const [loading, setLoading] = useState<boolean>(true); // State for tracking loading status
+  const [error, setError] = useState<string | null>(null); // State for error messages
 
   useEffect(() => {
     /**
-     * fetchActivePoll Function
-     * ------------------------
      * Fetches the currently active poll from the backend.
      */
     const fetchActivePoll = async (): Promise<void> => {
@@ -2707,9 +2940,7 @@ export default function CurrentPoll(): JSX.Element {
 
   useEffect(() => {
     /**
-     * fetchVoteCounts Function
-     * ------------------------
-     * Fetches the vote counts for the current poll and sets up a subscription for real-time updates.
+     * Fetches the vote counts for the current poll and sets up a real-time subscription for updates.
      */
     const fetchVoteCounts = async (): Promise<void> => {
       if (!poll) return;
@@ -2755,7 +2986,7 @@ export default function CurrentPoll(): JSX.Element {
       });
     }
 
-    // Cleanup subscription on component unmount
+    // Cleanup the subscription on component unmount
     return () => {
       if (subscription) subscription.unsubscribe();
     };
@@ -2770,11 +3001,11 @@ export default function CurrentPoll(): JSX.Element {
   }
 
   return (
-    <div className="section-container pb-4 sm:p-4">
-      <div className="heading">Current Poll</div>
-      <div className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
+    <section className="section-container pb-4 sm:p-4">
+      <header className="heading">Current Poll</header>
+      <article className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
         <div className="p-4">
-          <div className="text-lg font-semibold pb-2">{poll.title}</div>
+          <h2 className="text-lg font-semibold pb-2">{poll.title}</h2>
           <table className="w-full text-left table-auto">
             <thead>
               <tr>
@@ -2786,34 +3017,19 @@ export default function CurrentPoll(): JSX.Element {
               {poll.options.map((option, index) => (
                 <tr key={index}>
                   <td className="p-2">{option}</td>
-                  <td className="p-2">
-                    {voteCounts[option as string] || 0}
-                  </td>
+                  <td className="p-2">{voteCounts[option as string] || 0}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </article>
+    </section>
   );
-
 }
 
 ---
 File Path: components/Background.tsx
-/**
- * File Path: @/components/Background.tsx
- * 
- * Background Component
- * --------------------
- * This file defines the `Background` component, which serves as a wrapper around the animated background
- * of the application. It handles the transition effects for the background when navigating between routes.
- * 
- * The component uses Framer Motion for smooth transitions and animations, ensuring a fluid background
- * experience throughout the application.
- */
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -2822,28 +3038,27 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 /**
  * Background Component
  * --------------------
- * Wraps the `AnimatedBackground` component and provides animation variants for transitioning between routes.
- * Controls the opacity and transition of the background as routes change within the application.
- * 
+ * This component serves as a wrapper for the application's animated background,
+ * handling the transition effects between route changes using Framer Motion.
+ * It controls the background's opacity and ensures a smooth animation experience
+ * as users navigate through different routes in the application.
+ *
  * @component
- * @returns {JSX.Element} The rendered `Background` component with animation effects.
+ * @returns {JSX.Element} The animated background with route transition effects.
  */
 export function Background(): JSX.Element {
   /**
-   * backgroundVariants
-   * ------------------
-   * Defines animation states for the background's opacity during route transitions.
-   * - `enter`: Sets initial opacity when the component mounts or the route changes.
-   * - `active`: Gradually increases the opacity to full visibility over 25 seconds.
-   * - `exit`: Reduces the opacity back down when the component unmounts or the route changes.
+   * Animation variants for controlling the background opacity during route transitions.
+   * - `enter`: Initial state with reduced opacity when the component first renders.
+   * - `active`: Gradual transition to full opacity over 25 seconds, providing a smooth fade-in effect.
+   * - `exit`: Reverse transition to reduced opacity when the route changes or the component unmounts.
    */
   const backgroundVariants = {
-    enter: { opacity: 0.5 }, // Initial opacity when component mounts.
-    active: { opacity: 1, transition: { duration: 25, ease: "easeInOut" } }, // Transition to full opacity.
-    exit: { opacity: 0.5, transition: { duration: 25, ease: "easeInOut" } }, // Transition to reduced opacity on unmount.
+    enter: { opacity: 0.5 },
+    active: { opacity: 1, transition: { duration: 25, ease: "easeInOut" } },
+    exit: { opacity: 0.5, transition: { duration: 25, ease: "easeInOut" } },
   };
 
-  // Render the animated background with route-based transitions.
   return (
     <motion.div
       initial="enter"
@@ -2852,7 +3067,7 @@ export function Background(): JSX.Element {
       variants={backgroundVariants}
       className="fixed inset-0 -z-50 overflow-hidden h-screen w-screen"
     >
-      {/* Render the animated background grid */}
+      {/* Render the background animation */}
       <AnimatedBackground />
     </motion.div>
   );
@@ -2861,16 +3076,6 @@ export function Background(): JSX.Element {
 ---
 File Path: components/LessonOrder.tsx
 "use client";
-
-/**
- * File Path: @/components/LessonOrder.tsx
- * 
- * LessonOrder Component
- * ---------------------
- * This component allows an admin to manage the ordering of lessons.
- * It fetches all lessons from the `LessonContent` model that are unordered, then allows the user to drag and drop
- * to set the order. Changes are saved to the `LessonContent` model in the database.
- */
 
 import React, { useState, useEffect, useContext } from "react";
 import { Reorder } from "framer-motion";
@@ -2881,6 +3086,11 @@ import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 // Generate the Amplify client
 const client = generateClient<Schema>();
 
+/**
+ * LessonItem Interface
+ * --------------------
+ * Defines the structure of a lesson item, including its unique ID, title, slug, and ordering status.
+ */
 interface LessonItem {
   id: string;
   title: string;
@@ -2888,19 +3098,31 @@ interface LessonItem {
   isOrdered: boolean;
 }
 
-export default function LessonOrder() {
+/**
+ * LessonOrder Component
+ * ---------------------
+ * This component allows administrators to manage the order of lessons.
+ * It fetches lessons from the `LessonContent` model, displays unordered lessons,
+ * and allows users to reorder lessons using drag-and-drop functionality.
+ * Changes are saved back to the `LessonContent` model in the database.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered LessonOrder component.
+ */
+export default function LessonOrder(): JSX.Element {
   const [unorderedItems, setUnorderedItems] = useState<LessonItem[]>([]);
   const [orderedItems, setOrderedItems] = useState<LessonItem[]>([]);
   const { addToast } = useContext<ToastContextType>(ToastContext);
 
+  /**
+   * Fetch lesson items from the `LessonContent` model, separating ordered and unordered items.
+   */
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        // Fetch all items from the `LessonContent` model
         const { data: lessons } = await client.models.LessonContent.list();
   
         if (lessons) {
-          // Separate ordered and unordered items
           const unordered = lessons
             .filter(item => !item.isOrdered)
             .map(item => ({
@@ -2920,7 +3142,6 @@ export default function LessonOrder() {
               isOrdered: item.isOrdered,
             }));
   
-          // Update state with ordered and unordered items
           setUnorderedItems(unordered);
           setOrderedItems(ordered);
         }
@@ -2932,22 +3153,22 @@ export default function LessonOrder() {
   
     fetchItems();
   }, [addToast]);
-  
 
-  const handleSaveOrder = async () => {
+  /**
+   * Handle saving the updated lesson order to the backend.
+   */
+  const handleSaveOrder = async (): Promise<void> => {
     try {
-      // Ensure orderedItems are sorted before assigning orderIndex
       const sortedItems = [...orderedItems].sort((a, b) => {
         return orderedItems.indexOf(a) - orderedItems.indexOf(b);
       });
   
-      // Save each ordered item with its new order index
       const results = await Promise.all(
         sortedItems.map((item, index) =>
           client.models.LessonContent.update({
             id: item.id,
             isOrdered: true,
-            orderIndex: index, // Set the correct order index
+            orderIndex: index,
           })
         )
       );
@@ -2959,15 +3180,14 @@ export default function LessonOrder() {
       addToast({ messageType: "error", message: "Failed to save lesson order." });
     }
   };
-  
 
   return (
-    <div className="bg-black bg-opacity-70 p-2 rounded-lg w-full mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-8">
-        {/* Section 1: Unordered Items */}
+    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4">
+      <div className="flex flex-col md:flex-row md:justify-between gap-8">
+        {/* Unordered Lessons Section */}
         <div className="w-full md:w-1/2">
-          <h2 className="heading text-lg mb-2 md:mb-0">Unordered Lessons</h2>
-          <ul className="text-sm space-y-2 overflow-scroll max-h-[50vh]">
+          <h2 className="text-lg font-semibold mb-2">Unordered Lessons</h2>
+          <ul className="text-sm space-y-2 overflow-scroll max-h-[50vh]" role="list">
             {unorderedItems.map(item => (
               <li
                 key={item.id}
@@ -2983,15 +3203,16 @@ export default function LessonOrder() {
           </ul>
         </div>
 
-        {/* Section 2: Ordered Items */}
+        {/* Ordered Lessons Section */}
         <div className="w-full md:w-1/2">
-          <h2 className="heading text-lg mb-2 md:mb-0">Ordered Lessons</h2>
+          <h2 className="text-lg font-semibold mb-2">Ordered Lessons</h2>
           <Reorder.Group
             as="ul"
             axis="y"
             values={orderedItems}
             onReorder={setOrderedItems}
             className="text-sm space-y-2 overflow-scroll max-h-[50vh]"
+            role="list"
           >
             {orderedItems.map(item => (
               <Reorder.Item
@@ -3013,7 +3234,7 @@ export default function LessonOrder() {
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -3036,28 +3257,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
 
+/**
+ * Type definition for the Poll object from the Amplify data schema.
+ */
 type Poll = Schema["Poll"]["type"];
 
-// Generate a client instance for interacting with the data schema.
+// Generate a client instance for interacting with the Amplify data schema.
 const client = generateClient<Schema>();
 
 /**
  * AccordionProps Interface
  * ------------------------
- * Defines the props for the Accordion component.
+ * Defines the props for the Accordion component that displays individual poll details.
  */
 interface AccordionProps {
-  poll: Poll; // The poll object for this accordion section.
-  expanded: string | null; // The ID of the currently expanded poll (if any).
+  poll: Poll; // The poll object containing its details.
+  expanded: string | null; // ID of the currently expanded poll (if any).
   setExpanded: React.Dispatch<React.SetStateAction<string | null>>; // Function to set the expanded poll ID.
   handleActivatePoll: (pollId: string) => Promise<void>; // Function to handle poll activation.
   handleDeletePoll: (pollId: string) => Promise<void>; // Function to handle poll deletion.
 }
 
+/**
+ * Subscription Interface
+ * ----------------------
+ * Defines the structure for a subscription object with an unsubscribe method.
+ */
 interface Subscription {
   unsubscribe: () => void;
 }
-
 
 /**
  * Accordion Component
@@ -3138,6 +3366,8 @@ const Accordion: React.FC<AccordionProps> = ({
         className="cursor-pointer p-4 flex items-center justify-between"
         initial={false}
         onClick={() => setExpanded(isOpen ? null : poll.id)}
+        role="button"
+        aria-expanded={isOpen}
       >
         <div className="flex flex-col w-full">
           <div className="flex items-center justify-between">
@@ -3146,11 +3376,12 @@ const Accordion: React.FC<AccordionProps> = ({
                 isActive
                   ? "bg-blue-400 text-blue-50 border border-blue-200"
                   : "bg-blue-800 text-blue-700 border border-blue-600"
-              } bg-opacity-75 `}
+              } bg-opacity-75`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleActivatePoll(poll.id);
               }}
+              aria-label={`Activate poll ${poll.title}`}
             >
               Active
             </button>
@@ -3158,7 +3389,9 @@ const Accordion: React.FC<AccordionProps> = ({
               <div className="flex items-center justify-between">
                 <span>{poll.title}</span>
                 <div className="flex space-x-4">
-                  <span>{new Date(poll.createdAt).toLocaleDateString()}</span>
+                  <time dateTime={new Date(poll.createdAt).toISOString()}>
+                    {new Date(poll.createdAt).toLocaleDateString()}
+                  </time>
                 </div>
               </div>
               <div className="flex mt-2 space-x-2">
@@ -3168,6 +3401,7 @@ const Accordion: React.FC<AccordionProps> = ({
                     e.stopPropagation();
                     handleDeletePoll(poll.id);
                   }}
+                  aria-label={`Delete poll ${poll.title}`}
                 >
                   Delete
                 </button>
@@ -3177,6 +3411,7 @@ const Accordion: React.FC<AccordionProps> = ({
                     e.stopPropagation();
                     setExpanded(isOpen ? null : poll.id);
                   }}
+                  aria-label={isOpen ? `Collapse details of ${poll.title}` : `Expand details of ${poll.title}`}
                 >
                   {isOpen ? "Show Less" : "Show More"}
                 </button>
@@ -3208,7 +3443,9 @@ const Accordion: React.FC<AccordionProps> = ({
                 <div>{poll.status}</div>
 
                 <div className="font-bold text-center">Created</div>
-                <div>{new Date(poll.createdAt).toLocaleString()}</div>
+                <time dateTime={new Date(poll.createdAt).toISOString()}>
+                  {new Date(poll.createdAt).toLocaleString()}
+                </time>
               </div>
               <table className="w-full text-left table-auto">
                 <thead>
@@ -3239,8 +3476,8 @@ const Accordion: React.FC<AccordionProps> = ({
 /**
  * ListPolls Component
  * -------------------
- * Renders a list of polls with the ability to expand each poll for more details, 
- * activate polls, and delete polls. Also handles real-time updates via subscriptions.
+ * Displays a list of polls and allows the user to expand individual polls for more details, 
+ * activate polls, delete polls, and subscribe to real-time updates for votes.
  * 
  * @component
  * @returns {JSX.Element} The rendered ListPolls component.
@@ -3319,7 +3556,7 @@ export default function ListPolls(): JSX.Element {
               if (poll.id === activePoll.id) {
                 return {
                   ...poll,
-                  // voteCounts is not on the poll type, so handle it in the Accordion
+                  // voteCounts are handled within the Accordion component.
                 };
               }
               return poll;
@@ -3422,8 +3659,8 @@ export default function ListPolls(): JSX.Element {
   }
 
   return (
-    <div className="section-container p-2">
-      <div className="heading">Current Polls</div>
+    <section className="section-container p-2">
+      <h1 className="heading">Current Polls</h1>
       {polls.map((poll) => (
         <Accordion
           key={poll.id}
@@ -3434,31 +3671,36 @@ export default function ListPolls(): JSX.Element {
           handleDeletePoll={handleDeletePoll}
         />
       ))}
-    </div>
+    </section>
   );
-
 }
 
 ---
 File Path: components/AuthenticatedNavBar.tsx
 /**
  * File Path: components/AuthenticatedNavBar.tsx
- *
+ * 
  * AuthenticatedNavBar Component
- * ----------------------------
- * Renders the navigation bar based on the user's role and the current URL path.
- * Displays either the Members Menu or the Admin Menu depending on the pathname.
+ * -----------------------------
+ * Renders a navigation bar based on the user's role and the current URL path.
+ * This component dynamically displays either the Members Menu or the Admin Menu 
+ * depending on the pathname.
+ * 
+ * The component ensures proper accessibility and SEO by using semantic HTML elements.
+ * The styling changes dynamically based on the active link.
  */
+
+"use client";
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 /**
- * Interface for navigation links.
+ * Interface representing the structure of a navigation link.
  */
 interface NavLink {
-  href: string;
-  label: string;
+  href: string;  // URL the link points to
+  label: string; // Display label for the link
 }
 
 // Define navigation links for both members and admin.
@@ -3478,73 +3720,97 @@ const adminNavLinks: NavLink[] = [
 /**
  * AuthenticatedNavBar Component
  * -----------------------------
- * Renders the appropriate navigation bar based on the pathname.
+ * Renders the appropriate navigation bar based on the URL path.
+ * It dynamically selects either the Members or Admin navigation menu depending 
+ * on the URL, and highlights the active link for visual feedback.
  *
- * @returns {JSX.Element} The rendered navigation bar.
+ * @returns {JSX.Element} - The rendered navigation bar component.
  */
 export default function AuthenticatedNavBar(): JSX.Element {
   const pathname = usePathname();
 
-  // Determine whether to display the members or admin nav based on the URL path.
+  // Determine the correct set of navigation links based on the URL path.
   const navLinks = pathname.startsWith("/members/admin")
     ? adminNavLinks
     : membersNavLinks;
 
   return (
-    <div className="text-xs lg:text-sm xl:text-base lg:font-extralight lg:space-x-2 xl:space-x-2 mx-1 flex space-around items-center justify-center">
+    <nav 
+      aria-label="Authenticated Navigation Bar" 
+      className="text-xs lg:text-sm xl:text-base lg:font-extralight lg:space-x-2 xl:space-x-2 mx-1 flex space-around items-center justify-center"
+    >
       {navLinks.map((link) => {
-        // Determine if the current link is active
+        // Check if the current link is active
         const isActive =
           pathname === link.href ||
-          (link.href === "/members/code" &&
-            pathname.startsWith("/members/code/"));
+          (link.href === "/members/code" && pathname.startsWith("/members/code/"));
 
         return (
           <Link
             key={link.href}
             href={link.href}
+            aria-current={isActive ? "page" : undefined} // Accessibility: Indicate current page
             className={`p-2 border rounded ${
               isActive
-                ? "text-white border-white" // Active styles
-                : "text-yellow-400 border-0" // Inactive styles
+                ? "text-white border-white" // Active link styles
+                : "text-yellow-400 border-0" // Inactive link styles
             } transition-colors duration-200`}
           >
             {link.label}
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
 ---
 File Path: components/SetLessonStage.tsx
-// File Path: components/SetLessonStage.tsx
+/**
+ * File Path: components/SetLessonStage.tsx
+ *
+ * SetLessonStage Component
+ * ------------------------
+ * This component is responsible for updating the 'lessonStage' value in localStorage 
+ * to reflect the current lesson's slug. The component does not render any UI 
+ * and operates entirely through its side effect using the useEffect hook.
+ *
+ * It ensures the lesson state is preserved across page reloads by storing the slug 
+ * in the browser's localStorage.
+ */
 
 "use client";
 
 import { useEffect } from 'react';
 
+/**
+ * Props interface for SetLessonStage component.
+ */
 interface SetLessonStageProps {
+  /**
+   * The slug representing the current lesson stage.
+   */
   slug: string;
 }
 
 /**
  * SetLessonStage Component
- * -------------------------
- * This component updates the `lessonStage` in localStorage to reflect the current lesson's slug.
- *
+ * ------------------------
+ * Updates the 'lessonStage' value in localStorage based on the provided lesson slug.
+ * This component is used to track the user's current lesson stage persistently across sessions.
+ * 
  * @param {SetLessonStageProps} props - The component props containing the current lesson's slug.
  * @returns {null} This component does not render any visible UI.
  */
 const SetLessonStage: React.FC<SetLessonStageProps> = ({ slug }) => {
   useEffect(() => {
+    // Ensure window object is available before accessing localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('lessonStage', slug);
     }
   }, [slug]);
 
-  return null; // This component doesn't render anything visible
+  return null; // No visible UI
 };
 
 export default SetLessonStage;
@@ -3556,10 +3822,12 @@ File Path: components/Poll.tsx
  *
  * Poll Component
  * --------------
- * This file defines the Poll component, which is responsible for displaying the current active poll,
- * allowing users to vote, and showing the current results. The component integrates with AWS Amplify
- * for data fetching and real-time updates.
+ * This component is responsible for rendering the current active poll, 
+ * allowing users to vote, and displaying real-time results.
+ * It integrates with AWS Amplify to fetch poll data and handle real-time updates.
  */
+
+"use client";
 
 import { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
@@ -3572,7 +3840,8 @@ const client = generateClient<Schema>();
 /**
  * Poll Component
  * --------------
- * Renders the current active poll, allows voting, and displays real-time results.
+ * Renders the current active poll, allows users to vote, and displays real-time results.
+ * The component fetches data from AWS Amplify and handles state updates when users vote.
  *
  * @component
  * @returns {JSX.Element} The rendered Poll component.
@@ -3580,17 +3849,19 @@ const client = generateClient<Schema>();
 export default function Poll(): JSX.Element {
   const { user } = useAuth(); // Access user details from authentication context.
   const [poll, setPoll] = useState<Schema["Poll"]["type"] | null>(null); // State to store the current poll.
-  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store the vote counts for each option.
-  //const [selectedOption, setSelectedOption] = useState<string | null>(null); // State to store the user's selected option.
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({}); // State to store vote counts for each option.
   const [hasVoted, setHasVoted] = useState<boolean>(false); // State to track if the user has already voted.
-  const [loading, setLoading] = useState<boolean>(true); // State to track if data is still loading.
-  const [error, setError] = useState<string | null>(null); // State to store any error messages.
+  const [loading, setLoading] = useState<boolean>(true); // State to track data loading status.
+  const [error, setError] = useState<string | null>(null); // State to store error messages.
 
   useEffect(() => {
     /**
-     * fetchPollData Function
-     * ----------------------
-     * Fetches the current active poll and its associated votes from the backend.
+     * fetchPollData
+     * -------------
+     * Fetches the active poll and its associated votes from the backend.
+     * If an active poll is found, it sets the poll state and vote counts.
+     * 
+     * Handles user vote detection and initializes vote counts for each poll option.
      */
     const fetchPollData = async (): Promise<void> => {
       try {
@@ -3619,7 +3890,6 @@ export default function Poll(): JSX.Element {
         );
         if (userVote) {
           setHasVoted(true);
-          //setSelectedOption(userVote.option);
         }
 
         // Initialize and count votes
@@ -3651,6 +3921,8 @@ export default function Poll(): JSX.Element {
   useEffect(() => {
     /**
      * Subscribe to real-time poll updates once the user has voted.
+     * 
+     * Subscribes to new votes for the current poll, updating the vote counts in real-time.
      */
     if (poll && hasVoted) {
       const subscription = client.models.Vote.onCreate({
@@ -3671,11 +3943,11 @@ export default function Poll(): JSX.Element {
   }, [poll, hasVoted, voteCounts]);
 
   /**
-   * handleVote Function
-   * -------------------
+   * handleVote
+   * ----------
    * Handles the user's vote submission and updates the vote counts optimistically.
-   *
-   * @param {string} option - The option the user has selected to vote for.
+   * 
+   * @param {string} option - The option the user selects to vote for.
    */
   const handleVote = async (option: string): Promise<void> => {
     if (!hasVoted && option) {
@@ -3686,7 +3958,6 @@ export default function Poll(): JSX.Element {
           option,
         });
 
-        //setSelectedOption(option);
         setHasVoted(true);
 
         // Optimistically update vote counts
@@ -3706,13 +3977,13 @@ export default function Poll(): JSX.Element {
     return <div>{error || "There is no active poll currently"}</div>;
 
   return (
-    <div className="section-container sm:ml-1 md:ml-0 pb-4 sm:p-4 h-min">
-      <div className="heading">Current Poll</div>
-      <div className="bg-black bg-opacity-70 p-4 rounded-lg">
-        <div className="text-2xl font-bold mb-4">{poll.title}</div>
+    <section className="section-container sm:ml-1 md:ml-0 pb-4 sm:p-4 h-min">
+      <header className="heading">Current Poll</header>
+      <article className="bg-black bg-opacity-70 p-4 rounded-lg">
+        <h2 className="text-2xl font-bold mb-4">{poll.title}</h2>
         {hasVoted ? (
           <div className="max-w-md mx-auto">
-            <div className="text-lg mb-2 text-center">Current Results</div>
+            <h3 className="text-lg mb-2 text-center">Current Results</h3>
             <ul className="space-y-2 w-full">
               {Object.entries(voteCounts).map(([option, count]) => (
                 <li key={option} className="text-sm">
@@ -3739,8 +4010,8 @@ export default function Poll(): JSX.Element {
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </article>
+    </section>
   );
 }
 
@@ -3749,14 +4020,15 @@ File Path: components/AnimatedBackground.tsx
 /**
  * File Path: @/components/AnimatedBackground.tsx
  * 
- * Animated Background Component
- * -----------------------------
- * This file defines the `AnimatedBackground` component, which displays an animated grid of colored boxes.
- * The boxes change color at random intervals, creating a dynamic animated background.
- * The grid layout adapts to the window size, and each box's color cycles through black, blue, and orange.
+ * AnimatedBackground Component
+ * ----------------------------
+ * This component displays an animated grid of colored boxes that change color 
+ * at random intervals, creating a dynamic and responsive background. The grid 
+ * layout adapts to the window size, with boxes cycling through three colors: 
+ * black, blue, and orange. 
  * 
- * The component utilizes Framer Motion for smooth transitions and animations, and adjusts box sizes based
- * on the screen width to maintain responsiveness.
+ * The component leverages Framer Motion for smooth animations and ensures 
+ * responsiveness by adjusting box sizes based on screen width.
  */
 
 "use client";
@@ -3767,24 +4039,28 @@ import { motion } from "framer-motion";
 /**
  * AnimatedBackground Component
  * ----------------------------
- * Renders a grid-based animated background where each box cycles through a set of colors.
- * The grid is responsive, adapting its size and number of columns/rows based on the window dimensions.
+ * Renders a responsive, animated background of colored boxes that change color 
+ * at random intervals. The grid layout and box sizes adapt to the window's dimensions.
  * 
- * @component
- * @returns {JSX.Element | null} The rendered AnimatedBackground component, or null if grid dimensions are not ready.
+ * @returns {JSX.Element | null} The rendered AnimatedBackground component, or null 
+ * if grid dimensions are not yet ready.
  */
 export function AnimatedBackground(): JSX.Element | null {
-  // Define the ColorState type, restricting values to 0, 1, or 2.
+  /**
+   * Defines a type for color states, allowing only values of 0, 1, or 2.
+   */
   type ColorState = 0 | 1 | 2;
 
-  // State variables for managing grid size, number of boxes, and their color states.
+  // State variables for managing grid dimensions, box size, total boxes, and color states.
   const [boxSize, setBoxSize] = useState<number>(75); // Default size for larger screens.
-  const [gridColumns, setGridColumns] = useState<number>(0); // Number of grid columns based on screen width.
-  const [gridRows, setGridRows] = useState<number>(0); // Number of grid rows based on screen height.
+  const [gridColumns, setGridColumns] = useState<number>(0); // Number of columns in the grid.
+  const [gridRows, setGridRows] = useState<number>(0); // Number of rows in the grid.
   const [totalBoxes, setTotalBoxes] = useState<number>(0); // Total number of boxes in the grid.
   const [colorStates, setColorStates] = useState<ColorState[]>([]); // Array holding color states for each box.
 
-  // Mapping from color state to corresponding color value.
+  /**
+   * Maps color states to their corresponding color values.
+   */
   const colorMap: { [key in ColorState]: string } = {
     0: "#000000", // Black
     1: "#1e3a8a", // Blue (bg-blue-800)
@@ -3794,42 +4070,33 @@ export function AnimatedBackground(): JSX.Element | null {
   /**
    * updateDimensions Function
    * -------------------------
-   * Updates the grid dimensions and box size based on the current window size.
-   * Initializes the `colorStates` array with zeros to start with the black color for all boxes.
+   * Updates the grid's number of columns and rows based on the current window dimensions.
+   * Sets the box size dynamically depending on the screen width for responsiveness.
    */
   const updateDimensions = () => {
-    // Set box size based on screen width to ensure responsiveness.
     const newBoxSize = window.innerWidth <= 768 ? 50 : 75;
     setBoxSize(newBoxSize);
 
-    // Calculate grid dimensions based on window size and box size.
     const columns = Math.ceil(window.innerWidth / newBoxSize);
     const rows = Math.ceil(window.innerHeight / newBoxSize);
     const total = columns * rows;
 
-    // Update state with new grid and total box information.
     setGridColumns(columns);
     setGridRows(rows);
     setTotalBoxes(total);
-
-    // Initialize `colorStates` with zeros (all boxes start as black).
-    setColorStates(Array(total).fill(0));
+    setColorStates(Array(total).fill(0)); // Initialize all boxes with black color.
   };
 
   /**
    * useEffect Hook - Grid Setup
    * ---------------------------
-   * Sets up initial grid dimensions and adds a window resize event listener to update dimensions dynamically.
-   * Cleans up the event listener when the component is unmounted.
+   * Initializes the grid dimensions and sets up an event listener to update them on window resize.
    */
   useEffect(() => {
     if (typeof window !== "undefined") {
       updateDimensions();
-
-      // Add event listener for window resize.
       window.addEventListener("resize", updateDimensions);
 
-      // Cleanup event listener on component unmount.
       return () => window.removeEventListener("resize", updateDimensions);
     }
   }, []);
@@ -3837,51 +4104,49 @@ export function AnimatedBackground(): JSX.Element | null {
   /**
    * useEffect Hook - Animate Color States
    * -------------------------------------
-   * Animates the color states of the boxes at random intervals, cycling through black, blue, and orange.
-   * A new color is assigned to a random box at a set interval.
+   * Animates the color states of the grid boxes at random intervals, 
+   * cycling through black, blue, and orange. 
    * Cleans up the interval when the component is unmounted.
    */
   useEffect(() => {
-    if (totalBoxes === 0) return; // Skip animation if grid size is not yet determined.
+    if (totalBoxes === 0) return; // Exit if grid size is not yet determined.
 
-    // Interval to update color states at random box positions.
     const intervalId = setInterval(() => {
       const randomIndex = Math.floor(Math.random() * totalBoxes);
       setColorStates((prevColorStates) => {
         const newColorStates = [...prevColorStates];
-        // Cycle through colors: 0 (black) -> 1 (blue) -> 2 (orange) -> 0 (black).
+        // Cycle color: 0 (black) -> 1 (blue) -> 2 (orange) -> 0 (black).
         newColorStates[randomIndex] = ((prevColorStates[randomIndex] + 1) % 3) as ColorState;
         return newColorStates;
       });
-    }, 100); // Interval duration in milliseconds for color change.
+    }, 100); // Color change interval (milliseconds).
 
-    // Cleanup interval on component unmount.
     return () => clearInterval(intervalId);
   }, [totalBoxes]);
 
-  // Don't render until gridColumns and gridRows are set.
   if (gridColumns === 0 || gridRows === 0) {
-    return null; // Optionally return a loading indicator.
+    return null; // Return null if grid dimensions are not set yet.
   }
 
-  // Render the animated grid of boxes with dynamic colors.
+  // Render the animated grid of boxes.
   return (
-    <div
+    <section
+      aria-label="Animated background"
       className="inset-0 grid gap-2 opacity-70"
       style={{
-        gridTemplateColumns: `repeat(${gridColumns}, ${boxSize}px)`, // Define grid columns based on screen width and box size.
-        gridTemplateRows: `repeat(${gridRows}, ${boxSize}px)`, // Define grid rows based on screen height and box size.
+        gridTemplateColumns: `repeat(${gridColumns}, ${boxSize}px)`,
+        gridTemplateRows: `repeat(${gridRows}, ${boxSize}px)`,
       }}
     >
       {colorStates.map((colorState, index) => (
         <motion.div
           key={index}
           className="rounded-xl w-full h-full"
-          animate={{ backgroundColor: colorMap[colorState] }} // Animate color changes based on color state.
-          transition={{ duration: 0.5 }} // Set duration for color fade effect.
+          animate={{ backgroundColor: colorMap[colorState] }}
+          transition={{ duration: 0.5 }}
         />
       ))}
-    </div>
+    </section>
   );
 }
 
@@ -3892,64 +4157,64 @@ File Path: components/Toast.tsx
  *
  * Toast Component
  * ---------------
- * This file defines the Toast component, which is responsible for displaying toast notifications.
- * It leverages animations for showing and hiding toasts and listens to the ToastContext for any updates.
+ * This component is responsible for rendering toast notifications with animation effects.
+ * It listens to the ToastContext for any updates and uses Framer Motion for smooth 
+ * transitions when toasts appear or disappear. Toasts can be either success or error messages.
  */
 
 "use client";
 
 import React, { useContext } from "react";
-import { motion, AnimatePresence } from "framer-motion"; // Import motion components for animations.
-import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Import ToastContext to access toast logic and state.
+import { motion, AnimatePresence } from "framer-motion";
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 
 /**
  * Animation Variants
  * ------------------
- * Define the animation variants for the toast notifications.
- * These control how the toast will appear, behave, and disappear.
+ * Defines the animation states for toasts. Controls how the toasts will enter, 
+ * behave, and exit the screen with specific motion patterns.
  */
 const variants = {
-  hidden: { y: "-100%", opacity: 0 }, // Start from above and fade in.
-  visible: { y: 0, opacity: 1 }, // End at the original position fully visible.
-  exit: { y: "-100%", opacity: 0 }, // Exit by moving up and fading out.
+  hidden: { y: "-100%", opacity: 0 },  // Hidden state, starting from above with no opacity.
+  visible: { y: 0, opacity: 1 },       // Visible state, fully opaque and in position.
+  exit: { y: "-100%", opacity: 0 },    // Exit state, moving up and fading out.
 };
 
 /**
  * Toast Component
  * ---------------
- * This functional component renders toast notifications by mapping over the toasts array in the context.
- * It uses framer-motion for smooth animations when the toasts appear or disappear.
- *
- * @component
- * @returns {JSX.Element} The rendered Toast component.
+ * This functional component renders a list of toast notifications from the ToastContext.
+ * Each toast is animated using framer-motion and can be dismissed by clicking the close button.
+ * 
+ * @returns {JSX.Element} The rendered Toast component containing toast notifications.
  */
 const Toast: React.FC = (): JSX.Element => {
   // Access the toasts array and removeToast function from the ToastContext.
   const { toasts, removeToast } = useContext<ToastContextType>(ToastContext);
 
-  // Render the toast notifications with animations.
   return (
-    <div className="fixed top-0 w-full z-50">
+    <section className="fixed top-0 w-full z-50" aria-live="polite" aria-atomic="true">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
-            key={toast.id} // Use unique key for each toast for React list rendering.
+            key={toast.id}  // Use a unique key for each toast notification.
             initial="hidden"
             animate="visible"
             exit="exit"
-            variants={variants} // Apply the defined variants for animation.
-            transition={{ duration: 0.5 }} // Set the animation duration to 0.5 seconds.
+            variants={variants}  // Apply the animation variants.
+            transition={{ duration: 0.5 }}  // Set the animation duration.
             className={`text-lg p-3 max-w-md m-auto rounded-lg shadow bg-opacity-90 mt-1 ${
               toast.messageType === "success"
-                ? "shadow-green-900 bg-green-600 text-green-50" // Style for success messages using existing classes.
-                : "shadow-red-900 bg-red-600 text-red-50" // Style for error messages using existing classes.
+                ? "shadow-green-900 bg-green-600 text-green-50"  // Styling for success toasts.
+                : "shadow-red-900 bg-red-600 text-red-50"        // Styling for error toasts.
             }`}
           >
             <div className="p-3 grid grid-cols-[auto,1fr] gap-2 items-center font-extralight">
               <div className="flex-grow">{toast.message}</div>
               <button
-                onClick={() => toast.id && removeToast(toast.id)} // Remove toast when the close button is clicked.
+                onClick={() => toast.id && removeToast(toast.id)}  // Remove the toast when the close button is clicked.
                 className="justify-self-end"
+                aria-label="Close notification"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -3970,7 +4235,7 @@ const Toast: React.FC = (): JSX.Element => {
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
+    </section>
   );
 };
 
@@ -3985,9 +4250,10 @@ File Path: components/LessonForm.tsx
  *
  * LessonForm Component
  * --------------------
- * Provides a form interface for creating or updating lesson entries with metadata like type, title, docs, code, slug, and multiple links.
- * This form dynamically loads lesson data for editing if a lesson ID is selected.
- * On successful operations, the component triggers toast notifications and provides a way to return to the lesson list view.
+ * This component provides a form interface for creating or updating lesson entries.
+ * The form includes fields for metadata such as type, title, documentation, code, slug, and links.
+ * If a lesson ID is selected, the form dynamically loads the lesson for editing.
+ * On successful operations, toast notifications are triggered and the user can return to the lesson list.
  */
 
 import React, { useState, useContext, useEffect } from "react";
@@ -3998,15 +4264,23 @@ import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
 // Generate the Amplify client with the schema
 const client = generateClient<Schema>();
 
+/**
+ * Props interface for the LessonForm component.
+ */
 interface LessonFormProps {
+  /**
+   * The ID of the selected lesson or null if no lesson is selected.
+   */
   selectedLessonId: string | null;
+
+  /**
+   * A function to reset the current selection (e.g., after saving or deleting).
+   */
   resetSelection: () => void;
 }
 
 /**
- * Link Interface
- * --------------
- * Defines the structure of a link object, which includes the link text and URL.
+ * Interface for representing a link with text and URL.
  */
 interface Link {
   text: string;
@@ -4016,24 +4290,26 @@ interface Link {
 /**
  * LessonForm Component
  * --------------------
- * Renders a form for creating a new lesson or updating an existing one, with fields for type, title, docs, code, and multiple links.
- * It also provides options for saving, updating, and deleting lesson entries.
+ * Renders a form for creating a new lesson or updating an existing one.
+ * The form includes fields for type, title, documentation, code, slug, and links.
+ * Users can save, update, or delete lessons.
+ * 
+ * @param {LessonFormProps} props - The props include the selected lesson ID and a reset function.
+ * @returns {JSX.Element} The rendered form for lesson management.
  */
-const LessonForm: React.FC<LessonFormProps> = ({
-  selectedLessonId,
-  resetSelection,
-}) => {
+const LessonForm: React.FC<LessonFormProps> = ({ selectedLessonId, resetSelection }) => {
+  // Form state for managing lesson properties
   const [type, setType] = useState<"setup" | "prereq" | "code">("setup");
   const [title, setTitle] = useState<string>("");
   const [docs, setDocs] = useState<string>("");
   const [code, setCode] = useState<string | undefined>(undefined);
   const [slug, setSlug] = useState<string>("");
-  const [links, setLinks] = useState<Link[]>([{ text: "", url: "" }]); // Initialize with a default empty link
+  const [links, setLinks] = useState<Link[]>([{ text: "", url: "" }]);
   const { addToast } = useContext<ToastContextType>(ToastContext);
 
   useEffect(() => {
     if (selectedLessonId && selectedLessonId !== "new") {
-      // Load existing lesson for editing
+      // Load the existing lesson for editing
       const fetchLesson = async () => {
         const { data, errors } = await client.models.LessonContent.get({
           id: selectedLessonId,
@@ -4049,7 +4325,6 @@ const LessonForm: React.FC<LessonFormProps> = ({
           setCode(data.code || undefined);
           setSlug(data.slug);
 
-          // Clean up data.links to match the Link[] type
           const cleanedLinks: Link[] = (data.links || [])
             .filter((link): link is NonNullable<typeof link> => link != null)
             .map((link) => ({
@@ -4063,13 +4338,13 @@ const LessonForm: React.FC<LessonFormProps> = ({
 
       fetchLesson();
     } else {
-      // Clear form fields for new lesson creation
+      // Clear form for new lesson creation
       setType("setup");
       setTitle("");
       setDocs("");
       setCode(undefined);
       setSlug("");
-      setLinks([{ text: "", url: "" }]); // Reset links to default
+      setLinks([{ text: "", url: "" }]);
     }
   }, [selectedLessonId, addToast]);
 
@@ -4086,26 +4361,25 @@ const LessonForm: React.FC<LessonFormProps> = ({
 
       let result;
       setSlug(formattedSlug);
+
       if (selectedLessonId && selectedLessonId !== "new") {
-        // Update existing lesson
         result = await client.models.LessonContent.update({
           id: selectedLessonId,
           type,
           title,
           docs,
           code,
-          slug: slug,
-          links, // Save links array
+          slug,
+          links,
         });
       } else {
-        // Create a new lesson
         result = await client.models.LessonContent.create({
           type,
           title,
           docs,
           code,
           slug: formattedSlug,
-          links, // Save links array
+          links,
           isOrdered: false,
           orderIndex: null,
         });
@@ -4160,24 +4434,20 @@ const LessonForm: React.FC<LessonFormProps> = ({
   };
 
   /**
-   * Updates the link data in the form based on the index and field type (text or URL).
+   * Updates a link's text or URL based on the field type.
    *
    * @param {number} index - The index of the link to update.
-   * @param {string} field - The field being updated ("text" or "url").
-   * @param {string} value - The value to update the field with.
+   * @param {string} field - The field to update ("text" or "url").
+   * @param {string} value - The new value for the specified field.
    */
-  const handleLinkChange = (
-    index: number,
-    field: "text" | "url",
-    value: string
-  ): void => {
+  const handleLinkChange = (index: number, field: "text" | "url", value: string): void => {
     const updatedLinks = [...links];
     updatedLinks[index] = { ...updatedLinks[index], [field]: value };
     setLinks(updatedLinks);
   };
 
   /**
-   * Removes a link from the form based on its index.
+   * Removes a link from the form.
    *
    * @param {number} index - The index of the link to remove.
    */
@@ -4187,48 +4457,49 @@ const LessonForm: React.FC<LessonFormProps> = ({
   };
 
   return (
-    <div className="bg-black bg-opacity-70 rounded-lg w-full p-2">
+    <section className="bg-black bg-opacity-70 rounded-lg w-full p-2" aria-labelledby="lesson-form-title">
       {/* Type Selection using Radio Buttons */}
-      <div className="mb-4">
-        <label className="block text-sm mb-2">Type</label>
-        <div className="flex space-x-4">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              value="setup"
-              checked={type === "setup"}
-              onChange={() => setType("setup")}
-              className="mr-2"
-            />
-            Setup
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              value="prereq"
-              checked={type === "prereq"}
-              onChange={() => setType("prereq")}
-              className="mr-2"
-            />
-            Prerequisite
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              value="code"
-              checked={type === "code"}
-              onChange={() => setType("code")}
-              className="mr-2"
-            />
-            Code
-          </label>
-        </div>
+      <header id="lesson-form-title" className="mb-4">
+        <h2 className="block text-sm mb-2">Lesson Type</h2>
+      </header>
+      <div className="flex space-x-4 mb-4">
+        <label className="flex items-center">
+          <input
+            type="radio"
+            value="setup"
+            checked={type === "setup"}
+            onChange={() => setType("setup")}
+            className="mr-2"
+          />
+          Setup
+        </label>
+        <label className="flex items-center">
+          <input
+            type="radio"
+            value="prereq"
+            checked={type === "prereq"}
+            onChange={() => setType("prereq")}
+            className="mr-2"
+          />
+          Prerequisite
+        </label>
+        <label className="flex items-center">
+          <input
+            type="radio"
+            value="code"
+            checked={type === "code"}
+            onChange={() => setType("code")}
+            className="mr-2"
+          />
+          Code
+        </label>
       </div>
 
       {/* Title Input */}
       <div className="mb-4">
-        <label className="block text-sm mb-2">Title</label>
+        <label className="block text-sm mb-2" htmlFor="lesson-title">Title</label>
         <input
+          id="lesson-title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -4239,8 +4510,9 @@ const LessonForm: React.FC<LessonFormProps> = ({
 
       {/* Documentation Input */}
       <div className="mb-4">
-        <label className="block text-sm mb-2">Documentation</label>
+        <label className="block text-sm mb-2" htmlFor="lesson-docs">Documentation</label>
         <textarea
+          id="lesson-docs"
           value={docs}
           onChange={(e) => setDocs(e.target.value)}
           className="form-input"
@@ -4251,8 +4523,9 @@ const LessonForm: React.FC<LessonFormProps> = ({
 
       {/* Code Input (Optional) */}
       <div className="mb-4">
-        <label className="block text-sm mb-2">Code (Optional)</label>
+        <label className="block text-sm mb-2" htmlFor="lesson-code">Code (Optional)</label>
         <textarea
+          id="lesson-code"
           value={code || ""}
           onChange={(e) => setCode(e.target.value)}
           className="form-input"
@@ -4289,11 +4562,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
             </button>
           </div>
         ))}
-        <button
-          className="btn btn-primary"
-          type="button"
-          onClick={addLink}
-        >
+        <button className="btn btn-primary" type="button" onClick={addLink}>
           Add Link
         </button>
       </div>
@@ -4325,7 +4594,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 
@@ -4338,10 +4607,20 @@ File Path: components/CodeBlock.tsx
 import React, { useEffect, useRef } from "react";
 import hljs from "highlight.js/lib/core";
 import typescript from "highlight.js/lib/languages/typescript";
-import "highlight.js/styles/github-dark.css"; // Use the same theme as in LessonPage
+import "highlight.js/styles/github-dark.css"; // Syntax highlighting theme
 
+/**
+ * Props interface for the CodeBlock component.
+ */
 interface CodeBlockProps {
+  /**
+   * The code string to be highlighted.
+   */
   code: string;
+
+  /**
+   * The programming language of the code, which determines the syntax highlighting rules.
+   */
   language: string;
 }
 
@@ -4349,19 +4628,20 @@ interface CodeBlockProps {
  * CodeBlock Component
  * --------------------
  * Renders a block of code with syntax highlighting.
- *
+ * The component uses Highlight.js to apply syntax highlighting based on the specified programming language.
+ * 
  * @param {CodeBlockProps} props - The component props containing the code and its language.
  * @returns {JSX.Element} The rendered code block with syntax highlighting.
  */
 const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   const codeRef = useRef<HTMLElement>(null);
 
-  // Register languages once
+  // Register TypeScript language once during the component's first render
   useEffect(() => {
     hljs.registerLanguage("typescript", typescript);
   }, []);
 
-  // Highlight the code after component mounts or updates
+  // Highlight the code block whenever the code or language changes
   useEffect(() => {
     if (codeRef.current) {
       hljs.highlightElement(codeRef.current);
@@ -4369,13 +4649,13 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   }, [code, language]);
 
   return (
-    <div className="p-1 bg-black">
-      <pre className="overflow-x-auto bg-gray-800">
+    <section className="p-1 bg-black" aria-label="Code block with syntax highlighting">
+      <pre className="overflow-x-auto bg-gray-800 rounded-md">
         <code ref={codeRef} className={`language-${language}`}>
           {code}
         </code>
       </pre>
-    </div>
+    </section>
   );
 };
 
@@ -4385,31 +4665,72 @@ export default CodeBlock;
 File Path: components/TableOfContents.tsx
 "use client";
 
+/**
+ * File Path: @/components/TableOfContents.tsx
+ *
+ * TableOfContents Component
+ * -------------------------
+ * This component provides a slide-in table of contents (TOC) for navigating through a sorted list of lessons.
+ * Users can toggle the visibility of the TOC, and it closes when a user clicks outside or selects a lesson link.
+ * The component ensures accessibility, prevents body scrolling when open, and handles focus management.
+ */
+
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 
+/**
+ * Interface representing a lesson object.
+ */
 interface Lesson {
+  /**
+   * The slug (URL-friendly identifier) for the lesson.
+   */
   slug: string;
+
+  /**
+   * The title of the lesson.
+   */
   title: string;
 }
 
+/**
+ * Props interface for the TableOfContents component.
+ */
 interface TableOfContentsProps {
+  /**
+   * Array of lessons sorted in the desired order.
+   */
   sortedLessonOrder: Lesson[];
 }
 
-const TableOfContents: React.FC<TableOfContentsProps> = ({
-  sortedLessonOrder,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const tocRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+/**
+ * TableOfContents Component
+ * -------------------------
+ * This component renders a slide-in table of contents (TOC) panel that displays a list of lessons.
+ * The user can toggle the TOC panel open or closed, and it automatically closes when the user
+ * clicks outside of it or selects a lesson link. The TOC panel provides keyboard and screen reader
+ * accessibility features and prevents scrolling while the TOC is open.
+ *
+ * @param {TableOfContentsProps} props - The component props containing a sorted list of lessons.
+ * @returns {JSX.Element} The rendered table of contents with a toggle button and interactive lesson links.
+ */
+const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) => {
+  const [isOpen, setIsOpen] = useState(false); // State to track the open/closed state of the TOC.
+  const tocRef = useRef<HTMLDivElement>(null); // Reference to the TOC panel.
+  const buttonRef = useRef<HTMLButtonElement>(null); // Reference to the toggle button.
 
-  // Toggle the open state
+  /**
+   * Toggles the TOC panel open or closed.
+   */
   const toggleOpen = () => setIsOpen((prev) => !prev);
 
-  // Close TOC when clicking outside
+  /**
+   * Closes the TOC if a click occurs outside the panel.
+   * 
+   * @param {MouseEvent} event - The click event.
+   */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -4432,18 +4753,18 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       document.body.style.overflow = "auto";
     }
 
-    // Cleanup
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.body.style.overflow = "auto";
     };
   }, [isOpen]);
 
-  // Close TOC when a link is clicked
+  /**
+   * Handles closing the TOC when a link is clicked and returns focus to the toggle button.
+   */
   const handleLinkClick = () => {
     setIsOpen(false);
-    // Return focus to the toggle button after closing
-    buttonRef.current?.focus();
+    buttonRef.current?.focus(); // Return focus to the toggle button after closing the TOC.
   };
 
   return (
@@ -4457,7 +4778,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
         aria-expanded={isOpen}
         aria-controls="toc-panel"
       >
-        {isOpen ? "" : "Table of Contents" }
+        {isOpen ? "" : "Table of Contents"}
       </button>
 
       {/* Overlay */}
@@ -4489,7 +4810,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
             aria-labelledby="toc-title"
           >
             {/* Header Inside TOC */}
-            <div className="flex justify-between items-center p-4 border-b">
+            <header className="flex justify-between items-center p-4 border-b">
               <h2 id="toc-title" className="text-lg font-extralight">
                 Table of Contents
               </h2>
@@ -4501,10 +4822,10 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
               >
                 <XCircleIcon className="size-8 text-white" />
               </button>
-            </div>
+            </header>
 
             {/* TOC Links */}
-            <nav className="p-4 text-left ">
+            <nav className="p-4 text-left">
               <ul>
                 {sortedLessonOrder.map((lesson) => (
                   <li key={lesson.slug} className="mb-3">
@@ -4530,6 +4851,8 @@ export default TableOfContents;
 
 ---
 File Path: contexts/ToastContext.tsx
+'use client';
+
 /**
  * File Path: contexts/ToastContext.tsx
  * 
@@ -4540,10 +4863,8 @@ File Path: contexts/ToastContext.tsx
  * automatic timeout and removal of toasts.
  */
 
-'use client';
-
 import React, { createContext, useState, useCallback, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID to generate unique identifiers for each toast.
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Toast Interface
@@ -4604,7 +4925,8 @@ interface ToastProviderProps {
 /**
  * ToastProvider Component
  * -----------------------
- * Encapsulates all children components that need access to toast functionalities.
+ * Provides the ToastContext to all children components, allowing them to trigger
+ * and manage toast notifications.
  * 
  * @component
  * @param {ToastProviderProps} props - The component props.
@@ -4616,10 +4938,9 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   /**
    * removeToast Function
    * --------------------
-   * Removes a toast based on its ID. Uses useCallback to memoize the function.
+   * Removes a toast notification from the list based on its ID.
    * 
-   * @function
-   * @param {string} id - The ID of the toast to remove.
+   * @param {string} id - The ID of the toast to be removed.
    */
   const removeToast = useCallback((id: string) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
@@ -4628,22 +4949,20 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   /**
    * addToast Function
    * -----------------
-   * Adds a new toast to the state. It also sets a timer to automatically remove the toast.
+   * Adds a new toast to the array of toasts and schedules its automatic removal.
    * 
-   * @function
    * @param {Toast} toast - The toast object to add.
    */
   const addToast = useCallback((toast: Toast) => {
     const toastWithDefaultId = { ...toast, id: toast.id || uuidv4() }; // Assign a default ID if not provided.
-    setToasts((prevToasts) => [...prevToasts, toastWithDefaultId]); // Append the new toast to the existing array.
+    setToasts((prevToasts) => [...prevToasts, toastWithDefaultId]); // Append the new toast to the array.
 
-    const duration = toast.duration || 3000; // Use provided duration or default to 3000ms.
-    setTimeout(() => { // Set a timeout to remove the toast after the specified duration.
-      removeToast(toastWithDefaultId.id!);
+    const duration = toast.duration || 3000; // Default to 3000ms if no duration is provided.
+    setTimeout(() => {
+      removeToast(toastWithDefaultId.id!); // Remove toast after duration.
     }, duration);
   }, [removeToast]);
 
-  // Providing the context value to all child components.
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       {children}
@@ -4653,6 +4972,8 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
 ---
 File Path: contexts/AuthContext.tsx
+"use client";
+
 /**
  * File Path: contexts/AuthContext.tsx
  * 
@@ -4663,15 +4984,13 @@ File Path: contexts/AuthContext.tsx
  * authentication status, user information, admin privileges, and user profile details. It also handles user sign-out.
  */
 
-"use client";
-
 import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
-import { AuthUser, fetchAuthSession } from "@aws-amplify/auth"; // Import types and functions for authentication from AWS Amplify.
+import { AuthUser, fetchAuthSession } from "@aws-amplify/auth";
 
 /**
  * UserProfile Interface
  * ---------------------
- * Defines the shape of the user profile object containing essential user information.
+ * Defines the structure of the user profile object containing essential user information.
  * 
  * @interface UserProfile
  * @property {string} firstName - The user's first name.
@@ -4714,7 +5033,7 @@ const AuthContext = createContext<AuthContextProps | null>(null);
  * useAuth Hook
  * ------------
  * Custom hook to provide easy access to the authentication context.
- * It throws an error if used outside of an `AuthProvider`, ensuring proper usage.
+ * Throws an error if used outside of an `AuthProvider`, ensuring proper usage.
  * 
  * @returns {AuthContextProps} The authentication context properties, including user info, admin status, sign-out function, and user profile.
  */
@@ -4746,7 +5065,7 @@ interface AuthProviderProps {
 /**
  * AuthProvider Component
  * ----------------------
- * Wraps all child components that require access to authentication context.
+ * Wraps all child components that require access to the authentication context.
  * Provides context values such as the authenticated user, sign-out function, admin status, and user profile.
  * 
  * @component
@@ -4754,86 +5073,61 @@ interface AuthProviderProps {
  * @returns {JSX.Element} The rendered AuthProvider component, making authentication context accessible to all children.
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, user, signOut }) => {
-  // State to track if the authenticated user has admin privileges.
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-
-  // State to track if the process of determining admin status is still loading.
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // State to store the user's profile information.
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false); // State to track admin privileges.
+  const [loading, setLoading] = useState<boolean>(true); // State to track the loading status of admin checks.
+  const [profile, setProfile] = useState<UserProfile | null>(null); // State to store the user's profile information.
 
   useEffect(() => {
     /**
      * checkAdminStatus Function
      * -------------------------
      * Checks if the authenticated user belongs to the "admin" group by fetching their session
-     * and examining the token payload. Also extracts and sets the user's profile information.
-     * Sets `isAdmin`, `profile`, and `loading` states accordingly.
+     * and examining the token payload. Extracts and sets the user's profile information.
      */
     async function checkAdminStatus() {
       if (user) {
         try {
           const session = await fetchAuthSession();
-          // Extract the ID token payload from the session.
           const idTokenPayload = session.tokens?.idToken?.payload;
 
           if (idTokenPayload) {
-            // Extract groups to determine admin status with type checking.
             const groupsRaw = idTokenPayload["cognito:groups"];
             let groups: string[] | undefined;
 
             if (Array.isArray(groupsRaw) && groupsRaw.every(item => typeof item === "string")) {
               groups = groupsRaw;
-            } else {
-              groups = undefined;
             }
 
             setIsAdmin(Array.isArray(groups) && groups.includes("admin"));
 
-            // Extract user profile information with type checking.
-            const firstName =
-              typeof idTokenPayload.given_name === "string" ? idTokenPayload.given_name : "";
-            const lastName =
-              typeof idTokenPayload.family_name === "string" ? idTokenPayload.family_name : "";
-            const emailAddress =
-              typeof idTokenPayload.email === "string" ? idTokenPayload.email : "";
-            const username =
-              typeof idTokenPayload.preferred_username === "string"
-                ? idTokenPayload.preferred_username
-                : "";
-
             const extractedProfile: UserProfile = {
-              firstName,
-              lastName,
-              emailAddress,
-              username,
+              firstName: typeof idTokenPayload.given_name === "string" ? idTokenPayload.given_name : "",
+              lastName: typeof idTokenPayload.family_name === "string" ? idTokenPayload.family_name : "",
+              emailAddress: typeof idTokenPayload.email === "string" ? idTokenPayload.email : "",
+              username: typeof idTokenPayload.preferred_username === "string" ? idTokenPayload.preferred_username : ""
             };
+
             setProfile(extractedProfile);
           } else {
-            // If there's no ID token payload, set profile to null.
             setProfile(null);
           }
         } catch (error) {
           console.error("Failed to fetch user session:", error);
-          // In case of an error, reset admin status and profile.
           setIsAdmin(false);
           setProfile(null);
         } finally {
-          setLoading(false); // Set loading to false when admin check is complete.
+          setLoading(false);
         }
       } else {
-        // If no user is authenticated, reset admin status and profile.
         setIsAdmin(false);
         setProfile(null);
-        setLoading(false); // No admin check is required.
+        setLoading(false);
       }
     }
 
     checkAdminStatus();
   }, [user]);
 
-  // Return the context provider wrapping all child components that need authentication context.
   return (
     <AuthContext.Provider value={{ user, signOut, isAdmin, loading, profile }}>
       {children}
@@ -4874,24 +5168,50 @@ export interface LessonContent {
 
 ---
 File Path: utils/amplifyServerUtils.ts
-import { cookies } from 'next/headers';
+// @/utils/amplifyServerUtils.ts
 
+/**
+ * This file provides utility functions for server-side operations using AWS Amplify
+ * with Next.js. It includes functions for managing server-side authentication
+ * using cookies and for retrieving the currently authenticated user.
+ */
+
+import { cookies } from 'next/headers';
 import { createServerRunner } from '@aws-amplify/adapter-nextjs';
 import { generateServerClientUsingCookies } from '@aws-amplify/adapter-nextjs/api';
 import { getCurrentUser } from 'aws-amplify/auth/server';
-
 import { type Schema } from '@/amplify/data/resource';
 import outputs from '@/amplify_outputs.json';
 
+/**
+ * Creates a server runner with the Amplify configuration.
+ * This function enables running server-side operations within the Amplify context.
+ * The configuration is derived from the `outputs` file generated by AWS Amplify.
+ */
 export const { runWithAmplifyServerContext } = createServerRunner({
   config: outputs,
 });
 
+/**
+ * Generates a server-side Amplify client that uses cookies for authentication.
+ * This client allows authenticated API requests from the server, using the provided cookies
+ * to maintain user sessions.
+ */
 export const cookiesClient = generateServerClientUsingCookies<Schema>({
   config: outputs,
   cookies,
 });
 
+/**
+ * AuthGetCurrentUserServer
+ * ------------------------
+ * Retrieves the currently authenticated user on the server by executing a server-side
+ * operation in the Amplify context. If the user is authenticated, their details are returned.
+ * If an error occurs or the user is not authenticated, it returns `null`.
+ *
+ * @async
+ * @returns {Promise<any | null>} - Returns the current authenticated user object if available, otherwise `null`.
+ */
 export async function AuthGetCurrentUserServer() {
   try {
     const currentUser = await runWithAmplifyServerContext({
@@ -4900,7 +5220,7 @@ export async function AuthGetCurrentUserServer() {
     });
     return currentUser;
   } catch (error) {
-    console.error(error);
+    console.error('Error retrieving the current user:', error);
     return null;
   }
 }
