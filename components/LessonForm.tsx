@@ -1,4 +1,3 @@
-// @/components/LessonForm.tsx
 "use client";
 
 /**
@@ -213,118 +212,132 @@ const LessonForm: React.FC<LessonFormProps> = ({ selectedLessonId, resetSelectio
   };
 
   return (
-    <section className="bg-black bg-opacity-70 rounded-lg w-full p-2" aria-labelledby="lesson-form-title">
-      {/* Type Selection using Radio Buttons */}
+    <section
+      className="bg-black bg-opacity-70 rounded-lg w-full p-2 flex flex-col h-full"
+      aria-labelledby="lesson-form-title"
+    >
+      {/* Header */}
       <header id="lesson-form-title" className="mb-4">
-        <h2 className="block text-sm mb-2">Lesson Type</h2>
+        <h2 className="block text-lg mb-2">Lesson Form</h2>
       </header>
-      <div className="flex space-x-4 mb-4">
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="setup"
-            checked={type === "setup"}
-            onChange={() => setType("setup")}
-            className="mr-2"
-          />
-          Setup
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="prereq"
-            checked={type === "prereq"}
-            onChange={() => setType("prereq")}
-            className="mr-2"
-          />
-          Prerequisite
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="code"
-            checked={type === "code"}
-            onChange={() => setType("code")}
-            className="mr-2"
-          />
-          Code
-        </label>
-      </div>
 
-      {/* Title Input */}
-      <div className="mb-4">
-        <label className="block text-sm mb-2" htmlFor="lesson-title">Title</label>
-        <input
-          id="lesson-title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="form-input"
-          placeholder="Enter lesson title"
-        />
-      </div>
-
-      {/* Documentation Input */}
-      <div className="mb-4">
-        <label className="block text-sm mb-2" htmlFor="lesson-docs">Documentation</label>
-        <textarea
-          id="lesson-docs"
-          value={docs}
-          onChange={(e) => setDocs(e.target.value)}
-          className="form-input"
-          placeholder="Enter documentation"
-          rows={8}
-        />
-      </div>
-
-      {/* Code Input (Optional) */}
-      <div className="mb-4">
-        <label className="block text-sm mb-2" htmlFor="lesson-code">Code (Optional)</label>
-        <textarea
-          id="lesson-code"
-          value={code || ""}
-          onChange={(e) => setCode(e.target.value)}
-          className="form-input"
-          placeholder="Enter code content"
-          rows={8}
-        />
-      </div>
-
-      {/* Links Section */}
-      <div className="mb-6">
-        <label className="block text-sm mb-2">Links</label>
-        {links.map((link, index) => (
-          <div key={index} className="flex items-center space-x-2">
+      {/* Scrollable content */}
+      <div className="flex-grow overflow-y-auto">
+        {/* Type Selection using Radio Buttons */}
+        <div className="flex space-x-4 mb-4">
+          <label className="flex items-center">
             <input
-              type="text"
-              value={link.text}
-              onChange={(e) => handleLinkChange(index, "text", e.target.value)}
-              className="form-input w-1/2"
-              placeholder="Link Text"
+              type="radio"
+              value="setup"
+              checked={type === "setup"}
+              onChange={() => setType("setup")}
+              className="mr-2"
             />
+            Setup
+          </label>
+          <label className="flex items-center">
             <input
-              type="text"
-              value={link.url}
-              onChange={(e) => handleLinkChange(index, "url", e.target.value)}
-              className="form-input w-1/2"
-              placeholder="Link URL"
+              type="radio"
+              value="prereq"
+              checked={type === "prereq"}
+              onChange={() => setType("prereq")}
+              className="mr-2"
             />
-            <button
-              className="btn btn-secondary ml-2 mb-3"
-              type="button"
-              onClick={() => removeLink(index)}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-        <button className="btn btn-primary" type="button" onClick={addLink}>
-          Add Link
-        </button>
+            Prerequisite
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="code"
+              checked={type === "code"}
+              onChange={() => setType("code")}
+              className="mr-2"
+            />
+            Code
+          </label>
+        </div>
+
+        {/* Title Input */}
+        <div className="mb-4">
+          <label className="block text-sm mb-2" htmlFor="lesson-title">
+            Title
+          </label>
+          <input
+            id="lesson-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="form-input"
+            placeholder="Enter lesson title"
+          />
+        </div>
+
+        {/* Documentation Input */}
+        <div className="mb-4">
+          <label className="block text-sm mb-2" htmlFor="lesson-docs">
+            Documentation
+          </label>
+          <textarea
+            id="lesson-docs"
+            value={docs}
+            onChange={(e) => setDocs(e.target.value)}
+            className="form-input"
+            placeholder="Enter documentation"
+            rows={8}
+          />
+        </div>
+
+        {/* Code Input (Optional) */}
+        <div className="mb-4">
+          <label className="block text-sm mb-2" htmlFor="lesson-code">
+            Code (Optional)
+          </label>
+          <textarea
+            id="lesson-code"
+            value={code || ""}
+            onChange={(e) => setCode(e.target.value)}
+            className="form-input"
+            placeholder="Enter code content"
+            rows={8}
+          />
+        </div>
+
+        {/* Links Section */}
+        <div className="mb-6">
+          <label className="block text-sm mb-2">Links</label>
+          {links.map((link, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-3">
+              <input
+                type="text"
+                value={link.text}
+                onChange={(e) => handleLinkChange(index, "text", e.target.value)}
+                className="form-input w-1/2"
+                placeholder="Link Text"
+              />
+              <input
+                type="text"
+                value={link.url}
+                onChange={(e) => handleLinkChange(index, "url", e.target.value)}
+                className="form-input w-1/2"
+                placeholder="Link URL"
+              />
+              <button
+                className="btn btn-secondary ml-2"
+                type="button"
+                onClick={() => removeLink(index)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button className="btn btn-primary" type="button" onClick={addLink}>
+            Add Link
+          </button>
+        </div>
       </div>
 
-      {/* Form Buttons */}
-      <div className="flex justify-between">
+      {/* Footer with buttons */}
+      <div className="flex justify-between mt-4">
         {selectedLessonId && selectedLessonId !== "new" ? (
           <>
             <button className="btn btn-secondary" onClick={handleDeleteLesson}>

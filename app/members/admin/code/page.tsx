@@ -1,13 +1,14 @@
 "use client";
 
 /**
- * File Path: @/app/members/admin/code/page.tsx
+ * File Path: app/members/admin/code/page.tsx
  * 
  * AdminCodePage Component
  * -----------------------
  * This component provides an interface for administrators to manage lessons. Administrators can create new lessons,
  * update existing ones, and reorder lesson items. The page integrates several components to handle these operations,
  * including lesson listing, CRUD operations, and lesson ordering.
+ * 
  */
 
 import React, { useState } from "react";
@@ -59,32 +60,34 @@ export default function AdminCodePage(): JSX.Element {
 
   // Render the main layout with sections for managing lessons and lesson order.
   return (
-    <main className="section-container w-full lg:flex">
-      {/* Section for managing the list of lessons or displaying the lesson form */}
-      <div className="text-left flex flex-col md:flex-row md:space-x-6 md:mr-1 w-full">
-        {displayState === "list" ? (
-          <div className="w-full">
-            <AllLessonsList onSelectItem={showLessonForm} /> {/* Render the list of all lessons */}
-            <button
-              className="btn btn-primary mt-4 lg:mt-2"
-              onClick={() => showLessonForm("new")}
-            >
-              Add New Lesson
-            </button>
+    <main className="w-full text-sm text-left min-h-screen">
+      <div className="p-2 flex flex-col lg:flex-row gap-4">
+        {/* Lesson Management Section */}
+        <section className="lg:w-[38%]">
+          <div className="lg:fixed lg:top-20 h-[calc(100vh-5rem)] lg:bottom-4 lg:left-4 lg:w-[38%] p-2 section-container rounded-lg">
+            {displayState === "list" ? (
+              <div className="w-full h-full">
+                <AllLessonsList onSelectItem={showLessonForm} />
+              </div>
+            ) : (
+              <div className="w-full h-full">
+                <LessonForm
+                  selectedLessonId={selectedLessonId}
+                  resetSelection={showLessonList}
+                />
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="w-full">
-            <LessonForm
-              selectedLessonId={selectedLessonId} // Pass the selected lesson ID for updating or null for creating a new lesson.
-              resetSelection={showLessonList} // Reset to the lesson list view after form submission or cancellation.
-            />
-          </div>
-        )}
-      </div>
+        </section>
 
-      {/* Section for managing the order of lessons */}
-      <div className="flex flex-col md:flex-row md:space-x-6 w-full md:mr-1 mt-8 lg:mt-0">
-        <LessonOrder /> {/* Render the LessonOrder component for reordering lessons */}
+        {/* Lesson Order Section */}
+        <section className="lg:w-[56%]">
+          <div className="lg:fixed lg:top-20 h-[calc(100vh-5rem)] lg:bottom-4 lg:left-[42%] lg:w-[56%] p-2 section-container rounded-lg">
+            <div className="w-full h-full">
+              <LessonOrder />
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );

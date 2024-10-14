@@ -112,7 +112,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
   };
 
   return (
-    <div className="bg-black bg-opacity-70 rounded-lg w-full">
+    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4 flex flex-col h-full">
       <div className="flex p-2 flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
         {/* Search Input */}
@@ -126,7 +126,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
         />
       </div>
       {/* List of Lessons */}
-      <div className="h-fit overflow-y-auto">
+      <div className="flex-grow overflow-y-auto">
         <ul className="text-sm mt-4 ml-6">
           {filteredLessons.map((lesson) => (
             <li
@@ -140,7 +140,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
           ))}
         </ul>
       </div>
-    </div>
+    </section>
   );
 };
 

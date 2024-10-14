@@ -7,9 +7,10 @@
  * -------------------------
  * This component provides a slide-in table of contents (TOC) for navigating through a sorted list of lessons.
  * Users can toggle the visibility of the TOC, and it closes when a user clicks outside or selects a lesson link.
- * The component ensures accessibility, prevents body scrolling when open, and handles focus management. 
- * Additionally, it highlights the current page being viewed and scrolls it into view when the TOC is opened.:
- 
+ * The component ensures accessibility, prevents body scrolling when open, and handles focus management.
+ * Additionally, it highlights the current page being viewed and scrolls it into view when the TOC is opened.
+ * 
+ * The layout has been updated to include a search box underneath the "Table of Contents" text.
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -56,6 +57,7 @@ interface TableOfContentsProps {
  * accessibility features and prevents scrolling while the TOC is open.
  *
  * It now highlights the current page being viewed and scrolls it into view when the TOC is opened.
+ * Additionally, it includes a search box underneath the "Table of Contents" text.
  *
  * @param {TableOfContentsProps} props - The component props containing a sorted list of lessons and the current slug.
  * @returns {JSX.Element} The rendered table of contents with a toggle button and interactive lesson links.
@@ -68,6 +70,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   const tocRef = useRef<HTMLDivElement>(null); // Reference to the TOC panel.
   const buttonRef = useRef<HTMLButtonElement>(null); // Reference to the toggle button.
   const currentLessonRef = useRef<HTMLAnchorElement>(null); // Reference to the current lesson link.
+  const [searchTerm, setSearchTerm] = useState<string>(""); // State for the search term
 
   /**
    * Toggles the TOC panel open or closed.
@@ -119,13 +122,25 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     buttonRef.current?.focus(); // Return focus to the toggle button after closing the TOC.
   };
 
+  /**
+   * Handler for the search input change.
+   */
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Filtered lessons based on the search term
+  const filteredLessons = sortedLessonOrder.filter((lesson) =>
+    lesson.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <>
       {/* Toggle Button */}
       <button
         ref={buttonRef}
         onClick={toggleOpen}
-        className="fixed w-16 md:w-28 top-16 md:top-16 left-0 z-0 text-white bg-black bg-opacity-100 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
+        className="fixed w-16 top-16 sm:top-14 left-0 z-0 text-white bg-black bg-opacity-100 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
         aria-label={isOpen ? "Close Table of Contents" : "Show Table of Contents"}
         aria-expanded={isOpen}
         aria-controls="toc-panel"
@@ -176,10 +191,21 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
               </button>
             </header>
 
+            {/* Search Box */}
+            <div className="p-4">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="form-input max-w-sm md:mt-0 md:ml-4 p-2 rounded"
+              />
+            </div>
+
             {/* TOC Links */}
             <nav className="p-4 text-left overflow-y-auto flex-grow">
               <ul>
-                {sortedLessonOrder.map((lesson) => {
+                {filteredLessons.map((lesson) => {
                   const isCurrent = lesson.slug === currentSlug;
                   return (
                     <li key={lesson.slug} className="mb-3">

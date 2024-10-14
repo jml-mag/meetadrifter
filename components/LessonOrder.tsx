@@ -1,4 +1,3 @@
-// components/LessonOrder.tsx
 "use client";
 
 import React, { useState, useEffect, useContext } from "react";
@@ -36,6 +35,8 @@ interface LessonItem {
 export default function LessonOrder(): JSX.Element {
   const [unorderedItems, setUnorderedItems] = useState<LessonItem[]>([]);
   const [orderedItems, setOrderedItems] = useState<LessonItem[]>([]);
+  const [initialOrderedItems, setInitialOrderedItems] = useState<LessonItem[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
   const { addToast } = useContext<ToastContextType>(ToastContext);
 
   /**
@@ -45,7 +46,7 @@ export default function LessonOrder(): JSX.Element {
     const fetchItems = async () => {
       try {
         const { data: lessons } = await client.models.LessonContent.list();
-  
+
         if (lessons) {
           const unordered = lessons
             .filter(item => !item.isOrdered)
@@ -55,7 +56,7 @@ export default function LessonOrder(): JSX.Element {
               slug: item.slug,
               isOrdered: item.isOrdered,
             }));
-  
+
           const ordered = lessons
             .filter(item => item.isOrdered)
             .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
@@ -65,40 +66,57 @@ export default function LessonOrder(): JSX.Element {
               slug: item.slug,
               isOrdered: item.isOrdered,
             }));
-  
+
           setUnorderedItems(unordered);
           setOrderedItems(ordered);
+          setInitialOrderedItems(ordered);
         }
       } catch (err) {
         console.error("Error fetching lesson items:", err);
         addToast({ messageType: "error", message: "Failed to fetch lesson items." });
       }
     };
-  
+
     fetchItems();
   }, [addToast]);
+
+  /**
+   * Compare the current orderedItems with the initialOrderedItems to detect changes.
+   */
+  useEffect(() => {
+    if (orderedItems.length !== initialOrderedItems.length) {
+      setHasChanges(true);
+    } else {
+      const isSameOrder = orderedItems.every((item, index) => item.id === initialOrderedItems[index].id);
+      setHasChanges(!isSameOrder);
+    }
+  }, [orderedItems, initialOrderedItems]);
 
   /**
    * Handle saving the updated lesson order to the backend.
    */
   const handleSaveOrder = async (): Promise<void> => {
     try {
-      const sortedItems = [...orderedItems].sort((a, b) => {
-        return orderedItems.indexOf(a) - orderedItems.indexOf(b);
-      });
-  
-      const results = await Promise.all(
-        sortedItems.map((item, index) =>
+      const sortedItems = orderedItems.map((item, index) => ({
+        ...item,
+        orderIndex: index,
+        isOrdered: true,
+      }));
+
+      await Promise.all(
+        sortedItems.map((item) =>
           client.models.LessonContent.update({
             id: item.id,
             isOrdered: true,
-            orderIndex: index,
+            orderIndex: item.orderIndex,
           })
         )
       );
-  
-      console.log("Saved order:", results);
+
       addToast({ messageType: "success", message: "Lesson order saved successfully!" });
+      // Update initialOrderedItems to the new order after saving
+      setInitialOrderedItems(sortedItems);
+      setHasChanges(false);
     } catch (err) {
       console.error("Error saving lesson order:", err);
       addToast({ messageType: "error", message: "Failed to save lesson order." });
@@ -106,12 +124,12 @@ export default function LessonOrder(): JSX.Element {
   };
 
   return (
-    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between gap-8">
+    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full h-full flex flex-col">
+      <div className="flex-grow flex flex-col md:flex-row md:justify-between gap-8">
         {/* Unordered Lessons Section */}
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/2 flex flex-col">
           <h2 className="text-lg font-semibold mb-2">Unordered Lessons</h2>
-          <ul className="text-sm space-y-2 overflow-scroll max-h-[50vh]" role="list">
+          <ul className="text-sm space-y-2 flex-grow overflow-y-auto" role="list">
             {unorderedItems.map(item => (
               <li
                 key={item.id}
@@ -119,6 +137,7 @@ export default function LessonOrder(): JSX.Element {
                 onClick={() => {
                   setOrderedItems([...orderedItems, item]);
                   setUnorderedItems(unorderedItems.filter(unorderedItem => unorderedItem.id !== item.id));
+                  setHasChanges(true);
                 }}
               >
                 {item.title}
@@ -126,31 +145,34 @@ export default function LessonOrder(): JSX.Element {
             ))}
           </ul>
         </div>
-
+        
         {/* Ordered Lessons Section */}
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/2 flex flex-col">
           <h2 className="text-lg font-semibold mb-2">Ordered Lessons</h2>
           <Reorder.Group
             as="ul"
             axis="y"
             values={orderedItems}
-            onReorder={setOrderedItems}
-            className="text-sm space-y-2 overflow-scroll max-h-[50vh]"
+            onReorder={(newOrder) => {
+              setOrderedItems(newOrder);
+              setHasChanges(true);
+            }}
+            className="text-sm space-y-2 flex-grow overflow-y-auto max-h-[calc(100vh-16rem)]"
             role="list"
           >
             {orderedItems.map(item => (
               <Reorder.Item
                 key={item.id}
                 value={item}
-                className="bg-green-800 hover:bg-green-700 text-white p-2 rounded cursor-move"
+                className="bg-blue-800 hover:bg-blue-700 text-white p-2 rounded cursor-move"
               >
                 {item.title}
               </Reorder.Item>
             ))}
           </Reorder.Group>
-          {orderedItems.length > 0 && (
+          {hasChanges && (
             <button
-              className="btn btn-primary mt-4 w-full"
+              className="m-4 btn bg-green-600 hover:bg-green-700 border border-green-500 text-white"
               onClick={handleSaveOrder}
             >
               Save Changes
