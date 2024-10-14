@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * File Path: app/members/contact/RecentContacts.tsx
+ * File Path: components/RecentContacts.tsx
  * 
  * RecentContacts Component
  * ------------------------

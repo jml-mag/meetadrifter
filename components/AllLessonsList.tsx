@@ -112,7 +112,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
   };
 
   return (
-    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4 flex flex-col h-full">
+    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4 flex flex-col h-[calc(100%-70px)]">
       <div className="flex p-2 flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
         {/* Search Input */}
