@@ -28,6 +28,7 @@ interface NavLink {
 const membersNavLinks: NavLink[] = [
   { href: "/members", label: "Members Home" },
   { href: "/members/code", label: "Code" },
+  { href: "/members/contact", label: "Contact" },
 ];
 
 const adminNavLinks: NavLink[] = [

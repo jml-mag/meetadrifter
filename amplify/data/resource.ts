@@ -50,6 +50,18 @@ const schema = a.schema({
     allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create votes and read
   ]),
 
+  // ContactMessage model definition
+  ContactMessage: a.model({
+    firstName: a.string().required(),      // User's first name
+    lastName: a.string().required(),       // User's last name
+    emailAddress: a.string().required(),   // User's email address
+    message: a.string().required(),        // The message content
+    userId: a.string().required(),         // User's ID
+  }).authorization((allow) => [
+    allow.group('admin').to(['read', 'delete']),                // Admins can read and delete messages
+    allow.authenticated('userPools').to(['create']),            // Only authenticated users can create messages
+  ]),
+
   // SiteNotification model definition
   SiteNotification: a.model({
     message: a.string().required(), // Notification message

@@ -61,7 +61,7 @@ export default function Home(): JSX.Element {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2">
+    <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2 text-sm">
       <div className="w-full max-w-5xl">
         {/* Display the site notification if available */}
         {notification && (
@@ -81,7 +81,7 @@ export default function Home(): JSX.Element {
             {loading ? (
               <p className="text-center text-gray-700">Loading profile...</p>
             ) : profile ? (
-              <div className="bg-black bg-opacity-70 p-4 rounded-lg">
+              <div className="bg-black bg-opacity-70 p-4 rounded-lg text-xs text-left">
                 <div className="">
                   <p className="mb-2">
                     <strong>Username:</strong> {profile.username}
@@ -102,7 +102,7 @@ export default function Home(): JSX.Element {
               </div>
             ) : (
               <p className="text-center text-gray-700">
-                No profile information available.
+                Loading Profile Information...
               </p>
             )}
           </div>
