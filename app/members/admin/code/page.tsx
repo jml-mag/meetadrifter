@@ -8,7 +8,6 @@
  * This component provides an interface for administrators to manage lessons. Administrators can create new lessons,
  * update existing ones, and reorder lesson items. The page integrates several components to handle these operations,
  * including lesson listing, CRUD operations, and lesson ordering.
- * 
  */
 
 import React, { useState } from "react";
@@ -44,7 +43,7 @@ export default function AdminCodePage(): JSX.Element {
   /**
    * Displays the lesson form for creating a new lesson or editing an existing lesson.
    * 
-   * @param {string | null} lessonId - The ID of the lesson to edit, or "new" for creating a new lesson.
+   * @param {string | null} lessonId - The ID of the lesson to edit, or null for creating a new lesson.
    */
   const showLessonForm = (lessonId: string | null): void => {
     setSelectedLessonId(lessonId);
@@ -67,10 +66,23 @@ export default function AdminCodePage(): JSX.Element {
           <div className="lg:fixed lg:top-20 h-[calc(100vh-5rem)] lg:bottom-4 lg:left-4 lg:w-[38%] p-2 section-container rounded-lg">
             {displayState === "list" ? (
               <div className="w-full h-full">
+                {/* Header with Add New Button */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="heading text-lg">All Lessons</h2>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => showLessonForm(null)}
+                    aria-label="Add new lesson"
+                  >
+                    Add New
+                  </button>
+                </div>
+                {/* All Lessons List */}
                 <AllLessonsList onSelectItem={showLessonForm} />
               </div>
             ) : (
               <div className="w-full h-full">
+                {/* Lesson Form for Creating or Editing Lessons */}
                 <LessonForm
                   selectedLessonId={selectedLessonId}
                   resetSelection={showLessonList}
