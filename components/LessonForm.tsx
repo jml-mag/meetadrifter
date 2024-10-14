@@ -311,14 +311,14 @@ const LessonForm: React.FC<LessonFormProps> = ({ selectedLessonId, resetSelectio
                 type="text"
                 value={link.text}
                 onChange={(e) => handleLinkChange(index, "text", e.target.value)}
-                className="form-input w-1/2"
+                className="form-input w-1/2 my-2"
                 placeholder="Link Text"
               />
               <input
                 type="text"
                 value={link.url}
                 onChange={(e) => handleLinkChange(index, "url", e.target.value)}
-                className="form-input w-1/2"
+                className="form-input w-1/2 my-2"
                 placeholder="Link URL"
               />
               <button
