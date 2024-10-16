@@ -1,4 +1,5 @@
 File Path: amplify/backend.ts
+// @/ampify/backend.ts
 /**
  * Backend Configuration
  * ---------------------
@@ -20,11 +21,13 @@ import { manageUsers } from './functions/manage-users/resource'; // User managem
  * 
  * @returns {void} This function does not return a value.
  */
+/*
 defineBackend({
   auth, // Auth resource setup
   data, // Data resource setup
   manageUsers, // User management functionality
 });
+*/
 
 /**
  * (Optional) Backend Setup with AWS SES Email Configuration
@@ -32,7 +35,7 @@ defineBackend({
  * This commented section includes optional setup to integrate AWS SES for production email 
  * using an Email Identity. Uncomment and configure as needed.
  */
-/*
+
 import { Stack } from "aws-cdk-lib/core"; // AWS CDK core library
 import { EmailIdentity } from "aws-cdk-lib/aws-ses"; // AWS SES Email Identity utility
 
@@ -51,7 +54,7 @@ const authStack = Stack.of(cfnUserPool);
 const email = EmailIdentity.fromEmailIdentityName(
   authStack,
   "EmailIdentity",
-  process.env.EMAIL || '' // Email address to be used for SES
+  "no-reply@meetadrifter.com" // Email address to be used for SES
 );
 
 // Set the email configuration for the Cognito user pool
@@ -59,11 +62,10 @@ cfnUserPool.emailConfiguration = {
   emailSendingAccount: "DEVELOPER",
   sourceArn: email.emailIdentityArn, // ARN for the SES Email Identity
 };
-*/
 
 ---
 File Path: amplify/auth/resource.ts
-/**
+/** @/amplify/auth/resource.ts
  * Authentication Resource Configuration
  * -------------------------------------
  * This module configures the authentication resource for the application using AWS Amplify Gen 2.
@@ -133,6 +135,7 @@ export const auth = defineAuth({
 
 ---
 File Path: amplify/functions/manage-users/resource.ts
+// @/amplify/functions/manage-users/resource.ts
 import { defineFunction } from "@aws-amplify/backend";
 
 /**
@@ -197,7 +200,7 @@ export const manageUsers = defineFunction({
 ---
 File Path: amplify/functions/manage-users/handler.ts
 /**
- * File: amplify/functions/manage-users/resource.ts
+ * File: amplify/functions/manage-users/handler.ts
  * 
  * Description:
  * -------------
@@ -415,6 +418,18 @@ const schema = a.schema({
     option: a.string().required(),  // The selected poll option
   }).authorization((allow) => [
     allow.authenticated('userPools').to(['create', 'read']), // Authenticated users can create votes and read
+  ]),
+
+  // ContactMessage model definition
+  ContactMessage: a.model({
+    firstName: a.string().required(),      // User's first name
+    lastName: a.string().required(),       // User's last name
+    emailAddress: a.string().required(),   // User's email address
+    message: a.string().required(),        // The message content
+    userId: a.string().required(),         // User's ID
+  }).authorization((allow) => [
+    allow.group('admin').to(['read', 'delete']),                // Admins can read and delete messages
+    allow.authenticated('userPools').to(['create']),            // Only authenticated users can create messages
   ]),
 
   // SiteNotification model definition
@@ -635,28 +650,34 @@ File Path: app/page.tsx
 
 /**
  * File Path: app/page.tsx
- * 
+ *
  * Home Component
  * --------------
  * This component renders the home page of the application, including animated text elements and a footer.
- * It leverages Framer Motion for animations that are triggered when the component is mounted. The animations 
+ * It leverages Framer Motion for animations that are triggered when the component is mounted. The animations
  * include text sliding in, lines appearing sequentially, and the footer fading in.
  */
 
 import { useEffect, useState, MouseEvent } from "react";
-import { motion, useAnimation, AnimationControls, Variants } from "framer-motion";
+import {
+  motion,
+  useAnimation,
+  AnimationControls,
+  Variants,
+} from "framer-motion";
 import { climate_crisis, tiltWarp } from "@/app/fonts"; // Import custom fonts
 import Link from "next/link";
 import { Background } from "@/components/Background";
+import  Pitch from "@/components/Pitch";
 
 /**
  * Home Component
- * 
+ *
  * @remarks
  * This component sets up the main layout for the home page and integrates various animations
  * using Framer Motion. It ensures that the animations play sequentially on component mount.
  * The home page contains animated lines of text, a clickable footer, and a background component.
- * 
+ *
  * @returns {JSX.Element} The rendered home page with animations and interactive elements.
  */
 export default function Home(): JSX.Element {
@@ -667,6 +688,7 @@ export default function Home(): JSX.Element {
   const line2Controls: AnimationControls = useAnimation();
   const line3Controls: AnimationControls = useAnimation();
   const footerControls: AnimationControls = useAnimation();
+  const pitchControls: AnimationControls = useAnimation(); // New animation controls for "pitch goes here"
 
   // State to track if the component has mounted and if animations have completed.
   const [mounted, setMounted] = useState<boolean>(false);
@@ -702,14 +724,34 @@ export default function Home(): JSX.Element {
 
       await footerControls.start("visible");
       setAnimationsComplete(true);
+
+      // After footer animation is done, wait for 750ms and fade out the lines.
+      await new Promise((resolve) => setTimeout(resolve, 750));
+      await Promise.all([
+        line1Controls.start("hidden"),
+        line2Controls.start("hidden"),
+        line3Controls.start("hidden"),
+      ]);
+
+      // Quickly fade in the "pitch goes here" div
+      await pitchControls.start("visible");
     };
 
     sequenceAnimations();
-  }, [mounted, centerControls, topControls, line1Controls, line2Controls, line3Controls, footerControls]);
+  }, [
+    mounted,
+    centerControls,
+    topControls,
+    line1Controls,
+    line2Controls,
+    line3Controls,
+    footerControls,
+    pitchControls,
+  ]);
 
   /**
    * Handles clicks on links and prevents navigation until animations are complete.
-   * 
+   *
    * @param e - The mouse event triggered by clicking a link.
    */
   const handleClick = (e: MouseEvent<HTMLAnchorElement>): void => {
@@ -724,7 +766,11 @@ export default function Home(): JSX.Element {
       opacity: 1,
       transition: { type: "spring", stiffness: 300, damping: 25 },
     },
-    slideOut: { x: "100vw", opacity: 1, transition: { duration: 0.3, ease: "easeIn" } },
+    slideOut: {
+      x: "100vw",
+      opacity: 1,
+      transition: { duration: 0.3, ease: "easeIn" },
+    },
   };
 
   // Animation variants for the top text.
@@ -745,6 +791,12 @@ export default function Home(): JSX.Element {
     visible: { opacity: 1, transition: { duration: 0.5, ease: "easeIn" } },
   };
 
+  // Animation variants for the "pitch" div.
+  const pitchVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.3, ease: "easeIn" } },
+  };
+
   // Render the home page structure.
   return (
     <>
@@ -762,7 +814,7 @@ export default function Home(): JSX.Element {
 
         {/* Center text with slide-in and slide-out animations */}
         <motion.div
-          className={`${climate_crisis.className} text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white`}
+          className={`${climate_crisis.className} fixed top-1/2 w-full transform -translate-x-1/2 -translate-y-1/2 text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white text-center`}
           variants={centerVariants}
           initial="hidden"
           animate={centerControls}
@@ -771,19 +823,43 @@ export default function Home(): JSX.Element {
         </motion.div>
 
         {/* Animated lines of text with fade-in effect */}
-        <div className={`${tiltWarp.className} leading-relaxed text-xl sm:text-3xl md:text-4xl md:leading-loose`}>
-          <motion.div variants={lineVariants} initial="hidden" animate={line1Controls}>
+        <div
+          className={`${tiltWarp.className} fixed top-1/3 left-4 lg:left-1/3 lg-left-0 w-full text-xl sm:text-3xl md:text-4xl md:leading-loose text-left`}
+        >
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line1Controls}
+          >
             The website you join
           </motion.div>
-          <motion.div variants={lineVariants} initial="hidden" animate={line2Controls}>
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line2Controls}
+          >
             so that you can build for yourself
           </motion.div>
-          <motion.div variants={lineVariants} initial="hidden" animate={line3Controls}>
+          <motion.div
+            variants={lineVariants}
+            initial="hidden"
+            animate={line3Controls}
+          >
             the website you just joined.
           </motion.div>
         </div>
-
-        {/* Footer with fade-in animation */}
+        <div className="fixed top-16 bottom-10 left-0 right-0 overflow-y-scroll overflow-x-auto">
+          {/* Pitch text fade in animation */}
+          <motion.div
+            className="w-full text-sm"
+            variants={pitchVariants}
+            initial="hidden"
+            animate={pitchControls}
+          >
+            <Pitch />
+          </motion.div>
+        </div>
+        {/* Login button with fade-in animation */}
         <motion.div
           className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
           variants={footerVariants}
@@ -1233,7 +1309,7 @@ export default function Home(): JSX.Element {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2">
+    <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2 text-sm">
       <div className="w-full max-w-5xl">
         {/* Display the site notification if available */}
         {notification && (
@@ -1253,7 +1329,7 @@ export default function Home(): JSX.Element {
             {loading ? (
               <p className="text-center text-gray-700">Loading profile...</p>
             ) : profile ? (
-              <div className="bg-black bg-opacity-70 p-4 rounded-lg">
+              <div className="bg-black bg-opacity-70 p-4 rounded-lg text-xs text-left">
                 <div className="">
                   <p className="mb-2">
                     <strong>Username:</strong> {profile.username}
@@ -1274,13 +1350,206 @@ export default function Home(): JSX.Element {
               </div>
             ) : (
               <p className="text-center text-gray-700">
-                No profile information available.
+                Loading Profile Information...
               </p>
             )}
           </div>
           {/* Render Poll Component */}
           <Poll />
         </div>
+      </div>
+    </main>
+  );
+}
+
+---
+File Path: app/members/contact/page.tsx
+"use client";
+
+/**
+ * File Path: app/members/contact/page.tsx
+ * 
+ * ContactPage Component
+ * ---------------------
+ * This component renders a contact form for authenticated users. It retrieves user information using the useAuth hook
+ * and allows users to submit a message. Upon submission, the form fades out, and then the thank-you message fades in.
+ * The form submission saves the user's first name, last name, email address, and message to the `ContactMessage` data model.
+ */
+
+import React, { useState, useEffect } from "react";
+import { generateClient } from "aws-amplify/data"; // Import Amplify Data Client
+import type { Schema } from "@/amplify/data/resource"; // Import the data schema type
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook to access authentication context
+import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion for animations
+import { useRouter } from "next/navigation"; // For redirecting if needed
+
+// Generate an Amplify client instance with the defined schema
+const client = generateClient<Schema>();
+
+/**
+ * ContactPage Component
+ * ---------------------
+ * Renders a contact form that allows authenticated users to send messages.
+ * The form captures the user's first name, last name, email, and message.
+ * On successful submission, the form fades out, and then the thank-you message fades in.
+ * 
+ * @returns {JSX.Element} The rendered ContactPage component.
+ */
+export default function ContactPage(): JSX.Element {
+  const { user, profile, loading } = useAuth(); // Access user and profile information
+  const [message, setMessage] = useState<string>(""); // State to manage the message input
+  const [isLoading, setIsLoading] = useState<boolean>(false); // State to manage loading state
+  const [error, setError] = useState<string | null>(null); // State to manage error messages
+  const [submitted, setSubmitted] = useState<boolean>(false); // State to track form submission
+
+  // Redirect unauthenticated users (optional)
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      // If not loading and user is not authenticated, redirect to login
+      router.push("/login");
+    }
+  }, [loading, user, router]);
+
+  /**
+   * Helper function to capitalize the first letter of a string.
+   * 
+   * @param {string} str - The string to capitalize.
+   * @returns {string} The capitalized string.
+   */
+  const capitalizeFirstLetter = (str: string): string => {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  /**
+   * Handles form submission by saving the message to the ContactMessage model.
+   * 
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+   */
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    // Ensure profile is available
+    if (!profile) {
+      setError("User profile information is not available.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Create a new contact message entry
+      const { errors } = await client.models.ContactMessage.create({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        emailAddress: profile.emailAddress,
+        message,
+        userId: user?.username || "",
+      });
+
+      if (errors && errors.length > 0) {
+        console.error("Failed to submit message:", errors);
+        setError("An error occurred while sending your message. Please try again.");
+      } else {
+        // Show thank-you message
+        setSubmitted(true);
+      }
+    } catch (err) {
+      console.error("Error submitting message:", err);
+      setError("An unexpected error occurred. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Show loading state if authentication is still loading
+  if (loading) {
+    return (
+      <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2">
+        <div className="w-full max-w-3xl">
+          <section className="section-container p-2">
+            <h2 className="heading">Contact Us</h2>
+            <p className="mb-4">Loading your information...</p>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  // If user is not authenticated, return an empty fragment
+  if (!user || !profile) {
+    return <></>; // Returning an empty fragment instead of null
+  }
+
+  return (
+    <main className="flex min-h-screen flex-col items-center py-8 mx-2 sm:mx-1 md:mx-2">
+      <div className="w-full max-w-3xl">
+        <section className="section-container p-2">
+          <h2 className="heading">Contact</h2>
+          <div className="bg-black min-h-80 bg-opacity-70 p-4 rounded-lg w-full">
+            <div className="relative">
+              {/* Wrap both components in a single AnimatePresence */}
+              <AnimatePresence mode="wait">
+                {!submitted && (
+                  <motion.form
+                    key="contact-form"
+                    onSubmit={handleSubmit}
+                    className="flex flex-col space-y-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {/* Message Textarea */}
+                    <div>
+                      <label htmlFor="message" className="block text-white text-xs mb-2">
+                        Your Message
+                      </label>
+                      <textarea
+                        id="message"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        className="form-input"
+                        placeholder="Enter your message here..."
+                        rows={8}
+                        required
+                      />
+                    </div>
+                    {/* Error Message */}
+                    {error && <p className="text-red-500">{error}</p>}
+                    {/* Submit Button */}
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Sending..." : "Send Message"}
+                      </button>
+                    </div>
+                  </motion.form>
+                )}
+                {submitted && (
+                  <motion.div
+                    key="thank-you-message"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="p-4 text-center"
+                  >
+                    <p className=" text-white">
+                      Thanks for your message, {capitalizeFirstLetter(profile.firstName)}. Expect to hear back via email to {profile.emailAddress}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );
@@ -1358,7 +1627,7 @@ export default function AdminLayout({
 File Path: app/members/admin/page.tsx
 /**
  * File Path: @/app/members/admin/page.tsx
- * 
+ *
  * Admin Page Component
  * --------------------
  * This component defines the admin page for managing polls. It provides sections for listing existing
@@ -1367,15 +1636,15 @@ File Path: app/members/admin/page.tsx
  */
 
 import CurrentPoll from "@/components/CurrentPoll";
-
+import RecentContacts from "@/components/RecentContacts";
 /**
  * AdminPage Component
- * 
+ *
  * @remarks
  * This component renders the main admin dashboard, focused on poll management. It displays existing polls
  * via the `CurrentPoll` component and ensures that the layout is responsive for an optimal user experience
  * across different screen sizes.
- * 
+ *
  * @returns {JSX.Element} The rendered AdminPage component with sections for managing polls.
  */
 export default function AdminPage(): JSX.Element {
@@ -1383,8 +1652,10 @@ export default function AdminPage(): JSX.Element {
     <main className="w-full justify-center">
       <div className="">
         <div className="md:flex md:justify-around">
-          {/* Section for listing existing polls */}
-          <div className="md:w-full">
+          <div className="md:w-full m-1">
+            <RecentContacts />
+          </div>
+          <div className="md:w-full m-1">
             <CurrentPoll />
           </div>
         </div>
@@ -1398,7 +1669,7 @@ File Path: app/members/admin/code/page.tsx
 "use client";
 
 /**
- * File Path: @/app/members/admin/code/page.tsx
+ * File Path: app/members/admin/code/page.tsx
  * 
  * AdminCodePage Component
  * -----------------------
@@ -1440,7 +1711,7 @@ export default function AdminCodePage(): JSX.Element {
   /**
    * Displays the lesson form for creating a new lesson or editing an existing lesson.
    * 
-   * @param {string | null} lessonId - The ID of the lesson to edit, or "new" for creating a new lesson.
+   * @param {string | null} lessonId - The ID of the lesson to edit, or null for creating a new lesson.
    */
   const showLessonForm = (lessonId: string | null): void => {
     setSelectedLessonId(lessonId);
@@ -1456,32 +1727,47 @@ export default function AdminCodePage(): JSX.Element {
 
   // Render the main layout with sections for managing lessons and lesson order.
   return (
-    <main className="section-container w-full lg:flex">
-      {/* Section for managing the list of lessons or displaying the lesson form */}
-      <div className="text-left flex flex-col md:flex-row md:space-x-6 md:mr-1 w-full">
-        {displayState === "list" ? (
-          <div className="w-full">
-            <AllLessonsList onSelectItem={showLessonForm} /> {/* Render the list of all lessons */}
-            <button
-              className="btn btn-primary mt-4 lg:mt-2"
-              onClick={() => showLessonForm("new")}
-            >
-              Add New Lesson
-            </button>
+    <main className="w-full text-sm text-left min-h-screen">
+      <div className="p-2 flex flex-col lg:flex-row gap-4">
+        {/* Lesson Management Section */}
+        <section className="lg:w-[38%]">
+          <div className="lg:fixed lg:top-20 h-[calc(100vh-5rem)] lg:bottom-4 lg:left-4 lg:w-[38%] p-2 section-container rounded-lg">
+            {displayState === "list" ? (
+              <div className="w-full h-full">
+                {/* Header with Add New Button */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="heading text-lg">All Lessons</h2>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => showLessonForm(null)}
+                    aria-label="Add new lesson"
+                  >
+                    Add New
+                  </button>
+                </div>
+                {/* All Lessons List */}
+                <AllLessonsList onSelectItem={showLessonForm} />
+              </div>
+            ) : (
+              <div className="w-full h-full">
+                {/* Lesson Form for Creating or Editing Lessons */}
+                <LessonForm
+                  selectedLessonId={selectedLessonId}
+                  resetSelection={showLessonList}
+                />
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="w-full">
-            <LessonForm
-              selectedLessonId={selectedLessonId} // Pass the selected lesson ID for updating or null for creating a new lesson.
-              resetSelection={showLessonList} // Reset to the lesson list view after form submission or cancellation.
-            />
-          </div>
-        )}
-      </div>
+        </section>
 
-      {/* Section for managing the order of lessons */}
-      <div className="flex flex-col md:flex-row md:space-x-6 w-full md:mr-1 mt-8 lg:mt-0">
-        <LessonOrder /> {/* Render the LessonOrder component for reordering lessons */}
+        {/* Lesson Order Section */}
+        <section className="lg:w-[56%]">
+          <div className="lg:fixed lg:top-20 h-[calc(100vh-5rem)] lg:bottom-4 lg:left-[42%] lg:w-[56%] p-2 section-container rounded-lg">
+            <div className="w-full h-full">
+              <LessonOrder />
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );
@@ -1754,10 +2040,9 @@ File Path: app/members/admin/messaging/page.tsx
  * to provide feedback to the user. The layout is responsive and adapts to various screen sizes.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
-import { useContext } from "react";
 import { ToastContext, ToastContextType } from "@/contexts/ToastContext"; // Toast notifications context
 
 /**
@@ -2020,6 +2305,8 @@ File Path: app/members/code/[slug]/layout.tsx
  * ----------------
  * This component fetches the ordered list of lessons, determines the current lesson's
  * position, and renders the Table of Contents and Lesson Navigation alongside the page content.
+ * The component passes `currentSlug` to the `TableOfContents` component for highlighting and srolling
+ * into view.
  */
 
 import React from "react";
@@ -2039,8 +2326,18 @@ import { LessonContent } from "@/types/LessonContent";
  * Defines the properties for the Layout component, including the route parameters and children.
  */
 interface LayoutProps {
+  /**
+   * The child components to be rendered within the layout.
+   */
   children: React.ReactNode;
+
+  /**
+   * Route parameters extracted from the URL.
+   */
   params: {
+    /**
+     * The slug of the current lesson.
+     */
     slug: string;
   };
 }
@@ -2058,6 +2355,7 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
   const { slug } = params;
 
   try {
+    // Fetch the ordered list of lessons
     const { data: lessonOrderData, errors: orderErrors } =
       await cookiesClient.models.LessonContent.list({
         filter: { isOrdered: { eq: true } },
@@ -2070,19 +2368,30 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
 
     // Map and sort lessons by orderIndex
     const sortedLessonOrder: LessonContent[] = lessonOrderData
-      .map(({ id, title, slug, code, docs, isOrdered, orderIndex, links }) => ({
-        id,
-        title,
-        slug,
-        code,
-        docs,
-        isOrdered,
-        orderIndex,
-        links: (links || []).filter(
-          (link): link is { text: string; url: string } =>
-            link?.text !== null && link?.url !== null
-        ),
-      }))
+      .map(
+        ({
+          id,
+          title,
+          slug,
+          code,
+          docs,
+          isOrdered,
+          orderIndex,
+          links,
+        }): LessonContent => ({
+          id,
+          title,
+          slug,
+          code,
+          docs,
+          isOrdered,
+          orderIndex,
+          links: (links || []).filter(
+            (link): link is { text: string; url: string } =>
+              link?.text !== null && link?.url !== null
+          ),
+        })
+      )
       .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
 
     // Find the current lesson based on the slug
@@ -2099,41 +2408,52 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
     const nextLesson = sortedLessonOrder[currentLessonIndex + 1] || null;
     const prevLesson = sortedLessonOrder[currentLessonIndex - 1] || null;
 
-    // Utility to generate navigation links
+    /**
+     * Renders a navigation link to the previous or next lesson.
+     * 
+     * @param {LessonContent | null} lesson - The lesson to link to.
+     * @param {"prev" | "next"} direction - The direction of navigation.
+     * @returns {JSX.Element | null} The navigation link element or null if no lesson exists.
+     */
     const renderNavLink = (
       lesson: LessonContent | null,
       direction: "prev" | "next"
-    ) => {
+    ): JSX.Element | null => {
       if (!lesson) return null;
+
       const isPrev = direction === "prev";
       const Icon = isPrev ? ArrowLeftCircleIcon : ArrowRightCircleIcon;
       const label = isPrev
         ? `Go to previous lesson: ${lesson.title}`
         : `Go to next lesson: ${lesson.title}`;
+
       return (
         <Link
           href={`/members/code/${lesson.slug}`}
           className="text-white hover:text-green-400 transition-colors duration-200"
           aria-label={label}
         >
-          <Icon className="size-10" />
+          <Icon className="w-10 h-10" />
         </Link>
       );
     };
 
     return (
       <>
+        {/* Sets the lesson stage */}
         <SetLessonStage slug={slug} />
-        <div className="relative w-full min-h-screen bg-gray-900 text-white">
-          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20">
-            <div className="max-w-xl mx-auto grid grid-cols-3 items-center gap-2 rounded-lg">
+
+        <div className="relative w-full min-h-screen text-white">
+          {/* Navigation Header */}
+          <div className="fixed top-32 sm:top-28 md:top-20 left-0 right-0 bg-sky-950 bg-opacity-100 px-4 py-1 z-20 border-b-2 border-t-2 border-white">
+            <div className="max-w-xl mx-auto grid grid-cols-[auto,1fr,auto] items-center gap-2 rounded-lg">
               {/* Previous Lesson */}
               <div className="justify-self-start">
                 {renderNavLink(prevLesson, "prev")}
               </div>
 
               {/* Current Lesson Title */}
-              <h1 className="font-bold text-center text-sm">
+              <h1 className="font-bold text-center text-sm overflow-hidden text-ellipsis whitespace-nowrap">
                 {currentLesson.title}
               </h1>
 
@@ -2146,19 +2466,24 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
 
           {/* Table of Contents */}
           <aside className="fixed top-20 left-4 w-64 lg:block z-20">
-            <TableOfContents sortedLessonOrder={sortedLessonOrder} />
+            <TableOfContents
+              sortedLessonOrder={sortedLessonOrder}
+              currentSlug={slug} // Passes the current slug to highlight the current page
+            />
           </aside>
 
           {/* Main Content */}
           <main className="ml-0 mt-44 sm:mt-40 md:mt-32">
-            <div className="bg-sky-950">{children}</div>
+            <div>{children}</div>
           </main>
         </div>
       </>
     );
   } catch (error) {
     console.error("Unexpected error in layout:", error);
-    return <div className="text-red-500">An unexpected error occurred.</div>;
+    return (
+      <div className="text-red-500">An unexpected error occurred.</div>
+    );
   }
 };
 
@@ -2173,26 +2498,57 @@ import ReactMarkdown from "react-markdown";
 import "highlight.js/styles/github-dark.css"; // Use your preferred Highlight.js theme
 import CodeBlock from "@/components/CodeBlock"; // Ensure this component is correctly implemented
 import { cookiesClient } from "@/utils/amplifyServerUtils";
-import { LessonContent, Link } from "@/types/LessonContent"; // Ensure this type is correctly defined
+import { LessonContent, Link } from "@/types/LessonContent"; // Ensure these types are correctly defined
 
 /**
- * PageProps Interface
- * -------------------
- * Defines the structure of the route parameters passed to the page component.
+ * Interface for the page route parameters.
  */
 interface PageProps {
   params: {
+    /**
+     * The slug of the lesson to be displayed.
+     */
     slug: string;
   };
 }
 
 /**
+ * Component to render the Related Links section.
+ *
+ * @param {Object} props - Component props.
+ * @param {Link[]} props.links - Array of link objects.
+ * @returns {JSX.Element | null} The rendered Related Links section or null if no links.
+ */
+const LinksSection: React.FC<{ links: Link[] }> = ({ links }) => {
+  if (links.length === 0) return null;
+  return (
+    <div className="mt-4">
+      <h3 className="text-white font-semibold mb-2">Related Links:</h3>
+      <ul className="list-disc list-inside text-blue-400">
+        {links.map((link, index) => (
+          <li key={index}>
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              {link.text || link.url}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+/**
  * LessonPage Component
  * --------------------
  * Renders a lesson page based on the provided slug. It fetches the lesson content from the backend,
- * displays the documentation as formatted Markdown, renders code snippets with TypeScript syntax highlighting,
+ * displays the documentation as formatted Markdown, renders code snippets with syntax highlighting,
  * and displays any relevant lesson links.
- * 
+ *
  * @param {PageProps} props - The component props containing the route parameter `slug`.
  * @returns {Promise<JSX.Element>} The rendered lesson page component.
  */
@@ -2201,9 +2557,10 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
 
   try {
     // Fetch the lesson data based on the slug
-    const { data: lessons, errors } = await cookiesClient.models.LessonContent.list({
-      filter: { slug: { eq: slug } },
-    });
+    const { data: lessons, errors } =
+      await cookiesClient.models.LessonContent.list({
+        filter: { slug: { eq: slug } },
+      });
 
     // Handle errors or missing lessons
     if (errors || !lessons || lessons.length === 0) {
@@ -2222,125 +2579,296 @@ const LessonPage: React.FC<PageProps> = async ({ params }) => {
       isOrdered: lessonData.isOrdered,
       orderIndex: lessonData.orderIndex || null,
       links: (lessonData.links || [])
-        .filter((link): link is Link => link !== null) // Filter out null values
+        .filter((link): link is Link => {
+          if (link === null) return false;
+          const text = link.text?.trim() ?? "";
+          const url = link.url?.trim() ?? "";
+          return text.length > 0 || url.length > 0;
+        }) // Filter out links where both text and URL are empty or whitespace
         .map((link) => ({
-          text: link.text || "", // Default to an empty string if text is null
-          url: link.url || "", // Default to an empty string if URL is null
+          text: link.text?.trim() ?? "", // Trim whitespace and default to empty string
+          url: link.url?.trim() ?? "",   // Trim whitespace and default to empty string
         })),
     };
 
     return (
       <main className="text-sm text-left">
-        <div className="p-1 flex flex-col lg:flex-row gap-2">
-          {/* Documentation Section */}
-          <section className="lg:w-2/5">
-            <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto">
-              <ReactMarkdown className="whitespace-pre-wrap">
+        {lesson.code ? (
+          // Layout when code is present
+          <div className="p-1 flex flex-col lg:flex-row gap-2">
+            {/* Documentation Section */}
+            <section className="lg:w-2/5">
+              <div className="lg:fixed lg:top-32 lg:left-0 lg:h-[calc(100vh-8rem)] lg:w-2/5 p-4 m-1 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg overflow-y-auto pb-8">
+                <ReactMarkdown className="text-inherit whitespace-pre-wrap">
+                  {lesson.docs}
+                </ReactMarkdown>
+                {/* Links Section */}
+                <LinksSection links={lesson.links} />
+              </div>
+            </section>
+
+            {/* Code Section */}
+            <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
+              <CodeBlock code={lesson.code} language="typescript" />
+            </section>
+          </div>
+        ) : (
+          // Layout when code is absent
+          <div className="section-container relative top-12 w-full sm:max-w-md md:max-w-lg lg:max-w-2xl m-auto">
+            <div className="p-6 bg-gradient-to-br from-sky-950 to-slate-950 rounded-lg">
+              <ReactMarkdown className="text-justify text-sm">
                 {lesson.docs}
               </ReactMarkdown>
-
               {/* Links Section */}
-              {lesson.links.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-white font-semibold mb-2">Related Links:</h3>
-                  <ul className="list-disc list-inside text-blue-400">
-                    {lesson.links.map((link, index) => (
-                      <li key={index}>
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline"
-                        >
-                          {link.text || link.url}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <LinksSection links={lesson.links} />
             </div>
-          </section>
-
-          {/* Code Section */}
-          <section className="lg:w-3/5 p-2 bg-black rounded-lg lg:ml-auto">
-            {lesson.code && <CodeBlock code={lesson.code} language="typescript" />}
-          </section>
-        </div>
+          </div>
+        )}
       </main>
     );
   } catch (error) {
     console.error("Unexpected error:", error);
-    return <div className="text-red-500">An unexpected error occurred.</div>;
+    return (
+      <div className="text-red-500">An unexpected error occurred.</div>
+    );
   }
 };
 
 export default LessonPage;
 
 ---
-File Path: components/LessonNavigationLinks.tsx
+File Path: components/RecentContacts.tsx
+"use client";
+
 /**
- * File Path: app/members/code/[slug]/LessonNavigationLinks.tsx
+ * File Path: components/RecentContacts.tsx
  * 
- * Lesson Navigation Links Component
- * ---------------------------------
- * This component renders navigation links for previous and next lessons.
- * It ensures a clear and accessible layout for lesson progression, 
- * with appropriate icons indicating the direction of navigation.
+ * RecentContacts Component
+ * ------------------------
+ * This component fetches and displays recent contact messages for administrators. 
+ * Admins can view message details and delete messages individually.
  */
 
-import React from "react";
-import Link from "next/link";
-import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import React, { useState, useEffect } from "react";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "@/amplify/data/resource";
+import { motion, AnimatePresence } from "framer-motion";
+import { ToastContext, ToastContextType } from "@/contexts/ToastContext";
+
+// Initialize the Amplify client for data interactions
+const client = generateClient<Schema>();
+
+// Define the structure for the ContactMessage object
+type ContactMessage = Schema["ContactMessage"]["type"];
 
 /**
- * LessonNavigationLinksProps Interface
- * ------------------------------------
- * Defines the structure of the props passed to the `LessonNavigationLinks` component.
- * It includes optional `prevLesson` and `nextLesson` objects containing the slug and title.
+ * AccordionProps
+ * --------------
+ * Defines the properties for the Accordion component.
+ * 
+ * @interface AccordionProps
+ * @property {ContactMessage} message - The contact message to display.
+ * @property {string | null} expanded - The ID of the currently expanded message, or null if none.
+ * @property {React.Dispatch<React.SetStateAction<string | null>>} setExpanded - Function to expand or collapse a message.
+ * @property {(messageId: string) => Promise<void>} handleDeleteMessage - Function to handle message deletion.
  */
-interface LessonNavigationLinksProps {
-  prevLesson?: { slug: string; title: string }; // Optional previous lesson
-  nextLesson?: { slug: string; title: string }; // Optional next lesson
+interface AccordionProps {
+  message: ContactMessage;
+  expanded: string | null;
+  setExpanded: React.Dispatch<React.SetStateAction<string | null>>;
+  handleDeleteMessage: (messageId: string) => Promise<void>;
 }
 
 /**
- * LessonNavigationLinks Component
- * -------------------------------
- * Renders navigation links for navigating between lessons. If a previous or next lesson is available,
- * a clickable link is rendered, styled as a button with directional arrows and lesson titles.
+ * Accordion Component
+ * -------------------
+ * Displays an individual contact message with expandable details.
  * 
- * @param {LessonNavigationLinksProps} props - The props containing previous and next lesson information.
- * @returns {JSX.Element} The rendered component with navigation links.
+ * @param {AccordionProps} props - The props for the Accordion component.
+ * @returns {JSX.Element} The rendered accordion component.
  */
-const LessonNavigationLinks: React.FC<LessonNavigationLinksProps> = ({
-  prevLesson,
-  nextLesson,
-}) => (
-  <div className="section-container mt-8 flex justify-around text-lg font-bold">
-    {/* Previous Lesson Link */}
-    {prevLesson && (
-      <Link href={`/members/code/${prevLesson.slug}`} aria-label={`Go to previous lesson: ${prevLesson.title}`}>
-        <div className="bg-green-900 p-2 px-4 text-xs rounded-lg shadow-lg flex items-center">
-          <ArrowLeftIcon className="size-8 mr-2" />
-          {prevLesson.title}
-        </div>
-      </Link>
-    )}
-    
-    {/* Next Lesson Link */}
-    {nextLesson && (
-      <Link href={`/members/code/${nextLesson.slug}`} aria-label={`Go to next lesson: ${nextLesson.title}`}>
-        <div className="bg-green-900 p-2 text-xs rounded-lg shadow-lg flex items-center">
-          {nextLesson.title}
-          <ArrowRightIcon className="size-8 ml-2" />
-        </div>
-      </Link>
-    )}
-  </div>
-);
+const Accordion: React.FC<AccordionProps> = ({
+  message,
+  expanded,
+  setExpanded,
+  handleDeleteMessage,
+}) => {
+  const isOpen = message.id === expanded;
 
-export default LessonNavigationLinks;
+  return (
+    <article className="text-xs mb-2 bg-black bg-opacity-70 pb-2 shadow-lg rounded-lg overflow-hidden">
+      <motion.header
+        className="cursor-pointer p-4 flex items-center justify-between"
+        initial={false}
+        onClick={() => setExpanded(isOpen ? null : message.id)}
+        role="button"
+        aria-expanded={isOpen}
+      >
+        <div className="flex flex-col w-full">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col flex-grow">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">
+                  {message.firstName} {message.lastName}
+                </span>
+                <div className="flex space-x-4">
+                  <time dateTime={new Date(message.createdAt).toISOString()}>
+                    {new Date(message.createdAt).toLocaleDateString()}
+                  </time>
+                </div>
+              </div>
+              <div className="mt-1 text-sm text-gray-300">
+                {message.emailAddress}
+              </div>
+            </div>
+            <button
+              className="p-2 px-4 bg-red-600 text-white rounded ml-4"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteMessage(message.id);
+              }}
+              aria-label={`Delete message from ${message.firstName} ${message.lastName}`}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </motion.header>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.section
+            key="content"
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={{
+              open: { opacity: 1, height: "auto" },
+              collapsed: { opacity: 0, height: 0 },
+            }}
+            transition={{ duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] }}
+          >
+            <div className="p-4 text-left">
+              <p className="mb-2">
+                <strong>Message:</strong>
+              </p>
+              <p className="bg-gray-800 p-2 rounded">{message.message}</p>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+    </article>
+  );
+};
+
+/**
+ * RecentContacts Component
+ * ------------------------
+ * Fetches and displays recent contact messages.
+ * 
+ * @returns {JSX.Element} The rendered RecentContacts component.
+ */
+export default function RecentContacts(): JSX.Element {
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const { addToast } = React.useContext<ToastContextType>(ToastContext);
+
+  useEffect(() => {
+    /**
+     * Fetches contact messages from the backend and sorts them by creation date.
+     */
+    const fetchMessages = async (): Promise<void> => {
+      try {
+        const { data: messageList, errors } = await client.models.ContactMessage.list();
+        if (errors) {
+          setError("Failed to fetch contact messages");
+          console.error("Errors:", errors);
+        } else {
+          const sortedMessages = messageList.sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          setMessages(sortedMessages);
+        }
+      } catch (err) {
+        setError("An unexpected error occurred");
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+
+    // Subscribe to new contact messages
+    const subscription = client.models.ContactMessage.onCreate().subscribe({
+      next: (newMessage) => {
+        setMessages((prevMessages) => {
+          const updatedMessages = [newMessage, ...prevMessages];
+          return updatedMessages.sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        });
+      },
+      error: (error) => console.error("Error in subscription:", error),
+    });
+
+    // Cleanup subscription on component unmount
+    return () => subscription.unsubscribe();
+  }, []);
+
+  /**
+   * Deletes a specific contact message and updates the state.
+   * 
+   * @param {string} messageId - The ID of the contact message to delete.
+   */
+  const handleDeleteMessage = async (messageId: string): Promise<void> => {
+    try {
+      await client.models.ContactMessage.delete({ id: messageId });
+      setMessages((prevMessages) =>
+        prevMessages.filter((message) => message.id !== messageId)
+      );
+      addToast({
+        messageType: "success",
+        message: "Message deleted successfully.",
+      });
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+      addToast({
+        messageType: "error",
+        message: "Failed to delete message.",
+      });
+    }
+  };
+
+  if (loading) {
+    return <div>Loading contact messages...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  return (
+    <section className="section-container p-2">
+      <h1 className="heading">Recent Contacts</h1>
+      {messages.length === 0 ? (
+        <p>No contact messages found.</p>
+      ) : (
+        messages.map((message) => (
+          <Accordion
+            key={message.id}
+            message={message}
+            expanded={expanded}
+            setExpanded={setExpanded}
+            handleDeleteMessage={handleDeleteMessage}
+          />
+        ))
+      )}
+    </section>
+  );
+}
 
 ---
 File Path: components/AllLessonsList.tsx
@@ -2458,7 +2986,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
   };
 
   return (
-    <div className="bg-black bg-opacity-70 rounded-lg w-full">
+    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4 flex flex-col h-[calc(100%-70px)]">
       <div className="flex p-2 flex-col md:flex-row md:justify-between md:items-center">
         <h2 className="heading text-lg mb-2 md:mb-0">All Lessons</h2>
         {/* Search Input */}
@@ -2472,7 +3000,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
         />
       </div>
       {/* List of Lessons */}
-      <div className="h-fit overflow-y-auto">
+      <div className="flex-grow overflow-y-auto">
         <ul className="text-sm mt-4 ml-6">
           {filteredLessons.map((lesson) => (
             <li
@@ -2486,7 +3014,7 @@ const AllLessonsList: React.FC<AllLessonsListProps> = ({ onSelectItem }) => {
           ))}
         </ul>
       </div>
-    </div>
+    </section>
   );
 };
 
@@ -3030,6 +3558,7 @@ export default function CurrentPoll(): JSX.Element {
 
 ---
 File Path: components/Background.tsx
+// @/components/Background.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -3112,6 +3641,8 @@ interface LessonItem {
 export default function LessonOrder(): JSX.Element {
   const [unorderedItems, setUnorderedItems] = useState<LessonItem[]>([]);
   const [orderedItems, setOrderedItems] = useState<LessonItem[]>([]);
+  const [initialOrderedItems, setInitialOrderedItems] = useState<LessonItem[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
   const { addToast } = useContext<ToastContextType>(ToastContext);
 
   /**
@@ -3121,7 +3652,7 @@ export default function LessonOrder(): JSX.Element {
     const fetchItems = async () => {
       try {
         const { data: lessons } = await client.models.LessonContent.list();
-  
+
         if (lessons) {
           const unordered = lessons
             .filter(item => !item.isOrdered)
@@ -3131,7 +3662,7 @@ export default function LessonOrder(): JSX.Element {
               slug: item.slug,
               isOrdered: item.isOrdered,
             }));
-  
+
           const ordered = lessons
             .filter(item => item.isOrdered)
             .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
@@ -3141,40 +3672,57 @@ export default function LessonOrder(): JSX.Element {
               slug: item.slug,
               isOrdered: item.isOrdered,
             }));
-  
+
           setUnorderedItems(unordered);
           setOrderedItems(ordered);
+          setInitialOrderedItems(ordered);
         }
       } catch (err) {
         console.error("Error fetching lesson items:", err);
         addToast({ messageType: "error", message: "Failed to fetch lesson items." });
       }
     };
-  
+
     fetchItems();
   }, [addToast]);
+
+  /**
+   * Compare the current orderedItems with the initialOrderedItems to detect changes.
+   */
+  useEffect(() => {
+    if (orderedItems.length !== initialOrderedItems.length) {
+      setHasChanges(true);
+    } else {
+      const isSameOrder = orderedItems.every((item, index) => item.id === initialOrderedItems[index].id);
+      setHasChanges(!isSameOrder);
+    }
+  }, [orderedItems, initialOrderedItems]);
 
   /**
    * Handle saving the updated lesson order to the backend.
    */
   const handleSaveOrder = async (): Promise<void> => {
     try {
-      const sortedItems = [...orderedItems].sort((a, b) => {
-        return orderedItems.indexOf(a) - orderedItems.indexOf(b);
-      });
-  
-      const results = await Promise.all(
-        sortedItems.map((item, index) =>
+      const sortedItems = orderedItems.map((item, index) => ({
+        ...item,
+        orderIndex: index,
+        isOrdered: true,
+      }));
+
+      await Promise.all(
+        sortedItems.map((item) =>
           client.models.LessonContent.update({
             id: item.id,
             isOrdered: true,
-            orderIndex: index,
+            orderIndex: item.orderIndex,
           })
         )
       );
-  
-      console.log("Saved order:", results);
+
       addToast({ messageType: "success", message: "Lesson order saved successfully!" });
+      // Update initialOrderedItems to the new order after saving
+      setInitialOrderedItems(sortedItems);
+      setHasChanges(false);
     } catch (err) {
       console.error("Error saving lesson order:", err);
       addToast({ messageType: "error", message: "Failed to save lesson order." });
@@ -3182,12 +3730,12 @@ export default function LessonOrder(): JSX.Element {
   };
 
   return (
-    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between gap-8">
+    <section className="bg-black bg-opacity-70 p-4 rounded-lg w-full h-full flex flex-col">
+      <div className="flex-grow flex flex-col md:flex-row md:justify-between gap-8">
         {/* Unordered Lessons Section */}
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/2 flex flex-col">
           <h2 className="text-lg font-semibold mb-2">Unordered Lessons</h2>
-          <ul className="text-sm space-y-2 overflow-scroll max-h-[50vh]" role="list">
+          <ul className="text-sm space-y-2 flex-grow overflow-y-auto" role="list">
             {unorderedItems.map(item => (
               <li
                 key={item.id}
@@ -3195,6 +3743,7 @@ export default function LessonOrder(): JSX.Element {
                 onClick={() => {
                   setOrderedItems([...orderedItems, item]);
                   setUnorderedItems(unorderedItems.filter(unorderedItem => unorderedItem.id !== item.id));
+                  setHasChanges(true);
                 }}
               >
                 {item.title}
@@ -3202,31 +3751,34 @@ export default function LessonOrder(): JSX.Element {
             ))}
           </ul>
         </div>
-
+        
         {/* Ordered Lessons Section */}
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/2 flex flex-col">
           <h2 className="text-lg font-semibold mb-2">Ordered Lessons</h2>
           <Reorder.Group
             as="ul"
             axis="y"
             values={orderedItems}
-            onReorder={setOrderedItems}
-            className="text-sm space-y-2 overflow-scroll max-h-[50vh]"
+            onReorder={(newOrder) => {
+              setOrderedItems(newOrder);
+              setHasChanges(true);
+            }}
+            className="text-sm space-y-2 flex-grow overflow-y-auto max-h-[calc(100vh-16rem)]"
             role="list"
           >
             {orderedItems.map(item => (
               <Reorder.Item
                 key={item.id}
                 value={item}
-                className="bg-green-800 hover:bg-green-700 text-white p-2 rounded cursor-move"
+                className="bg-blue-800 hover:bg-blue-700 text-white p-2 rounded cursor-move"
               >
                 {item.title}
               </Reorder.Item>
             ))}
           </Reorder.Group>
-          {orderedItems.length > 0 && (
+          {hasChanges && (
             <button
-              className="btn btn-primary mt-4 w-full"
+              className="m-4 btn bg-green-600 hover:bg-green-700 border border-green-500 text-white"
               onClick={handleSaveOrder}
             >
               Save Changes
@@ -3237,6 +3789,118 @@ export default function LessonOrder(): JSX.Element {
     </section>
   );
 }
+
+---
+File Path: components/FeaturesList.tsx
+import React from "react";
+
+/**
+ * Features Data
+ * --------------
+ * Represents the technical aspects and features of the Meet a Drifter project.
+ * Each entry contains a title, summary, and additional detailed information.
+ */
+const featuresData = [
+  {
+    title: "The Stack",
+    summary: "React, Next.js 14, AWS Amplify Gen 2",
+    more: "Meet a Drifter is built using React for its component-based architecture, Next.js 14 for routing and optimized performance with server-side capabilities, and AWS Amplify Gen 2 for seamless backend services like authentication, data management, CI/CD, and hosting.",
+  },
+  {
+    title: "The Backend",
+    summary: "AWS Amplify Gen 2 - Rebuilt on CDK",
+    more: "The backend leverages AWS Amplify to seamlessly integrate authentication, data models, and email services. It provides a solid foundation for user management through AppSync-driven operations and Amplify Functions. This setup ensures scalable, real-time interaction between the frontend and backend while maintaining flexibility with custom queries, mutations, and email configurations via AWS SES when moving to production.",
+  },
+  {
+    title: "Backend - Data",
+    summary: "Customizable models and real-time synchronization with AppSync, ensuring users always access the latest polls, votes, and notifications, with flexible authorization for seamless content management.",
+    more: "The data layer is built with customizable models for handling real-time interactions, such as polls, votes, and notifications. Each model has specific authorization rules, allowing only authenticated users or admins to access, modify, or manage content. AppSync enables real-time data synchronization, ensuring users always interact with the latest data, while flexible structures like nested links support complex content management.",
+  },
+  {
+    title: "Backend - Authentication/Authorization",
+    summary: "AWS Cognito with email-based login, role-based grouping, and Amplify Functions for advanced user management, ensuring secure workflows with custom verification, and group permissions.",
+    more: "Authentication is powered by AWS Cognito with email-based login and verification, supporting secure user management. Users are grouped into roles (e.g., admin), and Amplify Functions offer powerful tools to list, add, or remove users from groups. Custom email verification, group-based permissions, and SES integration ensure secure and reliable authentication workflows for a production-ready environment.",
+  },
+  {
+    title: "The Frontend",
+    summary: "Next.js 14 and the App Router",
+    more: "The frontend is built with Next.js 14, utilizing the App Router to enable dynamic routing, layouts, and file-based navigation. This structure promotes modular development with nested routes and reusable components. The setup embraces client-side rendering for fast interactions, with support for serverless API routes when needed. It takes full advantage of Next.js's optimized performance, handling static and dynamic content efficiently, while enabling modern web standards like image optimization and lazy loading. This architecture ensures seamless, production-ready web experiences with smooth navigation and minimal load times.",
+  },
+  {
+    title: "Frontend - Routing and Protected Routes",
+    summary: "Next.js 14’s App Router enables flexible routing with nested layouts, providing modular code management and dynamic content delivery.",
+    more: "The App Router in Next.js 14 enhances frontend architecture by offering file-based routing with nested layouts, enabling developers to organize routes intuitively. Protected routes ensure secure access, limiting member and admin sections to authenticated users via AWS Cognito. Authentication checks are performed at the client level using the `useAuth` hook and dynamic redirects, ensuring seamless transitions between authenticated and public areas. Admin layouts further enforce access control by redirecting non-admin users. Amplify authentication and session management integrate smoothly with routing, creating a secure, scalable, and dynamic user experience across all sections of the application."
+  },  
+  {
+    title: "Frontend - React",
+    summary: "React State, Context, Hooks, and more",
+    more: "The application leverages core React features to manage state and behavior efficiently across components. React Hooks, such as `useState` and `useEffect`, control UI logic and handle side effects like fetching data and managing animations. Contexts, like `AuthContext` and `ToastContext`, provide global state management, ensuring consistent access to authentication and notifications throughout the app. Components are designed with modularity and reusability in mind, while stateful logic dynamically drives UI elements, including member pages and admin dashboards. Animations powered by Framer Motion enhance the user experience by introducing smooth transitions, further improving the interface's responsiveness and interactivity."
+  },  
+  {
+    title: "Lessons CMS",
+    summary: "Comprehensive management of lesson content with ordering and dynamic rendering.",
+    more: "The Lessons CMS allows admins to create, manage, and order lessons using AWS Amplify Gen 2. Lesson data, including titles, content, and relevant links, is stored within the `LessonContent` model. Admins can manage lessons through an intuitive interface with CRUD operations and set their display order using a `LessonOrder` drag and drop interface. Lessons are dynamically rendered for users, with lesson progress tracked locally and slugs pre-generated for SEO optimization. The integration ensures efficient content delivery with features like Next.js static generation and dynamic routing for seamless user navigation."
+  },
+  {
+    title: "And plenty more...",
+    summary: "Every line of code running this site is shown and explained.",
+    more: "Every line of code running this site is available to you for study, modification, inspiration and improvement for your own projects."
+  }
+  
+  
+];
+
+/**
+ * FeaturesItem Component
+ * ----------------------
+ * Renders a single feature item with title, summary, and detailed content.
+ *
+ * @param {string} title - The title of the feature.
+ * @param {string} summary - The summary text of the feature.
+ * @param {string} more - The full detailed content of the feature.
+ *
+ * @returns {JSX.Element} A rendered feature section.
+ */
+const FeaturesItem: React.FC<{
+  title: string;
+  summary: string;
+  more: string;
+}> = ({ title, summary, more }): JSX.Element => (
+  <div className="flex-grow p-4 rounded-lg min-w-[250px] max-w-[400px] md:m-2 bg-gray-900 opacity-90">
+    <div className="font-extralight text-lg text-white">{title}</div>
+    <div className="text-left ml-3 pt-3 text-white">{summary}</div>
+    <div className="mt-4 text-sm mx-4 text-white">{more}</div>
+  </div>
+);
+
+/**
+ * FeaturesList Component
+ * ----------------------
+ * Renders a list of feature sections using data from `featuresData`.
+ *
+ * @returns {JSX.Element} The list of feature sections.
+ */
+export const FeaturesList: React.FC = (): JSX.Element => {
+  return (
+    <div className="backdrop-blur-lg bg-black bg-opacity-50 rounded-lg p-4">
+      <div className="mb-4 text-left md:text-center text-2xl md:text-3xl text-white font-bold">
+        Featuring
+      </div>
+      <div className="flex flex-wrap gap-4 justify-center">
+        {featuresData.map((item, index) => (
+          <FeaturesItem
+            key={index}
+            title={item.title}
+            summary={item.summary}
+            more={item.more}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default FeaturesList;
 
 ---
 File Path: components/ListPolls.tsx
@@ -3707,6 +4371,7 @@ interface NavLink {
 const membersNavLinks: NavLink[] = [
   { href: "/members", label: "Members Home" },
   { href: "/members/code", label: "Code" },
+  { href: "/members/contact", label: "Contact" },
 ];
 
 const adminNavLinks: NavLink[] = [
@@ -4242,6 +4907,53 @@ const Toast: React.FC = (): JSX.Element => {
 export default Toast;
 
 ---
+File Path: components/Pitch.tsx
+import React from "react";
+import { FeaturesList } from "@/components/FeaturesList";
+import Image from "next/image";
+import codeImage from "@/public/code-screenshot.jpg";
+
+/**
+ * Pitch Component
+ * ---------------
+ * This component provides an introduction to the Meet a Drifter project, highlighting
+ * the transparency of the codebase and showcasing key features of the application.
+ *
+ * @returns {JSX.Element} A container displaying project highlights and technical features.
+ */
+const Pitch: React.FC = (): JSX.Element => {
+  return (
+    <div className="w-full text-white rounded-lg shadow-lg">
+      {/* Introductory text with background */}
+      <div className="mt-14 backdrop-blur-lg bg-blue-950 bg-opacity-50 rounded-lg overflow-hidden">
+        <div className="flex items-center justify-center h-full px-4 py-12">
+          <p className="text-3xl text-white font-extralight leading-tight text-center max-w-3xl">
+            Meet a Drifter is an open book project for web developers who want to see
+            real-world code in action.
+          </p>
+        </div>
+        
+      </div>
+      <div className="bg-black bg-opacity-70 pb-4 m-2 rounded-2xl shadow-inner">
+      <div className="my-4 mx-2 lg:max-w-7xl lg:mx-auto">
+          <Image
+            src={codeImage}
+            alt="Screenshot of members/code page."
+          />
+        </div></div>
+      <div className="relative md:flex justify-around mt-8">
+        {/* Component showcasing the features */}
+        <div className="">
+          <FeaturesList />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Pitch;
+
+---
 File Path: components/LessonForm.tsx
 "use client";
 
@@ -4457,118 +5169,132 @@ const LessonForm: React.FC<LessonFormProps> = ({ selectedLessonId, resetSelectio
   };
 
   return (
-    <section className="bg-black bg-opacity-70 rounded-lg w-full p-2" aria-labelledby="lesson-form-title">
-      {/* Type Selection using Radio Buttons */}
+    <section
+      className="bg-black bg-opacity-70 rounded-lg w-full p-2 flex flex-col h-full"
+      aria-labelledby="lesson-form-title"
+    >
+      {/* Header */}
       <header id="lesson-form-title" className="mb-4">
-        <h2 className="block text-sm mb-2">Lesson Type</h2>
+        <h2 className="block text-lg mb-2">Lesson Form</h2>
       </header>
-      <div className="flex space-x-4 mb-4">
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="setup"
-            checked={type === "setup"}
-            onChange={() => setType("setup")}
-            className="mr-2"
-          />
-          Setup
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="prereq"
-            checked={type === "prereq"}
-            onChange={() => setType("prereq")}
-            className="mr-2"
-          />
-          Prerequisite
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="code"
-            checked={type === "code"}
-            onChange={() => setType("code")}
-            className="mr-2"
-          />
-          Code
-        </label>
-      </div>
 
-      {/* Title Input */}
-      <div className="mb-4">
-        <label className="block text-sm mb-2" htmlFor="lesson-title">Title</label>
-        <input
-          id="lesson-title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="form-input"
-          placeholder="Enter lesson title"
-        />
-      </div>
-
-      {/* Documentation Input */}
-      <div className="mb-4">
-        <label className="block text-sm mb-2" htmlFor="lesson-docs">Documentation</label>
-        <textarea
-          id="lesson-docs"
-          value={docs}
-          onChange={(e) => setDocs(e.target.value)}
-          className="form-input"
-          placeholder="Enter documentation"
-          rows={8}
-        />
-      </div>
-
-      {/* Code Input (Optional) */}
-      <div className="mb-4">
-        <label className="block text-sm mb-2" htmlFor="lesson-code">Code (Optional)</label>
-        <textarea
-          id="lesson-code"
-          value={code || ""}
-          onChange={(e) => setCode(e.target.value)}
-          className="form-input"
-          placeholder="Enter code content"
-          rows={8}
-        />
-      </div>
-
-      {/* Links Section */}
-      <div className="mb-6">
-        <label className="block text-sm mb-2">Links</label>
-        {links.map((link, index) => (
-          <div key={index} className="flex items-center space-x-2">
+      {/* Scrollable content */}
+      <div className="flex-grow overflow-y-auto">
+        {/* Type Selection using Radio Buttons */}
+        <div className="flex space-x-4 mb-4">
+          <label className="flex items-center">
             <input
-              type="text"
-              value={link.text}
-              onChange={(e) => handleLinkChange(index, "text", e.target.value)}
-              className="form-input w-1/2"
-              placeholder="Link Text"
+              type="radio"
+              value="setup"
+              checked={type === "setup"}
+              onChange={() => setType("setup")}
+              className="mr-2"
             />
+            Setup
+          </label>
+          <label className="flex items-center">
             <input
-              type="text"
-              value={link.url}
-              onChange={(e) => handleLinkChange(index, "url", e.target.value)}
-              className="form-input w-1/2"
-              placeholder="Link URL"
+              type="radio"
+              value="prereq"
+              checked={type === "prereq"}
+              onChange={() => setType("prereq")}
+              className="mr-2"
             />
-            <button
-              className="btn btn-secondary ml-2 mb-3"
-              type="button"
-              onClick={() => removeLink(index)}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-        <button className="btn btn-primary" type="button" onClick={addLink}>
-          Add Link
-        </button>
+            Prerequisite
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="code"
+              checked={type === "code"}
+              onChange={() => setType("code")}
+              className="mr-2"
+            />
+            Code
+          </label>
+        </div>
+
+        {/* Title Input */}
+        <div className="mb-4">
+          <label className="block text-sm mb-2" htmlFor="lesson-title">
+            Title
+          </label>
+          <input
+            id="lesson-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="form-input"
+            placeholder="Enter lesson title"
+          />
+        </div>
+
+        {/* Documentation Input */}
+        <div className="mb-4">
+          <label className="block text-sm mb-2" htmlFor="lesson-docs">
+            Documentation
+          </label>
+          <textarea
+            id="lesson-docs"
+            value={docs}
+            onChange={(e) => setDocs(e.target.value)}
+            className="form-input"
+            placeholder="Enter documentation"
+            rows={8}
+          />
+        </div>
+
+        {/* Code Input (Optional) */}
+        <div className="mb-4">
+          <label className="block text-sm mb-2" htmlFor="lesson-code">
+            Code (Optional)
+          </label>
+          <textarea
+            id="lesson-code"
+            value={code || ""}
+            onChange={(e) => setCode(e.target.value)}
+            className="form-input"
+            placeholder="Enter code content"
+            rows={8}
+          />
+        </div>
+
+        {/* Links Section */}
+        <div className="mb-6">
+          <label className="block text-sm mb-2">Links</label>
+          {links.map((link, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-3">
+              <input
+                type="text"
+                value={link.text}
+                onChange={(e) => handleLinkChange(index, "text", e.target.value)}
+                className="form-input w-1/2 my-2"
+                placeholder="Link Text"
+              />
+              <input
+                type="text"
+                value={link.url}
+                onChange={(e) => handleLinkChange(index, "url", e.target.value)}
+                className="form-input w-1/2 my-2"
+                placeholder="Link URL"
+              />
+              <button
+                className="btn btn-secondary ml-2"
+                type="button"
+                onClick={() => removeLink(index)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button className="btn btn-primary" type="button" onClick={addLink}>
+            Add Link
+          </button>
+        </div>
       </div>
 
-      {/* Form Buttons */}
-      <div className="flex justify-between">
+      {/* Footer with buttons */}
+      <div className="flex justify-between mt-4">
         {selectedLessonId && selectedLessonId !== "new" ? (
           <>
             <button className="btn btn-secondary" onClick={handleDeleteLesson}>
@@ -4602,6 +5328,7 @@ export default LessonForm;
 
 ---
 File Path: components/CodeBlock.tsx
+// @/components/CodeBlock.tsx
 "use client";
 
 import React, { useEffect, useRef } from "react";
@@ -4673,6 +5400,9 @@ File Path: components/TableOfContents.tsx
  * This component provides a slide-in table of contents (TOC) for navigating through a sorted list of lessons.
  * Users can toggle the visibility of the TOC, and it closes when a user clicks outside or selects a lesson link.
  * The component ensures accessibility, prevents body scrolling when open, and handles focus management.
+ * Additionally, it highlights the current page being viewed and scrolls it into view when the TOC is opened.
+ * 
+ * The layout has been updated to include a search box underneath the "Table of Contents" text.
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -4703,6 +5433,11 @@ interface TableOfContentsProps {
    * Array of lessons sorted in the desired order.
    */
   sortedLessonOrder: Lesson[];
+
+  /**
+   * The slug of the current page being viewed.
+   */
+  currentSlug: string;
 }
 
 /**
@@ -4713,26 +5448,32 @@ interface TableOfContentsProps {
  * clicks outside of it or selects a lesson link. The TOC panel provides keyboard and screen reader
  * accessibility features and prevents scrolling while the TOC is open.
  *
- * @param {TableOfContentsProps} props - The component props containing a sorted list of lessons.
+ * It now highlights the current page being viewed and scrolls it into view when the TOC is opened.
+ * Additionally, it includes a search box underneath the "Table of Contents" text.
+ *
+ * @param {TableOfContentsProps} props - The component props containing a sorted list of lessons and the current slug.
  * @returns {JSX.Element} The rendered table of contents with a toggle button and interactive lesson links.
  */
-const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) => {
-  const [isOpen, setIsOpen] = useState(false); // State to track the open/closed state of the TOC.
+const TableOfContents: React.FC<TableOfContentsProps> = ({
+  sortedLessonOrder,
+  currentSlug,
+}) => {
+  const [isOpen, setIsOpen] = useState<boolean>(false); // State to track the open/closed state of the TOC.
   const tocRef = useRef<HTMLDivElement>(null); // Reference to the TOC panel.
   const buttonRef = useRef<HTMLButtonElement>(null); // Reference to the toggle button.
+  const currentLessonRef = useRef<HTMLAnchorElement>(null); // Reference to the current lesson link.
+  const [searchTerm, setSearchTerm] = useState<string>(""); // State for the search term
 
   /**
    * Toggles the TOC panel open or closed.
    */
-  const toggleOpen = () => setIsOpen((prev) => !prev);
+  const toggleOpen = (): void => setIsOpen((prev) => !prev);
 
   /**
    * Closes the TOC if a click occurs outside the panel.
-   * 
-   * @param {MouseEvent} event - The click event.
    */
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (
         tocRef.current &&
         !tocRef.current.contains(event.target as Node) &&
@@ -4747,6 +5488,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
       document.addEventListener("mousedown", handleClickOutside);
       // Prevent scrolling when TOC is open
       document.body.style.overflow = "hidden";
+
+      // Scroll the current lesson into view
+      currentLessonRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
       // Restore scrolling when TOC is closed
@@ -4762,10 +5509,22 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
   /**
    * Handles closing the TOC when a link is clicked and returns focus to the toggle button.
    */
-  const handleLinkClick = () => {
+  const handleLinkClick = (): void => {
     setIsOpen(false);
     buttonRef.current?.focus(); // Return focus to the toggle button after closing the TOC.
   };
+
+  /**
+   * Handler for the search input change.
+   */
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Filtered lessons based on the search term
+  const filteredLessons = sortedLessonOrder.filter((lesson) =>
+    lesson.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <>
@@ -4773,7 +5532,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
       <button
         ref={buttonRef}
         onClick={toggleOpen}
-        className="fixed w-16 md:w-28 top-16 md:top-16 left-0 z-0 text-white bg-black bg-opacity-50 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
+        className="fixed w-16 top-16 sm:top-14 left-0 z-0 text-white bg-black bg-opacity-100 p-1 py-2 border-r border-b border-t border-white text-xs rounded-tr-lg rounded-br-lg"
         aria-label={isOpen ? "Close Table of Contents" : "Show Table of Contents"}
         aria-expanded={isOpen}
         aria-controls="toc-panel"
@@ -4805,12 +5564,12 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed z-40 top-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 shadow-lg overflow-y-auto"
+            className="fixed z-40 top-0 bottom-0 left-0 h-full w-full max-w-md bg-gradient-to-br from-black to-slate-950 shadow-lg flex flex-col"
             ref={tocRef}
             aria-labelledby="toc-title"
           >
             {/* Header Inside TOC */}
-            <header className="flex justify-between items-center p-4 border-b">
+            <header className="flex justify-between items-center p-4 border-b flex-shrink-0">
               <h2 id="toc-title" className="text-lg font-extralight">
                 Table of Contents
               </h2>
@@ -4820,24 +5579,41 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ sortedLessonOrder }) 
                 className="text-blue-600 hover:text-blue-800 focus:outline-none"
                 aria-label="Close Table of Contents"
               >
-                <XCircleIcon className="size-8 text-white" />
+                <XCircleIcon className="w-6 h-6 text-white" />
               </button>
             </header>
 
+            {/* Search Box */}
+            <div className="p-4">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="form-input max-w-sm md:mt-0 md:ml-4 p-2 rounded"
+              />
+            </div>
+
             {/* TOC Links */}
-            <nav className="p-4 text-left">
+            <nav className="p-4 text-left overflow-y-auto flex-grow">
               <ul>
-                {sortedLessonOrder.map((lesson) => (
-                  <li key={lesson.slug} className="mb-3">
-                    <Link
-                      href={`/members/code/${lesson.slug}`}
-                      onClick={handleLinkClick}
-                      className="text-white text-sm hover:underline"
-                    >
-                      {lesson.title}
-                    </Link>
-                  </li>
-                ))}
+                {filteredLessons.map((lesson) => {
+                  const isCurrent = lesson.slug === currentSlug;
+                  return (
+                    <li key={lesson.slug} className="mb-3">
+                      <Link
+                        href={`/members/code/${lesson.slug}`}
+                        onClick={handleLinkClick}
+                        className={`text-sm hover:underline ${
+                          isCurrent ? "text-sky-400" : "text-white"
+                        }`}
+                        ref={isCurrent ? currentLessonRef : null}
+                      >
+                        {lesson.title}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </nav>
           </motion.aside>

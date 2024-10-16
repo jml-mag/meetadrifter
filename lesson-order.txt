@@ -27,6 +27,8 @@ components/SetLessonStage.tsx
 app/members/code/generateStaticParams.ts
 app/members/code/[slug]/page.tsx
 components/CodeBlock.tsx
+app/members/contact/page.tsx
+components/RecentContacts.tsx
 app/members/admin/layout.tsx
 app/members/admin/page.tsx
 components/CurrentPoll.tsx
