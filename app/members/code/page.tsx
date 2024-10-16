@@ -31,16 +31,16 @@ export default function MemberCodePage(): JSX.Element {
    * useEffect Hook
    * --------------
    * On component mount, this effect checks the presence of `lessonStage` in localStorage. If it's not found,
-   * the hook initializes the stage to "welcome" and redirects the user to the welcome lesson page.
+   * the hook initializes the stage to "technical-prerequisites" and redirects the user to the technical-prerequisites lesson page.
    * If a lesson stage is found, the user is redirected to the appropriate lesson page based on the stored value.
    */
   useEffect(() => {
     const lessonStage = localStorage.getItem("lessonStage");
 
     if (!lessonStage) {
-      // Initialize `lessonStage` to "welcome" if it doesn't exist and redirect to the welcome page
-      localStorage.setItem("lessonStage", "welcome");
-      router.push("/members/code/welcome");
+      // Initialize `lessonStage` to "technical-prerequisites" if it doesn't exist and redirect to the technical-prerequisites page
+      localStorage.setItem("lessonStage", "technical-prerequisites");
+      router.push("/members/code/technical-prerequisites");
     } else {
       // Redirect to the lesson corresponding to the current `lessonStage`
       router.push(`/members/code/${lessonStage}`);
