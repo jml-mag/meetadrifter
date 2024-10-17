@@ -11,7 +11,7 @@ import React from "react";
 import { FeaturesList } from "@/components/FeaturesList";
 import Image from "next/image";
 import codeImage from "@/public/code-screenshot.jpg";
-import adminCodeImage from "@/public/admin-poll-screenshot.png"
+import adminCodeImage from "@/public/admin-poll-screenshot.png";
 import { tiltWarp } from "@/app/fonts"; // Import custom fonts
 
 /**
@@ -55,17 +55,9 @@ const Pitch: React.FC = (): JSX.Element => {
           />
         </div>
       </section>
-
-      {/* Features list showcasing technical highlights */}
-      <section className="relative md:flex justify-around mt-8">
-        <div>
-          <FeaturesList />
-        </div>
-      </section>
-
       {/* Closing text with custom fonts */}
-      <footer
-        className={`${tiltWarp.className} m-auto w-11/12 mt-8 mb-12 text-sm md:text-base lg:text-2xl text-center p-12 leading-relaxed`}
+      <section
+        className={`${tiltWarp.className} m-auto w-11/12 mt-8 mb-8 text-sm md:text-base lg:text-2xl text-center p-12 leading-relaxed`}
       >
         All in, this project is
         <span className="text-base md:text-lg lg:text-4xl text-sky-300">
@@ -75,7 +67,13 @@ const Pitch: React.FC = (): JSX.Element => {
         on top of the default Next.js and Amplify Gen 2 installations designed
         to provide insights for web developers and hopefully help someone
         <span className="text-sky-300"> ship something great</span>.
-      </footer>
+      </section>
+      {/* Features list showcasing technical highlights */}
+      <section className="relative md:flex justify-around mt-8 mb-8">
+        <div>
+          <FeaturesList />
+        </div>
+      </section>
     </main>
   );
 };
