@@ -56,13 +56,13 @@ const Pitch: React.FC = (): JSX.Element => {
       <footer
         className={`${tiltWarp.className} m-auto w-11/12 mt-8 mb-12 text-sm md:text-base lg:text-2xl text-center p-12 leading-relaxed`}
       >
-        All in, this is
+        All in, this project is
         <span className="text-base md:text-lg lg:text-4xl text-sky-300">
           {" "}
           45 files{" "}
         </span>
         on top of the default Next.js and Amplify Gen 2 installations designed
-        to give some insight for web developers and hopefully help someone
+        to provide insights for web developers and hopefully help someone
         <span className="text-sky-300"> ship something great</span>.
       </footer>
     </main>
