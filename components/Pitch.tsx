@@ -11,7 +11,7 @@ import React from "react";
 import { FeaturesList } from "@/components/FeaturesList";
 import Image from "next/image";
 import codeImage from "@/public/code-screenshot.jpg";
-import adminCodeImage from "@/public/admin-poll-screenshot.jpg"
+import adminCodeImage from "@/public/admin-poll-screenshot.png"
 import { tiltWarp } from "@/app/fonts"; // Import custom fonts
 
 /**
