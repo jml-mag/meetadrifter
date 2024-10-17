@@ -154,7 +154,7 @@ export default function CreatePoll(): JSX.Element {
                 aria-label={`Poll Option ${index + 1}`}
               />
               <button
-                className="btn btn-secondary ml-2"
+                className="btn btn-secondary ml-2 -mt-3"
                 type="button"
                 onClick={() => handleOptionRemove(index)}
                 aria-label={`Remove Option ${index + 1}`}

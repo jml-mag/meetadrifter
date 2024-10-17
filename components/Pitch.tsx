@@ -11,6 +11,7 @@ import React from "react";
 import { FeaturesList } from "@/components/FeaturesList";
 import Image from "next/image";
 import codeImage from "@/public/code-screenshot.jpg";
+import adminCodeImage from "@/public/admin-poll-screenshot.jpg"
 import { tiltWarp } from "@/app/fonts"; // Import custom fonts
 
 /**
@@ -40,6 +41,16 @@ const Pitch: React.FC = (): JSX.Element => {
           <Image
             src={codeImage}
             alt="Screenshot of members/code page."
+            className="rounded-lg"
+          />
+        </div>
+      </section>
+      {/* Image section showcasing project code */}
+      <section className="bg-black bg-opacity-70 pb-4 m-2 rounded-2xl shadow-inner">
+        <div className="my-4 mx-2 lg:max-w-7xl lg:mx-auto">
+          <Image
+            src={adminCodeImage}
+            alt="Screenshot of members/admin/polls page."
             className="rounded-lg"
           />
         </div>
