@@ -54,8 +54,8 @@ const featuresData = [
   },
   {
     title: "And plenty more...",
-    summary: "Every line of code running this site is available and explained.",
-    more: "Every line of code running this site is available to you for study, modification, inspiration and improvement for your own projects.",
+    summary: "Every file running this site is available and explained.",
+    more: "Every line of code running this site is available to you for study, modification, and  inspiration for your own projects.",
   },
 ];
 
@@ -75,7 +75,7 @@ const FeaturesItem: React.FC<{
   more: string;
 }> = ({ title, summary, more }): JSX.Element => (
   <article
-    className="flex-grow p-4 rounded-lg min-w-[250px] max-w-[400px] md:m-2 bg-gray-900 opacity-90"
+    className="flex-grow p-4 rounded-lg min-w-[250px] max-w-[400px] md:m-2 bg-gradient-to-br from-black to-black via-stone-800"
     aria-label={`Feature: ${title}`}
   >
     <h3 className="font-extralight text-lg text-white">{title}</h3>
