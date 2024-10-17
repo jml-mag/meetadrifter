@@ -68,7 +68,9 @@ export default function Home(): JSX.Element {
           <div className="section-container pb-4 sm:p-4">
             <div className="heading">Notifications</div>
             <div className="bg-black bg-opacity-70 p-8 md:p-12 rounded-lg flex flex-col sm:flex-row sm:justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-              {notification}
+              <div className="text-left leading-loose">{notification}
+                </div>
+              
             </div>
           </div>
         )}
