@@ -1,4 +1,4 @@
-# Meet A Drifter [meetadrifter.com](https://www.meetadrifter.com)
+# Meet A Drifter
 # [https://www.meetadrifter.com](https://www.meetadrifter.com)
 
 
