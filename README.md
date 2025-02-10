@@ -1,4 +1,5 @@
 # Meet A Drifter [meetadrifter.com](https://www.meetadrifter.com)
+# [https://www.meetadrifter.com](https://www.meetadrifter.com)
 
 
 **Meet A Drifter** is a tutorial-oriented web application showcasing a modern, full-stack approach with **Next.js** (using the App Router) and **AWS Amplify Gen 2**. It demonstrates how to integrate authentication, data models, serverless functions, and more—providing an open book of code for learning and reuse.
