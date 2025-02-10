@@ -585,11 +585,11 @@ export const tiltWarp = Tilt_Warp({
 File Path: app/layout.tsx
 /**
  * File Path: app/layout.tsx
- * 
+ *
  * RootLayout Component
  * --------------------
  * This component defines the root layout for the application. It integrates global styles, toast notifications,
- * and Amplify client-side configuration. It also ensures that all child components are wrapped with 
+ * and Amplify client-side configuration. It also ensures that all child components are wrapped with
  * foundational elements such as SEO metadata, accessibility features, and general styling.
  */
 
@@ -597,31 +597,51 @@ import type { Metadata } from "next"; // Import Next.js metadata type
 import { ToastProvider } from "@/contexts/ToastContext"; // Import ToastProvider for toast notifications
 import Toast from "@/components/Toast"; // Import Toast component for displaying notifications
 import { inter } from "@/app/fonts"; // Import custom fonts (Inter) for global styling
-import ConfigureAmplifyClientSide from '@/components/ConfigureAmplify'; // Import Amplify configuration for client-side setup
+import ConfigureAmplifyClientSide from "@/components/ConfigureAmplify"; // Import Amplify configuration for client-side setup
 import "./globals.css"; // Import global CSS styles
 
 /**
  * Metadata configuration for the entire application.
- * 
+ *
  * @remarks
  * This configuration defines the metadata for SEO purposes, such as the title and description of the site.
  */
 export const metadata: Metadata = {
-  title: "Meet A Drifter", 
-  description: "A website that exists solely as the base of a tutorial of sorts, for now.",
+  title: "Meet A Drifter",
+  description:
+    "A website that exists solely as the base of a tutorial of sorts, for now.",
+  creator: "Matter and Gas",
+  applicationName: "Meet A Drifter",
+  keywords: [
+    "tutorial",
+    "nextjs",
+    "react",
+    "typescript",
+    "tailwindcss",
+    "aws",
+    "amplify",
+    "serverless",
+    "gen 2",
+    "amplify gen 2",
+    "AWS CDK",
+    "matter and gas",
+    "meet a drifter",
+    "meetadrifter",
+    "web application",
+  ],
 };
 
 /**
  * RootLayout Component
- * 
+ *
  * @remarks
  * The RootLayout component serves as the main wrapper for the entire application. It ensures that global styles,
- * Amplify client-side configuration, and toast notifications are applied across all pages. Additionally, it 
+ * Amplify client-side configuration, and toast notifications are applied across all pages. Additionally, it
  * provides accessibility improvements by setting the document language and ensures that metadata for SEO is applied.
- * 
+ *
  * @param {Readonly<{ children: React.ReactNode }>} props - The properties of the RootLayout component.
  * @param {React.ReactNode} props.children - The child components that will be rendered within the layout.
- * 
+ *
  * @returns {JSX.Element} Returns the root layout component, wrapping all child components in the application.
  */
 export default function RootLayout({
@@ -635,9 +655,7 @@ export default function RootLayout({
         <ConfigureAmplifyClientSide />
         <ToastProvider>
           <Toast />
-          <main>
-            {children}
-          </main>
+          <main>{children}</main>
         </ToastProvider>
       </body>
     </html>
@@ -861,7 +879,7 @@ export default function Home(): JSX.Element {
         </div>
         {/* Login button with fade-in animation */}
         <motion.div
-          className="fixed top-4 right-4 text-center bg-yellow-600 hover:bg-yellow-500 bg-opacity-50 hover:bg-opacity-50 border border-yellow-300 text-yellow-400 hover:text-yellow-200 p-2 px-3 rounded-lg shadow-sm shadow-yellow-700"
+          className="fixed top-4 right-4 text-center bg-yellow-500 hover:bg-yellow-300  border-2 border-yellow-50 text-black font-bold p-2 px-3 rounded-lg shadow shadow-yellow-300"
           variants={footerVariants}
           initial="hidden"
           animate={footerControls}
@@ -1315,8 +1333,10 @@ export default function Home(): JSX.Element {
         {notification && (
           <div className="section-container pb-4 sm:p-4">
             <div className="heading">Notifications</div>
-            <div className="bg-black bg-opacity-70 p-4 rounded-lg flex flex-col sm:flex-row sm:justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-              {notification}
+            <div className="bg-black bg-opacity-70 p-8 md:p-12 rounded-lg flex flex-col sm:flex-row sm:justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+              <div className="text-left leading-loose">{notification}
+                </div>
+              
             </div>
           </div>
         )}
@@ -2271,16 +2291,16 @@ export default function MemberCodePage(): JSX.Element {
    * useEffect Hook
    * --------------
    * On component mount, this effect checks the presence of `lessonStage` in localStorage. If it's not found,
-   * the hook initializes the stage to "welcome" and redirects the user to the welcome lesson page.
+   * the hook initializes the stage to "technical-prerequisites" and redirects the user to the technical-prerequisites lesson page.
    * If a lesson stage is found, the user is redirected to the appropriate lesson page based on the stored value.
    */
   useEffect(() => {
     const lessonStage = localStorage.getItem("lessonStage");
 
     if (!lessonStage) {
-      // Initialize `lessonStage` to "welcome" if it doesn't exist and redirect to the welcome page
-      localStorage.setItem("lessonStage", "welcome");
-      router.push("/members/code/welcome");
+      // Initialize `lessonStage` to "technical-prerequisites" if it doesn't exist and redirect to the technical-prerequisites page
+      localStorage.setItem("lessonStage", "technical-prerequisites");
+      router.push("/members/code/technical-prerequisites");
     } else {
       // Redirect to the lesson corresponding to the current `lessonStage`
       router.push(`/members/code/${lessonStage}`);
@@ -3368,7 +3388,7 @@ export default function CreatePoll(): JSX.Element {
                 aria-label={`Poll Option ${index + 1}`}
               />
               <button
-                className="btn btn-secondary ml-2"
+                className="btn btn-secondary ml-2 -mt-3"
                 type="button"
                 onClick={() => handleOptionRemove(index)}
                 aria-label={`Remove Option ${index + 1}`}
@@ -3792,14 +3812,15 @@ export default function LessonOrder(): JSX.Element {
 
 ---
 File Path: components/FeaturesList.tsx
+// @/components/FeaturesList.tsx
+
 import React from "react";
 
-/**
- * Features Data
- * --------------
- * Represents the technical aspects and features of the Meet a Drifter project.
- * Each entry contains a title, summary, and additional detailed information.
- */
+// FeaturesList.tsx
+// -----------------
+// Provides an overview of the core technical features in the Meet a Drifter project.
+// This file defines the `FeaturesList` component to display a collection of feature entries.
+
 const featuresData = [
   {
     title: "The Stack",
@@ -3813,12 +3834,14 @@ const featuresData = [
   },
   {
     title: "Backend - Data",
-    summary: "Customizable models and real-time synchronization with AppSync, ensuring users always access the latest polls, votes, and notifications, with flexible authorization for seamless content management.",
+    summary:
+      "Customizable models and real-time synchronization with AppSync, ensuring users always access the latest polls, votes, and notifications, with flexible authorization for seamless content management.",
     more: "The data layer is built with customizable models for handling real-time interactions, such as polls, votes, and notifications. Each model has specific authorization rules, allowing only authenticated users or admins to access, modify, or manage content. AppSync enables real-time data synchronization, ensuring users always interact with the latest data, while flexible structures like nested links support complex content management.",
   },
   {
     title: "Backend - Authentication/Authorization",
-    summary: "AWS Cognito with email-based login, role-based grouping, and Amplify Functions for advanced user management, ensuring secure workflows with custom verification, and group permissions.",
+    summary:
+      "AWS Cognito with email-based login, role-based grouping, and Amplify Functions for advanced user management, ensuring secure workflows with custom verification, and group permissions.",
     more: "Authentication is powered by AWS Cognito with email-based login and verification, supporting secure user management. Users are grouped into roles (e.g., admin), and Amplify Functions offer powerful tools to list, add, or remove users from groups. Custom email verification, group-based permissions, and SES integration ensure secure and reliable authentication workflows for a production-ready environment.",
   },
   {
@@ -3828,64 +3851,71 @@ const featuresData = [
   },
   {
     title: "Frontend - Routing and Protected Routes",
-    summary: "Next.js 14’s App Router enables flexible routing with nested layouts, providing modular code management and dynamic content delivery.",
-    more: "The App Router in Next.js 14 enhances frontend architecture by offering file-based routing with nested layouts, enabling developers to organize routes intuitively. Protected routes ensure secure access, limiting member and admin sections to authenticated users via AWS Cognito. Authentication checks are performed at the client level using the `useAuth` hook and dynamic redirects, ensuring seamless transitions between authenticated and public areas. Admin layouts further enforce access control by redirecting non-admin users. Amplify authentication and session management integrate smoothly with routing, creating a secure, scalable, and dynamic user experience across all sections of the application."
-  },  
+    summary:
+      "Next.js 14’s App Router enables flexible routing with nested layouts, providing modular code management and dynamic content delivery.",
+    more: "The App Router in Next.js 14 enhances frontend architecture by offering file-based routing with nested layouts, enabling developers to organize routes intuitively. Protected routes ensure secure access, limiting member and admin sections to authenticated users via AWS Cognito. Authentication checks are performed at the client level using the `useAuth` hook and dynamic redirects, ensuring seamless transitions between authenticated and public areas. Admin layouts further enforce access control by redirecting non-admin users. Amplify authentication and session management integrate smoothly with routing, creating a secure, scalable, and dynamic user experience across all sections of the application.",
+  },
   {
     title: "Frontend - React",
     summary: "React State, Context, Hooks, and more",
-    more: "The application leverages core React features to manage state and behavior efficiently across components. React Hooks, such as `useState` and `useEffect`, control UI logic and handle side effects like fetching data and managing animations. Contexts, like `AuthContext` and `ToastContext`, provide global state management, ensuring consistent access to authentication and notifications throughout the app. Components are designed with modularity and reusability in mind, while stateful logic dynamically drives UI elements, including member pages and admin dashboards. Animations powered by Framer Motion enhance the user experience by introducing smooth transitions, further improving the interface's responsiveness and interactivity."
-  },  
+    more: "The application leverages core React features to manage state and behavior efficiently across components. React Hooks, such as `useState` and `useEffect`, control UI logic and handle side effects like fetching data and managing animations. Contexts, like `AuthContext` and `ToastContext`, provide global state management, ensuring consistent access to authentication and notifications throughout the app. Components are designed with modularity and reusability in mind, while stateful logic dynamically drives UI elements, including member pages and admin dashboards. Animations powered by Framer Motion enhance the user experience by introducing smooth transitions, further improving the interface's responsiveness and interactivity.",
+  },
   {
     title: "Lessons CMS",
-    summary: "Comprehensive management of lesson content with ordering and dynamic rendering.",
-    more: "The Lessons CMS allows admins to create, manage, and order lessons using AWS Amplify Gen 2. Lesson data, including titles, content, and relevant links, is stored within the `LessonContent` model. Admins can manage lessons through an intuitive interface with CRUD operations and set their display order using a `LessonOrder` drag and drop interface. Lessons are dynamically rendered for users, with lesson progress tracked locally and slugs pre-generated for SEO optimization. The integration ensures efficient content delivery with features like Next.js static generation and dynamic routing for seamless user navigation."
+    summary:
+      "Comprehensive management of lesson content with ordering and dynamic rendering.",
+    more: "The Lessons CMS allows admins to create, manage, and order lessons using AWS Amplify Gen 2. Lesson data, including titles, content, and relevant links, is stored within the `LessonContent` model. Admins can manage lessons through an intuitive interface with CRUD operations and set their display order using a `LessonOrder` drag and drop interface. Lessons are dynamically rendered for users, with lesson progress tracked locally and slugs pre-generated for SEO optimization. The integration ensures efficient content delivery with features like Next.js static generation and dynamic routing for seamless user navigation.",
   },
   {
     title: "And plenty more...",
-    summary: "Every line of code running this site is shown and explained.",
-    more: "Every line of code running this site is available to you for study, modification, inspiration and improvement for your own projects."
-  }
-  
-  
+    summary: "Every file running this site is available and explained.",
+    more: "Every line of code running this site is available to you for study, modification, and  inspiration for your own projects.",
+  },
 ];
 
 /**
- * FeaturesItem Component
- * ----------------------
- * Renders a single feature item with title, summary, and detailed content.
+ * Renders an individual feature entry.
  *
- * @param {string} title - The title of the feature.
- * @param {string} summary - The summary text of the feature.
- * @param {string} more - The full detailed content of the feature.
- *
- * @returns {JSX.Element} A rendered feature section.
+ * @component
+ * @param {Object} props - Component properties.
+ * @param {string} props.title - The feature's title.
+ * @param {string} props.summary - A brief summary of the feature.
+ * @param {string} props.more - Detailed information about the feature.
+ * @returns {JSX.Element} The rendered feature item.
  */
 const FeaturesItem: React.FC<{
   title: string;
   summary: string;
   more: string;
 }> = ({ title, summary, more }): JSX.Element => (
-  <div className="flex-grow p-4 rounded-lg min-w-[250px] max-w-[400px] md:m-2 bg-gray-900 opacity-90">
-    <div className="font-extralight text-lg text-white">{title}</div>
-    <div className="text-left ml-3 pt-3 text-white">{summary}</div>
-    <div className="mt-4 text-sm mx-4 text-white">{more}</div>
-  </div>
+  <article
+    className="flex-grow p-4 rounded-lg min-w-[250px] max-w-[400px] md:m-2 bg-gradient-to-br from-black to-black via-stone-800"
+    aria-label={`Feature: ${title}`}
+  >
+    <h3 className="font-extralight text-lg text-white">{title}</h3>
+    <p className="text-left ml-3 pt-3 text-white">{summary}</p>
+    <p className="mt-4 text-sm mx-4 text-white">{more}</p>
+  </article>
 );
 
 /**
- * FeaturesList Component
- * ----------------------
- * Renders a list of feature sections using data from `featuresData`.
+ * Displays a list of feature entries based on the `featuresData`.
  *
+ * @component
  * @returns {JSX.Element} The list of feature sections.
  */
 export const FeaturesList: React.FC = (): JSX.Element => {
   return (
-    <div className="backdrop-blur-lg bg-black bg-opacity-50 rounded-lg p-4">
-      <div className="mb-4 text-left md:text-center text-2xl md:text-3xl text-white font-bold">
+    <section
+      className="backdrop-blur-lg bg-black bg-opacity-50 rounded-lg p-4"
+      aria-labelledby="features-heading"
+    >
+      <h2
+        id="features-heading"
+        className="mb-4 text-left md:text-center text-2xl md:text-3xl text-white font-bold"
+      >
         Featuring
-      </div>
+      </h2>
       <div className="flex flex-wrap gap-4 justify-center">
         {featuresData.map((item, index) => (
           <FeaturesItem
@@ -3896,7 +3926,7 @@ export const FeaturesList: React.FC = (): JSX.Element => {
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 
@@ -4908,46 +4938,83 @@ export default Toast;
 
 ---
 File Path: components/Pitch.tsx
+// @/components/Pitch.tsx
+
+// Pitch.tsx
+// ----------
+// This component serves as an introduction to the Meet a Drifter project,
+// showcasing the transparency of the codebase and key technical features.
+
+// use client
+
 import React from "react";
 import { FeaturesList } from "@/components/FeaturesList";
 import Image from "next/image";
 import codeImage from "@/public/code-screenshot.jpg";
+import adminCodeImage from "@/public/admin-poll-screenshot.png";
+import { tiltWarp } from "@/app/fonts"; // Import custom fonts
 
 /**
- * Pitch Component
- * ---------------
- * This component provides an introduction to the Meet a Drifter project, highlighting
- * the transparency of the codebase and showcasing key features of the application.
+ * Renders the main pitch section, introducing the Meet a Drifter project.
  *
- * @returns {JSX.Element} A container displaying project highlights and technical features.
+ * @component
+ * @returns {JSX.Element} A section displaying introductory content and project features.
  */
 const Pitch: React.FC = (): JSX.Element => {
   return (
-    <div className="w-full text-white rounded-lg shadow-lg">
-      {/* Introductory text with background */}
-      <div className="mt-14 backdrop-blur-lg bg-blue-950 bg-opacity-50 rounded-lg overflow-hidden">
+    <main className="w-full text-white rounded-lg">
+      {/* Introduction with a blurred background */}
+      <section className="mt-14 backdrop-blur-lg bg-blue-950 bg-opacity-50 rounded-lg overflow-hidden">
         <div className="flex items-center justify-center h-full px-4 py-12">
-          <p className="text-3xl text-white font-extralight leading-tight text-center max-w-3xl">
-            Meet a Drifter is an open book project for web developers who want to see
-            real-world code in action.
+          <p
+            className={`text-3xl xl:text-4xl font-extralight leading-tight text-center max-w-3xl`}
+          >
+            Meet a Drifter is an open book project for web developers who want
+            to see real-world code in action.
           </p>
         </div>
-        
-      </div>
-      <div className="bg-black bg-opacity-70 pb-4 m-2 rounded-2xl shadow-inner">
-      <div className="my-4 mx-2 lg:max-w-7xl lg:mx-auto">
+      </section>
+
+      {/* Image section showcasing project code */}
+      <section className="bg-black bg-opacity-70 pb-4 m-2 rounded-2xl shadow-inner">
+        <div className="my-4 mx-2 lg:max-w-7xl lg:mx-auto">
           <Image
             src={codeImage}
             alt="Screenshot of members/code page."
+            className="rounded-lg"
           />
-        </div></div>
-      <div className="relative md:flex justify-around mt-8">
-        {/* Component showcasing the features */}
-        <div className="">
+        </div>
+      </section>
+      {/* Image section showcasing project code */}
+      <section className="bg-black bg-opacity-70 pb-4 m-2 rounded-2xl shadow-inner">
+        <div className="my-4 mx-2 lg:max-w-7xl lg:mx-auto">
+          <Image
+            src={adminCodeImage}
+            alt="Screenshot of members/admin/polls page."
+            className="rounded-lg"
+          />
+        </div>
+      </section>
+      {/* Closing text with custom fonts */}
+      <section
+        className={`${tiltWarp.className} m-auto w-11/12 mt-8 mb-8 text-sm md:text-base lg:text-2xl text-center p-12 leading-relaxed`}
+      >
+        All in, this project is
+        <span className="text-base md:text-lg lg:text-4xl text-sky-300">
+          {" "}
+          45 files{" "}
+        </span>
+        on top of the default Next.js and Amplify Gen 2 installations designed
+        to provide insights for web developers and hopefully help someone
+        <span className="text-sky-300"> ship something great</span>.
+      </section>
+      {/* Features list showcasing technical highlights */}
+      <section className="relative md:flex justify-around mt-8 mb-8">
+        <div>
           <FeaturesList />
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

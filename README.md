@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meet A Drifter
 
-## Getting Started
+**Meet A Drifter** is a tutorial-oriented web application showcasing a modern, full-stack approach with **Next.js** (using the App Router) and **AWS Amplify Gen 2**. It demonstrates how to integrate authentication, data models, serverless functions, and more—providing an open book of code for learning and reuse.
 
-First, run the development server:
+## What the Site Is
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- A **tutorial**/demo site, designed to help developers see a real-world codebase in action.
+- Includes features such as user authentication (AWS Cognito), polls, lesson content, contact forms, and basic admin functionality.
+- Organized to be as transparent as possible, allowing you to follow along and understand each piece of the stack.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What It Does
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **User Management**  
+   - Email-based sign-up and login via AWS Cognito.
+   - Group-based authorization, so certain pages or admin features are locked to users in the "admin" group.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Data & Content**  
+   - Stores and manages polls, votes, and lesson content using AWS Amplify’s data layer and AppSync.
+   - Real-time updates for polls and voting, ensuring data consistency.
 
-## Learn More
+3. **Admin Features**  
+   - Admins can manage users, control poll statuses (activate/inactivate), and post site-wide notifications.
+   - Lesson content can be created, edited, and reordered via a drag-and-drop interface.
 
-To learn more about Next.js, take a look at the following resources:
+4. **Frontend Experiences**  
+   - A dynamic “lesson” system for step-by-step or tutorial-like content, with code blocks and markdown.
+   - An animated home page, plus interactive UI elements built with **Framer Motion** and **Tailwind CSS**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Basics of How It Is Built
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Next.js (App Router)**  
+   - Handles routing, layouts, and static/dynamic rendering in a React environment.
+   - Provides a file-based approach for pages (e.g., `app/page.tsx`, `app/members/page.tsx`, etc.).
 
-## Deploy on Vercel
+2. **AWS Amplify Gen 2**  
+   - Combines AWS CDK with Amplify’s developer experience.  
+   - The `amplify/` directory defines backend resources (Cognito, AppSync, functions, SES email identity) using “infrastructure-as-code.”
+   - Includes authentication, data models (using Amplify’s schema definitions), and serverless functions for user management and custom operations.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Authentication & Authorization**  
+   - AWS Cognito for email-based signup/login and group-based roles.
+   - Admin checks in the front-end (`isAdmin`) plus function-level group enforcement in the backend.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Data Models**  
+   - Declarative schemas (`amplify/data/resource.ts`) define models like `Poll`, `Vote`, and `LessonContent`.
+   - Real-time sync with AppSync subscriptions is used for live updates (e.g., poll votes).
+
+5. **Deployed & Serverless**  
+   - The site can be deployed via Amplify Hosting, with CI/CD integrated or by hooking up a Git repo.
+   - Serverless functions in the `amplify/functions/` directory handle special logic (e.g., user management in Cognito).
+
+---
+
+**Enjoy exploring the code and learning how a Next.js + Amplify Gen 2 project is structured from end to end!**
