@@ -1,6 +1,3 @@
-## 📘 `meetadrifter/README.md`
-
-```markdown
 # Meet A Drifter
 **https://www.meetadrifter.com**
 
@@ -31,29 +28,29 @@ This project demonstrates:
 
 ## What the Application Does
 
-### 1. User Authentication & Roles
+### User Authentication & Roles
 - Email-based signup/login via AWS Cognito
 - Group-based authorization (admin vs member)
 - Frontend and backend enforcement
 
-### 2. Lesson & Tutorial System
+### Lesson & Tutorial System
 - Lessons stored as structured content (markdown + optional code)
 - Dynamic lesson routing
 - Split-pane layouts for documentation and code
 - Drag-and-drop lesson ordering in admin UI
 
-### 3. Polling & Real-Time Data
+### Polling & Real-Time Data
 - Admin-created polls
 - Authenticated users vote
 - Live updates via AppSync subscriptions
 
-### 4. Admin Dashboard
+### Admin Dashboard
 - User management
 - Poll creation and activation
 - Site-wide notifications
 - Content management
 
-### 5. Frontend Experience
+### Frontend Experience
 - Animated landing page
 - Interactive components
 - Clean, modular UI architecture
