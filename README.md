@@ -1,6 +1,3 @@
-
----
-
 ## 📘 `meetadrifter/README.md`
 
 ```markdown
