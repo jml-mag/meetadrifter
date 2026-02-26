@@ -1072,3 +1072,56 @@
 2025-02-10 13:57:38,167 - INFO - Searched through /Users/jmlima/Desktop/MOVE/meetadrifter/utils
 2025-02-10 13:57:38,168 - INFO - Operation completed. All code written to current-code.txt
 2025-02-10 13:57:38,168 - INFO - All file paths written to 'current-filenames.txt'
+2026-02-26 13:58:16,215 - INFO - Appended content from amplify/backend.ts
+2026-02-26 13:58:16,216 - INFO - Appended content from amplify/auth/resource.ts
+2026-02-26 13:58:16,216 - INFO - Appended content from amplify/functions/manage-users/resource.ts
+2026-02-26 13:58:16,216 - INFO - Appended content from amplify/functions/manage-users/handler.ts
+2026-02-26 13:58:16,217 - INFO - Appended content from amplify/data/resource.ts
+2026-02-26 13:58:16,217 - INFO - Searched through /Users/jmlima/Desktop/meetadrifter/amplify
+2026-02-26 13:58:16,217 - INFO - Appended content from app/fonts.ts
+2026-02-26 13:58:16,217 - INFO - Appended content from app/layout.tsx
+2026-02-26 13:58:16,217 - INFO - Appended content from app/page.tsx
+2026-02-26 13:58:16,217 - INFO - Appended content from app/globals.css
+2026-02-26 13:58:16,217 - INFO - Appended content from app/members/layout.tsx
+2026-02-26 13:58:16,217 - INFO - Appended content from app/members/page.tsx
+2026-02-26 13:58:16,218 - INFO - Appended content from app/members/contact/page.tsx
+2026-02-26 13:58:16,218 - INFO - Appended content from app/members/admin/layout.tsx
+2026-02-26 13:58:16,218 - INFO - Appended content from app/members/admin/page.tsx
+2026-02-26 13:58:16,218 - INFO - Appended content from app/members/admin/code/page.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from app/members/admin/polls/page.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from app/members/admin/users/page.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from app/members/admin/messaging/page.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from app/members/code/generateStaticParams.ts
+2026-02-26 13:58:16,219 - INFO - Appended content from app/members/code/page.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from app/members/code/[slug]/layout.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from app/members/code/[slug]/page.tsx
+2026-02-26 13:58:16,219 - INFO - Searched through /Users/jmlima/Desktop/meetadrifter/app
+2026-02-26 13:58:16,219 - INFO - Appended content from components/RecentContacts.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from components/AllLessonsList.tsx
+2026-02-26 13:58:16,219 - INFO - Appended content from components/ConfigureAmplify.tsx
+2026-02-26 13:58:16,220 - INFO - Appended content from components/MembersMenu.tsx
+2026-02-26 13:58:16,220 - INFO - Appended content from components/CreatePoll.tsx
+2026-02-26 13:58:16,220 - INFO - Appended content from components/CurrentPoll.tsx
+2026-02-26 13:58:16,221 - INFO - Appended content from components/Background.tsx
+2026-02-26 13:58:16,221 - INFO - Appended content from components/LessonOrder.tsx
+2026-02-26 13:58:16,221 - INFO - Appended content from components/FeaturesList.tsx
+2026-02-26 13:58:16,221 - INFO - Appended content from components/ListPolls.tsx
+2026-02-26 13:58:16,222 - INFO - Appended content from components/AuthenticatedNavBar.tsx
+2026-02-26 13:58:16,222 - INFO - Appended content from components/SetLessonStage.tsx
+2026-02-26 13:58:16,222 - INFO - Appended content from components/Poll.tsx
+2026-02-26 13:58:16,222 - INFO - Appended content from components/AnimatedBackground.tsx
+2026-02-26 13:58:16,222 - INFO - Appended content from components/Toast.tsx
+2026-02-26 13:58:16,223 - INFO - Appended content from components/Pitch.tsx
+2026-02-26 13:58:16,223 - INFO - Appended content from components/LessonForm.tsx
+2026-02-26 13:58:16,223 - INFO - Appended content from components/CodeBlock.tsx
+2026-02-26 13:58:16,223 - INFO - Appended content from components/TableOfContents.tsx
+2026-02-26 13:58:16,223 - INFO - Searched through /Users/jmlima/Desktop/meetadrifter/components
+2026-02-26 13:58:16,223 - INFO - Appended content from contexts/ToastContext.tsx
+2026-02-26 13:58:16,223 - INFO - Appended content from contexts/AuthContext.tsx
+2026-02-26 13:58:16,223 - INFO - Searched through /Users/jmlima/Desktop/meetadrifter/contexts
+2026-02-26 13:58:16,223 - INFO - Appended content from types/LessonContent.ts
+2026-02-26 13:58:16,223 - INFO - Searched through /Users/jmlima/Desktop/meetadrifter/types
+2026-02-26 13:58:16,223 - INFO - Appended content from utils/amplifyServerUtils.ts
+2026-02-26 13:58:16,223 - INFO - Searched through /Users/jmlima/Desktop/meetadrifter/utils
+2026-02-26 13:58:16,224 - INFO - Operation completed. All code written to meetadrifter-code.txt
+2026-02-26 13:58:16,224 - INFO - All file paths written to 'current-filenames.txt'

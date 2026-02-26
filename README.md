@@ -1,56 +1,129 @@
-# Meet A Drifter
-# [https://www.meetadrifter.com](https://www.meetadrifter.com)
-
-
-**Meet A Drifter** is a tutorial-oriented web application showcasing a modern, full-stack approach with **Next.js** (using the App Router) and **AWS Amplify Gen 2**. It demonstrates how to integrate authentication, data models, serverless functions, and more—providing an open book of code for learning and reuse.
-
-## What the Site Is
-
-- A **tutorial**/demo site, designed to help developers see a real-world codebase in action.
-- Includes features such as user authentication (AWS Cognito), polls, lesson content, contact forms, and basic admin functionality.
-- Organized to be as transparent as possible, allowing you to follow along and understand each piece of the stack.
-
-## What It Does
-
-1. **User Management**  
-   - Email-based sign-up and login via AWS Cognito.
-   - Group-based authorization, so certain pages or admin features are locked to users in the "admin" group.
-
-2. **Data & Content**  
-   - Stores and manages polls, votes, and lesson content using AWS Amplify’s data layer and AppSync.
-   - Real-time updates for polls and voting, ensuring data consistency.
-
-3. **Admin Features**  
-   - Admins can manage users, control poll statuses (activate/inactivate), and post site-wide notifications.
-   - Lesson content can be created, edited, and reordered via a drag-and-drop interface.
-
-4. **Frontend Experiences**  
-   - A dynamic “lesson” system for step-by-step or tutorial-like content, with code blocks and markdown.
-   - An animated home page, plus interactive UI elements built with **Framer Motion** and **Tailwind CSS**.
-
-## Basics of How It Is Built
-
-1. **Next.js (App Router)**  
-   - Handles routing, layouts, and static/dynamic rendering in a React environment.
-   - Provides a file-based approach for pages (e.g., `app/page.tsx`, `app/members/page.tsx`, etc.).
-
-2. **AWS Amplify Gen 2**  
-   - Combines AWS CDK with Amplify’s developer experience.  
-   - The `amplify/` directory defines backend resources (Cognito, AppSync, functions, SES email identity) using “infrastructure-as-code.”
-   - Includes authentication, data models (using Amplify’s schema definitions), and serverless functions for user management and custom operations.
-
-3. **Authentication & Authorization**  
-   - AWS Cognito for email-based signup/login and group-based roles.
-   - Admin checks in the front-end (`isAdmin`) plus function-level group enforcement in the backend.
-
-4. **Data Models**  
-   - Declarative schemas (`amplify/data/resource.ts`) define models like `Poll`, `Vote`, and `LessonContent`.
-   - Real-time sync with AppSync subscriptions is used for live updates (e.g., poll votes).
-
-5. **Deployed & Serverless**  
-   - The site can be deployed via Amplify Hosting, with CI/CD integrated or by hooking up a Git repo.
-   - Serverless functions in the `amplify/functions/` directory handle special logic (e.g., user management in Cognito).
 
 ---
 
-**Enjoy exploring the code and learning how a Next.js + Amplify Gen 2 project is structured from end to end!**
+## 📘 `meetadrifter/README.md`
+
+```markdown
+# Meet A Drifter
+**https://www.meetadrifter.com**
+
+A full-stack, tutorial-oriented web application designed to demonstrate how a modern Next.js + AWS Amplify Gen 2 system is built **in practice**, using a real deployed product instead of isolated examples.
+
+Meet A Drifter is intentionally an “open book” codebase: users join the site in order to learn how to build the very site they are using.
+
+---
+
+## Why This Exists
+
+Many tutorials show fragments of systems in isolation — auth here, data there, UI somewhere else.  
+Meet A Drifter was built to answer a different question:
+
+> *What does a complete, real-world full-stack application actually look like when everything is wired together?*
+
+This project demonstrates:
+- authentication
+- authorization
+- real-time data
+- admin tooling
+- serverless backends
+- UI state management
+
+…all inside a single, deployed application.
+
+---
+
+## What the Application Does
+
+### 1. User Authentication & Roles
+- Email-based signup/login via AWS Cognito
+- Group-based authorization (admin vs member)
+- Frontend and backend enforcement
+
+### 2. Lesson & Tutorial System
+- Lessons stored as structured content (markdown + optional code)
+- Dynamic lesson routing
+- Split-pane layouts for documentation and code
+- Drag-and-drop lesson ordering in admin UI
+
+### 3. Polling & Real-Time Data
+- Admin-created polls
+- Authenticated users vote
+- Live updates via AppSync subscriptions
+
+### 4. Admin Dashboard
+- User management
+- Poll creation and activation
+- Site-wide notifications
+- Content management
+
+### 5. Frontend Experience
+- Animated landing page
+- Interactive components
+- Clean, modular UI architecture
+
+---
+
+## Architectural Highlights
+
+### App Router–First Design
+The application is built entirely using Next.js App Router conventions, with clear separation between public, authenticated, and admin routes.
+
+### Code-First Infrastructure
+AWS Amplify Gen 2 is used to define backend resources directly in TypeScript:
+- authentication
+- data models
+- serverless functions
+- email configuration
+
+This keeps infrastructure versioned alongside application code.
+
+### Real-Time Data via GraphQL
+Polls and votes update live using AppSync subscriptions, demonstrating how real-time features fit cleanly into a modern React app.
+
+### Clear Separation of Concerns
+- `app/` — routing and page composition
+- `components/` — reusable UI pieces
+- `contexts/` — auth and UI state
+- `amplify/` — backend definitions
+- `utils/` — shared helpers
+
+---
+
+## Technology Stack
+
+### Frontend
+- Next.js 14 (App Router)
+- React + TypeScript
+- Tailwind CSS
+- Framer Motion
+- Markdown rendering with syntax highlighting
+
+### Backend
+- AWS Amplify Gen 2
+- AppSync GraphQL
+- Cognito authentication
+- Lambda functions for custom logic
+- SES for transactional email
+
+---
+
+## What This Project Demonstrates
+
+- Building and deploying a real full-stack application
+- Authentication and authorization done correctly
+- Admin tooling as a first-class concern
+- Real-time data flows
+- Clean frontend architecture
+- Teaching by example through a transparent codebase
+
+---
+
+## Deployment
+
+The application is deployed using AWS Amplify Hosting with CI/CD integration from Git. Backend resources are provisioned via Amplify’s code-first infrastructure definitions.
+
+---
+
+## License
+
+MIT
